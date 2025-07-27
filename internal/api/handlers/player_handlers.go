@@ -35,6 +35,12 @@ func NewPlayerHandler(playerService *services.PlayerService) *PlayerHandler {
 func (h *PlayerHandler) GetPlayer(c *gin.Context) {
 	playerID := c.Param("id")
 	
+	// Validate player ID format
+	if err := utils.ValidatePlayerID(playerID); err != nil {
+		utils.SendJSONResponse(c, http.StatusBadRequest, err)
+		return
+	}
+	
 	player, err := h.playerService.GetPlayerByID(playerID)
 	if err != nil {
 		if apiErr, ok := err.(errors.APIError); ok {
@@ -65,7 +71,15 @@ func (h *PlayerHandler) GetPlayer(c *gin.Context) {
 // @Failure 400 {object} models.Response
 // @Router /api/v1/players [get]
 func (h *PlayerHandler) SearchPlayers(c *gin.Context) {
-	req := utils.ParseSearchParams(c)
+	req, err := utils.ParseSearchParams(c)
+	if err != nil {
+		if apiErr, ok := err.(errors.APIError); ok {
+			utils.SendJSONResponse(c, apiErr.Code, apiErr)
+			return
+		}
+		utils.SendJSONResponse(c, http.StatusBadRequest, err)
+		return
+	}
 
 	players, meta, err := h.playerService.SearchPlayers(req)
 	if err != nil {
@@ -108,6 +122,12 @@ func (h *PlayerHandler) SearchPlayers(c *gin.Context) {
 func (h *PlayerHandler) GetPlayerRatingHistory(c *gin.Context) {
 	playerID := c.Param("id")
 	
+	// Validate player ID format
+	if err := utils.ValidatePlayerID(playerID); err != nil {
+		utils.SendJSONResponse(c, http.StatusBadRequest, err)
+		return
+	}
+	
 	history, err := h.playerService.GetPlayerRatingHistory(playerID)
 	if err != nil {
 		if apiErr, ok := err.(errors.APIError); ok {
@@ -141,7 +161,22 @@ func (h *PlayerHandler) GetPlayerRatingHistory(c *gin.Context) {
 // @Router /api/v1/clubs/{id}/players [get]
 func (h *PlayerHandler) GetPlayersByClub(c *gin.Context) {
 	clubID := c.Param("id")
-	req := utils.ParseSearchParams(c)
+	
+	// Validate club ID format
+	if err := utils.ValidateClubID(clubID); err != nil {
+		utils.SendJSONResponse(c, http.StatusBadRequest, err)
+		return
+	}
+	
+	req, err := utils.ParseSearchParams(c)
+	if err != nil {
+		if apiErr, ok := err.(errors.APIError); ok {
+			utils.SendJSONResponse(c, apiErr.Code, apiErr)
+			return
+		}
+		utils.SendJSONResponse(c, http.StatusBadRequest, err)
+		return
+	}
 
 	players, meta, err := h.playerService.GetPlayersByClub(clubID, req)
 	if err != nil {

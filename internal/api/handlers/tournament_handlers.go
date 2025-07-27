@@ -37,6 +37,12 @@ func NewTournamentHandler(tournamentService *services.TournamentService) *Tourna
 func (h *TournamentHandler) GetTournament(c *gin.Context) {
 	tournamentID := c.Param("id")
 	
+	// Validate tournament ID format
+	if err := utils.ValidateTournamentID(tournamentID); err != nil {
+		utils.SendJSONResponse(c, http.StatusBadRequest, err)
+		return
+	}
+	
 	tournament, err := h.tournamentService.GetTournamentByID(tournamentID)
 	if err != nil {
 		if apiErr, ok := err.(errors.APIError); ok {
@@ -69,7 +75,15 @@ func (h *TournamentHandler) GetTournament(c *gin.Context) {
 // @Failure 400 {object} models.Response
 // @Router /api/v1/tournaments [get]
 func (h *TournamentHandler) SearchTournaments(c *gin.Context) {
-	req := utils.ParseSearchParamsWithDefaults(c, "finishedOn", "desc")
+	req, err := utils.ParseSearchParamsWithDefaults(c, "finishedOn", "desc")
+	if err != nil {
+		if apiErr, ok := err.(errors.APIError); ok {
+			utils.SendJSONResponse(c, apiErr.Code, apiErr)
+			return
+		}
+		utils.SendJSONResponse(c, http.StatusBadRequest, err)
+		return
+	}
 
 	tournaments, meta, err := h.tournamentService.SearchTournaments(req)
 	if err != nil {
@@ -210,7 +224,15 @@ func (h *TournamentHandler) GetTournamentsByDateRange(c *gin.Context) {
 		return
 	}
 
-	req := utils.ParseSearchParamsWithDefaults(c, "finishedOn", "desc")
+	req, err := utils.ParseSearchParamsWithDefaults(c, "finishedOn", "desc")
+	if err != nil {
+		if apiErr, ok := err.(errors.APIError); ok {
+			utils.SendJSONResponse(c, apiErr.Code, apiErr)
+			return
+		}
+		utils.SendJSONResponse(c, http.StatusBadRequest, err)
+		return
+	}
 
 	tournaments, meta, err := h.tournamentService.GetTournamentsByDateRange(startDate, endDate, req)
 	if err != nil {

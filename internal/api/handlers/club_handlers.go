@@ -36,6 +36,12 @@ func NewClubHandler(clubService *services.ClubService) *ClubHandler {
 func (h *ClubHandler) GetClub(c *gin.Context) {
 	clubID := c.Param("id")
 	
+	// Validate club ID format
+	if err := utils.ValidateClubID(clubID); err != nil {
+		utils.SendJSONResponse(c, http.StatusBadRequest, err)
+		return
+	}
+	
 	club, err := h.clubService.GetClubByID(clubID)
 	if err != nil {
 		if apiErr, ok := err.(errors.APIError); ok {
@@ -68,7 +74,15 @@ func (h *ClubHandler) GetClub(c *gin.Context) {
 // @Failure 400 {object} models.Response
 // @Router /api/v1/clubs [get]
 func (h *ClubHandler) SearchClubs(c *gin.Context) {
-	req := utils.ParseSearchParams(c)
+	req, err := utils.ParseSearchParams(c)
+	if err != nil {
+		if apiErr, ok := err.(errors.APIError); ok {
+			utils.SendJSONResponse(c, apiErr.Code, apiErr)
+			return
+		}
+		utils.SendJSONResponse(c, http.StatusBadRequest, err)
+		return
+	}
 
 	clubs, meta, err := h.clubService.SearchClubs(req)
 	if err != nil {
