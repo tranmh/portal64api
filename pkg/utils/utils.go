@@ -66,28 +66,29 @@ func ParseSearchParamsWithDefaults(c *gin.Context, defaultSortBy, defaultSortOrd
 	}, nil
 }
 
-// ValidateClubID validates a club ID format (e.g., C0101)
+// ValidateClubID validates a club ID format (e.g., D300H, A080T, C0101, UNKNOWN)
 func ValidateClubID(clubID string) error {
 	if clubID == "" {
 		return errors.NewBadRequestError("Club ID cannot be empty")
 	}
 	
-	// Club ID should start with 'C' followed by 4 digits
-	if len(clubID) != 5 || clubID[0] != 'C' {
-		return errors.NewBadRequestError("Invalid club ID format (expected: C0101)")
+	// Club ID should be alphanumeric and between 3-10 characters
+	if len(clubID) < 3 || len(clubID) > 10 {
+		return errors.NewBadRequestError("Invalid club ID format")
 	}
 	
-	// Check if the last 4 characters are digits
-	for i := 1; i < 5; i++ {
-		if clubID[i] < '0' || clubID[i] > '9' {
-			return errors.NewBadRequestError("Invalid club ID format (expected: C0101)")
+	// Check if all characters are alphanumeric
+	for i := 0; i < len(clubID); i++ {
+		c := clubID[i]
+		if !((c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')) {
+			return errors.NewBadRequestError("Invalid club ID format")
 		}
 	}
 	
 	return nil
 }
 
-// ValidatePlayerID validates a player ID format (e.g., C0101-1014)
+// ValidatePlayerID validates a player ID format (e.g., D300H-1014, UNKNOWN-10849749)
 func ValidatePlayerID(playerID string) error {
 	if playerID == "" {
 		return errors.NewBadRequestError("Player ID cannot be empty")
@@ -95,17 +96,17 @@ func ValidatePlayerID(playerID string) error {
 	
 	parts := strings.Split(playerID, "-")
 	if len(parts) != 2 {
-		return errors.NewBadRequestError("Invalid player ID format (expected: C0101-1014)")
+		return errors.NewBadRequestError("Invalid player ID format (expected: CLUBID-PERSONID)")
 	}
 	
 	// Validate club part
 	if err := ValidateClubID(parts[0]); err != nil {
-		return errors.NewBadRequestError("Invalid player ID format (expected: C0101-1014)")
+		return errors.NewBadRequestError("Invalid player ID format (expected: CLUBID-PERSONID)")
 	}
 	
 	// Validate person ID part
 	if _, err := strconv.ParseUint(parts[1], 10, 32); err != nil {
-		return errors.NewBadRequestError("Invalid player ID format (expected: C0101-1014)")
+		return errors.NewBadRequestError("Invalid player ID format (expected: CLUBID-PERSONID)")
 	}
 	
 	return nil
@@ -241,6 +242,12 @@ func writeCSV(writer *csv.Writer, data interface{}) error {
 
 	// Get headers from first element
 	firstElement := v.Index(0)
+	
+	// Handle interface{} elements - extract underlying value
+	if firstElement.Kind() == reflect.Interface && !firstElement.IsNil() {
+		firstElement = firstElement.Elem()
+	}
+	
 	if firstElement.Kind() == reflect.Ptr {
 		if firstElement.IsNil() {
 			return fmt.Errorf("first element is nil")
@@ -249,7 +256,7 @@ func writeCSV(writer *csv.Writer, data interface{}) error {
 	}
 
 	if firstElement.Kind() != reflect.Struct {
-		return fmt.Errorf("slice elements must be structs")
+		return fmt.Errorf("slice elements must be structs, got %v", firstElement.Kind())
 	}
 
 	headers := getCSVHeaders(firstElement)
@@ -264,6 +271,12 @@ func writeCSV(writer *csv.Writer, data interface{}) error {
 	// Write data rows
 	for i := 0; i < v.Len(); i++ {
 		element := v.Index(i)
+		
+		// Handle interface{} elements - extract underlying value
+		if element.Kind() == reflect.Interface && !element.IsNil() {
+			element = element.Elem()
+		}
+		
 		if element.Kind() == reflect.Ptr {
 			if element.IsNil() {
 				continue // Skip nil elements

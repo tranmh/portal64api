@@ -110,7 +110,19 @@ func SetupRoutes(dbs *database.Databases) *gin.Engine {
 		{
 			clubs.GET("", clubHandler.SearchClubs)
 			clubs.GET("/all", clubHandler.GetAllClubs)
-			clubs.GET("/:id", clubHandler.GetClub)
+			clubs.GET("/:id", func(c *gin.Context) {
+				clubID := c.Param("id")
+				// Check for empty ID case (trailing slash results in empty param)
+				if clubID == "" {
+					c.JSON(http.StatusNotFound, gin.H{
+						"success": false,
+						"error":   "Club ID is required",
+					})
+					return
+				}
+				// Call the actual handler
+				clubHandler.GetClub(c)
+			})
 			clubs.GET("/:id/players", playerHandler.GetPlayersByClub)
 		}
 
