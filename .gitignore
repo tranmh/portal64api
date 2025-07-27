@@ -1,0 +1,123 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+bin/
+*.test
+*.out
+
+# Go workspace files
+go.work
+go.work.sum
+
+# Dependency directories
+vendor/
+
+# Go build cache
+.cache/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Windows specific
+*.lnk
+desktop.ini
+
+# Logs
+*.log
+logs/
+log/
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.cover
+*.coverprofile
+coverage.out
+coverage.html
+
+# Test outputs
+*.test
+testdata/
+
+# Build artifacts
+dist/
+build/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Database files (for local development)
+*.db
+*.sqlite
+*.sqlite3
+
+# Docker
+.dockerignore
+
+# Generated documentation
+docs/generated/
+
+# Air (hot reload) temporary files
+.air.toml.bak
+tmp/
+
+# GoLand
+.idea/
+
+# VS Code
+.vscode/settings.json
+.vscode/launch.json
+
+# Certificates and keys
+*.key
+*.crt
+*.pem
+*.p12
+ssl/
+
+# Configuration backups
+*.backup
+*.bak
+
+# Performance profiling
+*.prof
+*.mem
+*.cpu
+
+# Local development overrides
+docker-compose.override.yml
+config.local.yaml
+
+# Swagger generated files (if using swag)
+docs/generated/
+
+# Windows PowerShell debugging
+build-errors.log

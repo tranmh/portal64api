@@ -1,0 +1,948 @@
+openapi: 3.0.3
+info:
+  title: Portal64 API
+  description: |
+    REST API for DWZ (Deutsche Wertungszahl) chess rating system.
+    
+    Provides access to player ratings, club information, and tournament data
+    from the SVW (Schachverband Württemberg) chess federation databases.
+    
+    ## Player ID Format
+    Player IDs follow the format: `{VKZ}-{PersonID}` (e.g., `C0101-1014`)
+    where VKZ is the club identifier and PersonID is the unique person identifier.
+    
+    ## Club ID Format  
+    Club IDs use the VKZ format: `{C}{NNNN}` (e.g., `C0101` for "Post-SV Ulm")
+    
+    ## Tournament ID Format
+    Tournament IDs follow the format: `{Code}-{SubCode}-{Type}` (e.g., `C529-K00-HT1`)
+    
+    ## Response Formats
+    All endpoints support both JSON and CSV formats:
+    - JSON: Default format or use `Accept: application/json` header
+    - CSV: Use `Accept: text/csv` header or `?format=csv` query parameter
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@svw.info
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8080
+    description: Development server
+  - url: https://api.svw.info
+    description: Production server
+
+tags:
+  - name: players
+    description: Player and rating operations
+  - name: clubs  
+    description: Club and organization operations
+  - name: tournaments
+    description: Tournament operations
+  - name: health
+    description: System health and status
+
+paths:
+  /health:
+    get:
+      tags:
+        - health
+      summary: Health check
+      description: Check if the API is running and healthy
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: healthy
+                  version:
+                    type: string
+                    example: 1.0.0
+
+  /api/v1/players:
+    get:
+      tags:
+        - players
+      summary: Search players
+      description: Search players by name with pagination and sorting
+      parameters:
+        - name: query
+          in: query
+          description: Search query (name or part of name)
+          schema:
+            type: string
+          example: "Müller"
+        - name: limit
+          in: query
+          description: Maximum number of results (max 100)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          description: Number of results to skip
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: sort_by
+          in: query
+          description: Field to sort by
+          schema:
+            type: string
+            enum: [name, vorname, geburtsdatum]
+            default: name
+        - name: sort_order
+          in: query
+          description: Sort order
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: asc
+        - name: format
+          in: query
+          description: Response format
+          schema:
+            type: string
+            enum: [json, csv]
+            default: json
+      responses:
+        '200':
+          description: List of players
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayersResponse'
+            text/csv:
+              schema:
+                type: string
+                example: |
+                  id,name,firstname,club,club_id,birth,gender,nation,fide_id,current_dwz,dwz_index,status
+                  C0101-1014,Sick,Oliver,Post-SV Ulm,C0101,1980-05-15,male,GER,12345,2156,45,active
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/players/{id}:
+    get:
+      tags:
+        - players
+      summary: Get player by ID
+      description: Get detailed information about a specific player
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Player ID in format C0101-1014
+          schema:
+            type: string
+            pattern: '^C[0-9]{4}-[0-9]+$'
+          example: "C0101-1014"
+        - name: format
+          in: query
+          description: Response format
+          schema:
+            type: string
+            enum: [json, csv]
+            default: json
+      responses:
+        '200':
+          description: Player details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerResponse'
+            text/csv:
+              schema:
+                type: string
+        '404':
+          description: Player not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/players/{id}/rating-history:
+    get:
+      tags:
+        - players
+      summary: Get player rating history
+      description: Get DWZ rating history for a specific player
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Player ID in format C0101-1014
+          schema:
+            type: string
+            pattern: '^C[0-9]{4}-[0-9]+$'
+          example: "C0101-1014"
+        - name: format
+          in: query
+          description: Response format
+          schema:
+            type: string
+            enum: [json, csv]
+            default: json
+      responses:
+        '200':
+          description: Rating history
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Evaluation'
+            text/csv:
+              schema:
+                type: string
+
+  /api/v1/clubs:
+    get:
+      tags:
+        - clubs
+      summary: Search clubs
+      description: Search clubs by name, VKZ, or other criteria
+      parameters:
+        - name: query
+          in: query
+          description: Search query (name, short name, or VKZ)
+          schema:
+            type: string
+          example: "Ulm"
+        - name: limit
+          in: query
+          description: Maximum number of results (max 100)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          description: Number of results to skip
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: sort_by
+          in: query
+          description: Field to sort by
+          schema:
+            type: string
+            enum: [name, kurzname, member_count, average_dwz]
+            default: name
+        - name: sort_order
+          in: query
+          description: Sort order
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: asc
+        - name: filter_by
+          in: query
+          description: Filter by field
+          schema:
+            type: string
+            enum: [region, district]
+        - name: filter_value
+          in: query
+          description: Filter value
+          schema:
+            type: string
+        - name: format
+          in: query
+          description: Response format
+          schema:
+            type: string
+            enum: [json, csv]
+            default: json
+      responses:
+        '200':
+          description: List of clubs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClubsResponse'
+            text/csv:
+              schema:
+                type: string
+
+  /api/v1/clubs/{id}:
+    get:
+      tags:
+        - clubs
+      summary: Get club by ID
+      description: Get detailed information about a specific club
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Club ID (VKZ) in format C0101
+          schema:
+            type: string
+            pattern: '^C[0-9]{4}$'
+          example: "C0101"
+        - name: format
+          in: query
+          description: Response format
+          schema:
+            type: string
+            enum: [json, csv]
+            default: json
+      responses:
+        '200':
+          description: Club details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClubResponse'
+            text/csv:
+              schema:
+                type: string
+        '404':
+          description: Club not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/clubs/{id}/players:
+    get:
+      tags:
+        - players
+      summary: Get players by club
+      description: Get all players that are members of a specific club
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Club ID (VKZ) in format C0101
+          schema:
+            type: string
+            pattern: '^C[0-9]{4}$'
+          example: "C0101"
+        - name: query
+          in: query
+          description: Search query within club members
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: Maximum number of results (max 100)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          description: Number of results to skip
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: sort_by
+          in: query
+          description: Field to sort by
+          schema:
+            type: string
+            enum: [name, vorname, current_dwz]
+            default: name
+        - name: sort_order
+          in: query
+          description: Sort order
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: asc
+        - name: format
+          in: query
+          description: Response format
+          schema:
+            type: string
+            enum: [json, csv]
+            default: json
+      responses:
+        '200':
+          description: List of club players
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayersResponse'
+            text/csv:
+              schema:
+                type: string
+        '404':
+          description: Club not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/tournaments:
+    get:
+      tags:
+        - tournaments
+      summary: Search tournaments
+      description: Search tournaments by name, code, or other criteria
+      parameters:
+        - name: query
+          in: query
+          description: Search query (tournament name or code)
+          schema:
+            type: string
+          example: "Hauptturnier"
+        - name: limit
+          in: query
+          description: Maximum number of results (max 100)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          description: Number of results to skip
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: sort_by
+          in: query
+          description: Field to sort by
+          schema:
+            type: string
+            enum: [tname, finishedOn, rounds]
+            default: finishedOn
+        - name: sort_order
+          in: query
+          description: Sort order
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+        - name: filter_by
+          in: query
+          description: Filter by field
+          schema:
+            type: string
+            enum: [year, type]
+        - name: filter_value
+          in: query
+          description: Filter value
+          schema:
+            type: string
+        - name: format
+          in: query
+          description: Response format
+          schema:
+            type: string
+            enum: [json, csv]
+            default: json
+      responses:
+        '200':
+          description: List of tournaments
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentsResponse'
+            text/csv:
+              schema:
+                type: string
+
+  /api/v1/tournaments/{id}:
+    get:
+      tags:
+        - tournaments
+      summary: Get tournament by ID
+      description: Get detailed information about a specific tournament
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Tournament ID/Code in format C529-K00-HT1
+          schema:
+            type: string
+          example: "C529-K00-HT1"
+        - name: format
+          in: query
+          description: Response format
+          schema:
+            type: string
+            enum: [json, csv]
+            default: json
+      responses:
+        '200':
+          description: Tournament details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentResponse'
+            text/csv:
+              schema:
+                type: string
+        '404':
+          description: Tournament not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/tournaments/upcoming:
+    get:
+      tags:
+        - tournaments
+      summary: Get upcoming tournaments
+      description: Get tournaments that are open for registration or upcoming
+      parameters:
+        - name: limit
+          in: query
+          description: Maximum number of results
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: format
+          in: query
+          description: Response format
+          schema:
+            type: string
+            enum: [json, csv]
+            default: json
+      responses:
+        '200':
+          description: List of upcoming tournaments
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TournamentResponse'
+            text/csv:
+              schema:
+                type: string
+
+  /api/v1/tournaments/recent:
+    get:
+      tags:
+        - tournaments
+      summary: Get recent tournaments
+      description: Get recently finished tournaments
+      parameters:
+        - name: days
+          in: query
+          description: Number of days to look back
+          schema:
+            type: integer
+            minimum: 1
+            default: 30
+        - name: limit
+          in: query
+          description: Maximum number of results
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: format
+          in: query
+          description: Response format
+          schema:
+            type: string
+            enum: [json, csv]
+            default: json
+      responses:
+        '200':
+          description: List of recent tournaments
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TournamentResponse'
+            text/csv:
+              schema:
+                type: string
+
+  /api/v1/tournaments/date-range:
+    get:
+      tags:
+        - tournaments
+      summary: Get tournaments by date range
+      description: Get tournaments within a specific date range
+      parameters:
+        - name: start_date
+          in: query
+          required: true
+          description: Start date in YYYY-MM-DD format
+          schema:
+            type: string
+            format: date
+          example: "2024-01-01"
+        - name: end_date
+          in: query
+          required: true
+          description: End date in YYYY-MM-DD format
+          schema:
+            type: string
+            format: date
+          example: "2024-12-31"
+        - name: query
+          in: query
+          description: Search query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: Maximum number of results (max 100)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          description: Number of results to skip
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: format
+          in: query
+          description: Response format
+          schema:
+            type: string
+            enum: [json, csv]
+            default: json
+      responses:
+        '200':
+          description: List of tournaments in date range
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TournamentsResponse'
+            text/csv:
+              schema:
+                type: string
+        '400':
+          description: Bad request (invalid date format)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    PlayerResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Player ID in format C0101-1014
+          example: "C0101-1014"
+        name:
+          type: string
+          description: Last name
+          example: "Sick"
+        firstname:
+          type: string
+          description: First name
+          example: "Oliver"
+        club:
+          type: string
+          description: Club name
+          example: "Post-SV Ulm"
+        club_id:
+          type: string
+          description: Club ID (VKZ)
+          example: "C0101"
+        birth:
+          type: string
+          format: date
+          description: Birth date
+          example: "1980-05-15"
+        gender:
+          type: string
+          enum: [male, female, unknown]
+          description: Gender
+          example: "male"
+        nation:
+          type: string
+          description: Nation code
+          example: "GER"
+        fide_id:
+          type: integer
+          description: FIDE ID
+          example: 12345
+        current_dwz:
+          type: integer
+          description: Current DWZ rating
+          example: 2156
+        dwz_index:
+          type: integer
+          description: DWZ index (number of rated games)
+          example: 45
+        status:
+          type: string
+          enum: [active, inactive, unknown]
+          description: Player status
+          example: "active"
+
+    ClubResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Club ID (VKZ)
+          example: "C0101"
+        name:
+          type: string
+          description: Full club name
+          example: "Post-SV Ulm"
+        short_name:
+          type: string
+          description: Short club name
+          example: "Post-SV Ulm"
+        region:
+          type: string
+          description: Region name
+          example: "Württemberg"
+        district:
+          type: string
+          description: District code
+          example: "01"
+        founding_date:
+          type: string
+          format: date
+          description: Club founding date
+          example: "1950-01-01"
+        member_count:
+          type: integer
+          description: Number of active members
+          example: 45
+        average_dwz:
+          type: number
+          format: float
+          description: Average DWZ rating of active members
+          example: 1856.4
+        status:
+          type: string
+          enum: [active, inactive, unknown]
+          description: Club status
+          example: "active"
+
+    TournamentResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Tournament ID/Code
+          example: "C529-K00-HT1"
+        name:
+          type: string
+          description: Tournament name
+          example: "SUI - SEM 2025 - Hauptturnier 1 Disentis"
+        code:
+          type: string
+          description: Tournament code
+          example: "C529-K00-HT1"
+        type:
+          type: string
+          description: Tournament type
+          example: "Open"
+        organization:
+          type: string
+          description: Organizing body
+          example: "Swiss Chess Federation"
+        rounds:
+          type: integer
+          description: Number of rounds
+          example: 9
+        start_date:
+          type: string
+          format: date-time
+          description: Tournament start date
+          example: "2025-01-15T10:00:00Z"
+        end_date:
+          type: string
+          format: date-time
+          description: Tournament end date
+          example: "2025-01-22T18:00:00Z"
+        status:
+          type: string
+          enum: [open, registration_open, running, finished, cancelled]
+          description: Tournament status
+          example: "finished"
+        participant_count:
+          type: integer
+          description: Number of participants
+          example: 128
+
+    Evaluation:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Evaluation ID
+          example: 12345
+        id_master:
+          type: integer
+          description: Tournament master ID
+          example: 567
+        id_person:
+          type: integer
+          description: Person ID
+          example: 1014
+        e_coefficient:
+          type: integer
+          description: E coefficient
+          example: 30
+        we:
+          type: number
+          format: float
+          description: Expected score
+          example: 0.65
+        achievement:
+          type: integer
+          description: Achievement points
+          example: 650
+        level:
+          type: integer
+          description: Performance level
+          example: 1985
+        games:
+          type: integer
+          description: Number of games played
+          example: 7
+        unrated_games:
+          type: integer
+          description: Number of unrated games
+          example: 0
+        points:
+          type: number
+          format: float
+          description: Points scored
+          example: 4.5
+        dwz_old:
+          type: integer
+          description: Old DWZ rating
+          example: 2140
+        dwz_old_index:
+          type: integer
+          description: Old DWZ index
+          example: 42
+        dwz_new:
+          type: integer
+          description: New DWZ rating
+          example: 2156
+        dwz_new_index:
+          type: integer
+          description: New DWZ index
+          example: 45
+
+    PlayersResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlayerResponse'
+        meta:
+          $ref: '#/components/schemas/Meta'
+
+    ClubsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClubResponse'
+        meta:
+          $ref: '#/components/schemas/Meta'
+
+    TournamentsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/TournamentResponse'
+        meta:
+          $ref: '#/components/schemas/Meta'
+
+    Meta:
+      type: object
+      properties:
+        total:
+          type: integer
+          description: Total number of results
+          example: 150
+        limit:
+          type: integer
+          description: Limit per page
+          example: 20
+        offset:
+          type: integer
+          description: Current offset
+          example: 0
+        count:
+          type: integer
+          description: Number of results in current page
+          example: 20
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+          description: Error message
+          example: "Resource not found"
+        message:
+          type: string
+          description: Detailed error message
+          example: "The requested player could not be found"

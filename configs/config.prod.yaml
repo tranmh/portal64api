@@ -1,0 +1,34 @@
+server:
+  port: 8080
+  host: "0.0.0.0"
+  environment: "production"
+  enable_https: true
+  cert_file: "/etc/ssl/certs/portal64api.crt"
+  key_file: "/etc/ssl/private/portal64api.key"
+  read_timeout: 30
+  write_timeout: 30
+
+database:
+  mvdsb:
+    host: "db.svw.info"
+    port: 3306
+    username: "portal64api_prod"
+    password: "${MVDSB_PASSWORD}"
+    database: "mvdsb"
+    charset: "utf8mb4"
+  
+  portal64_bdw:
+    host: "db.svw.info"
+    port: 3306
+    username: "portal64api_prod"
+    password: "${PORTAL64_BDW_PASSWORD}"
+    database: "portal64_bdw"
+    charset: "utf8mb4"
+  
+  portal64_svw:
+    host: "db.svw.info"
+    port: 3306
+    username: "portal64api_prod"
+    password: "${PORTAL64_SVW_PASSWORD}"
+    database: "portal64_svw"
+    charset: "utf8mb4"

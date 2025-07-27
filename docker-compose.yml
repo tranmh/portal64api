@@ -1,0 +1,102 @@
+version: '3.8'
+
+services:
+  portal64api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - SERVER_PORT=8080
+      - SERVER_HOST=0.0.0.0
+      - ENVIRONMENT=development
+      - MVDSB_HOST=mysql
+      - MVDSB_PORT=3306
+      - MVDSB_USERNAME=portal64api
+      - MVDSB_PASSWORD=password123
+      - MVDSB_DATABASE=mvdsb
+      - PORTAL64_BDW_HOST=mysql
+      - PORTAL64_BDW_PORT=3306
+      - PORTAL64_BDW_USERNAME=portal64api
+      - PORTAL64_BDW_PASSWORD=password123
+      - PORTAL64_BDW_DATABASE=portal64_bdw
+      - PORTAL64_SVW_HOST=mysql
+      - PORTAL64_SVW_PORT=3306
+      - PORTAL64_SVW_USERNAME=portal64api
+      - PORTAL64_SVW_PASSWORD=password123
+      - PORTAL64_SVW_DATABASE=portal64_svw
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - portal64_network
+
+  mysql:
+    image: mysql:8.0
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootpassword123
+      - MYSQL_USER=portal64api
+      - MYSQL_PASSWORD=password123
+      - MYSQL_DATABASE=mvdsb
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$$MYSQL_ROOT_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - portal64_network
+
+  # Optional: Redis for caching (future enhancement)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - portal64_network
+    profiles:
+      - with-redis
+
+  # Optional: Nginx reverse proxy
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - portal64api
+    restart: unless-stopped
+    networks:
+      - portal64_network
+    profiles:
+      - with-nginx
+
+volumes:
+  mysql_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  portal64_network:
+    driver: bridge
