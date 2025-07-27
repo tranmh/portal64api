@@ -45,8 +45,11 @@ deps:
 	@go mod tidy
 	@echo "$(GREEN)Dependencies updated$(NC)"
 
-## test: Run all tests
+## test: Run unit and integration tests (excluding system tests)
 test: test-unit test-integration
+
+## test-all: Run all tests including system tests
+test-all: test-unit test-integration test-system
 
 ## test-unit: Run unit tests
 test-unit:
@@ -56,7 +59,15 @@ test-unit:
 ## test-integration: Run integration tests
 test-integration:
 	@echo "$(GREEN)Running integration tests...$(NC)"
-	@go test -v ./tests/integration/...
+	@go test -v ./tests/integration/ -run "^((?!TestSystemSuite).)*$$"
+
+## test-system: Run system tests against live deployment
+test-system:
+	@echo "$(GREEN)Running system tests against http://test.svw.info:8080...$(NC)"
+	@echo "$(YELLOW)Checking server health...$(NC)"
+	@curl -f http://test.svw.info:8080/health > /dev/null 2>&1 || (echo "$(RED)Error: Test server not reachable at http://test.svw.info:8080$(NC)" && exit 1)
+	@echo "$(GREEN)Server is healthy, running system tests...$(NC)"
+	@go test -v ./tests/integration/ -run TestSystemSuite -timeout=300s
 
 ## test-coverage: Run tests with coverage
 test-coverage:
