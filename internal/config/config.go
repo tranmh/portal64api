@@ -1,10 +1,12 @@
 package config
 
 import (
+	"bufio"
 	"fmt"
 	"log"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/joho/godotenv"
 )
@@ -33,7 +35,6 @@ type DatabaseConfig struct {
 	Portal64BDW DatabaseConnection `yaml:"portal64_bdw"`
 	Portal64SVW DatabaseConnection `yaml:"portal64_svw"`
 }
-
 // DatabaseConnection holds individual database connection details
 type DatabaseConnection struct {
 	Host     string `yaml:"host"`
@@ -46,12 +47,96 @@ type DatabaseConnection struct {
 
 // Load loads configuration from environment variables and .env file
 func Load() (*Config, error) {
-	// Load .env file if it exists
-	if err := godotenv.Load(); err != nil {
-		log.Println("No .env file found, using environment variables")
-	}
+	// Try to load .env file with multiple approaches
+	loadEnvFile()
+	
+	return loadConfig(), nil
+}
 
-	config := &Config{
+// loadEnvFile attempts to load .env file with fallback methods
+func loadEnvFile() {
+	envFiles := []string{
+		".env",
+		"/opt/portal64api/.env",
+	}
+	
+	var loaded bool
+	
+	// Try godotenv first
+	for _, envFile := range envFiles {
+		if _, err := os.Stat(envFile); err == nil {
+			if err := godotenv.Load(envFile); err == nil {
+				log.Printf("Successfully loaded .env file using godotenv: %s", envFile)
+				loaded = true
+				break
+			} else {
+				log.Printf("godotenv failed to load %s: %v", envFile, err)
+			}
+		}
+	}
+	
+	// If godotenv failed, try manual parsing
+	if !loaded {
+		for _, envFile := range envFiles {
+			if manualLoadEnvFile(envFile) {
+				log.Printf("Successfully loaded .env file manually: %s", envFile)
+				loaded = true
+				break
+			}
+		}
+	}
+	
+	if !loaded {
+		log.Println("No .env file found or could be loaded, using system environment variables only")
+	}
+}
+
+// manualLoadEnvFile manually parses and loads environment variables from .env file
+func manualLoadEnvFile(filename string) bool {
+	file, err := os.Open(filename)
+	if err != nil {
+		return false
+	}
+	defer file.Close()
+	
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		
+		// Skip empty lines and comments
+		if len(line) == 0 || strings.HasPrefix(line, "#") {
+			continue
+		}
+		
+		// Parse KEY=VALUE format
+		parts := strings.SplitN(line, "=", 2)
+		if len(parts) != 2 {
+			continue
+		}
+		
+		key := strings.TrimSpace(parts[0])
+		value := strings.TrimSpace(parts[1])
+		
+		// Remove quotes if present
+		if len(value) >= 2 {
+			if (strings.HasPrefix(value, "\"") && strings.HasSuffix(value, "\"")) ||
+				(strings.HasPrefix(value, "'") && strings.HasSuffix(value, "'")) {
+				value = value[1 : len(value)-1]
+			}
+		}
+		
+		// Only set if not already set in environment
+		if os.Getenv(key) == "" {
+			os.Setenv(key, value)
+		}
+	}
+	
+	return scanner.Err() == nil
+}
+
+// loadConfig creates configuration from environment variables
+func loadConfig() *Config {
+	return &Config{
 		Server: ServerConfig{
 			Port:         getIntEnv("SERVER_PORT", 8080),
 			Host:         getStringEnv("SERVER_HOST", "0.0.0.0"),
@@ -61,8 +146,7 @@ func Load() (*Config, error) {
 			KeyFile:      getStringEnv("KEY_FILE", ""),
 			ReadTimeout:  getIntEnv("READ_TIMEOUT", 10),
 			WriteTimeout: getIntEnv("WRITE_TIMEOUT", 10),
-		},
-		Database: DatabaseConfig{
+		},		Database: DatabaseConfig{
 			MVDSB: DatabaseConnection{
 				Host:     getStringEnv("MVDSB_HOST", "localhost"),
 				Port:     getIntEnv("MVDSB_PORT", 3306),
@@ -89,8 +173,6 @@ func Load() (*Config, error) {
 			},
 		},
 	}
-
-	return config, nil
 }
 
 // Helper functions to get environment variables with defaults
@@ -100,7 +182,6 @@ func getStringEnv(key, defaultValue string) string {
 	}
 	return defaultValue
 }
-
 func getIntEnv(key string, defaultValue int) int {
 	if value := os.Getenv(key); value != "" {
 		if intValue, err := strconv.Atoi(value); err == nil {
