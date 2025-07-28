@@ -87,12 +87,7 @@ func SetupRoutes(dbs *database.Databases) *gin.Engine {
 	})
 
 	// Health check endpoint
-	router.GET("/health", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"status":  "healthy",
-			"version": "1.0.0",
-		})
-	})
+	router.GET("/health", handlers.HealthCheck)
 
 	// API v1 routes
 	v1 := router.Group("/api/v1")
