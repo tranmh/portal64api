@@ -88,14 +88,15 @@ class ClubManager {
             
             // Validate club ID
             if (!Utils.validateClubID(clubId)) {
-                Utils.showError('club-lookup-results', 'Invalid club ID format. Expected format: C0101');
+                Utils.showError('club-lookup-results', 'Invalid club ID format. Expected format: alphanumeric characters (e.g., C0101, B000E, UNKNOWN)');
                 return;
             }
             
             const result = await api.getClub(clubId, format);
             
             if (format === 'json') {
-                this.displayClubDetail('club-lookup-results', result);
+                // API returns {success: true, data: {...}}
+                this.displayClubDetail('club-lookup-results', result.data || result);
             } else {
                 new CodeDisplayManager().displayResponse('club-lookup-results', result, 'Club Data (CSV)');
             }
@@ -148,7 +149,7 @@ class ClubManager {
         clubs.forEach(club => {
             html += `
                 <tr>
-                    <td><code>${Utils.sanitizeHTML(club.club_id || club.vkz || 'N/A')}</code></td>
+                    <td><code>${Utils.sanitizeHTML(club.id || 'N/A')}</code></td>
                     <td><strong>${Utils.sanitizeHTML(club.name || 'N/A')}</strong></td>
                     <td>${Utils.sanitizeHTML(club.region || 'N/A')}</td>
                     <td>${Utils.sanitizeHTML(club.district || 'N/A')}</td>
@@ -156,7 +157,7 @@ class ClubManager {
                         ${club.member_count ? `<span class="badge badge-secondary">${club.member_count}</span>` : 'N/A'}
                     </td>
                     <td>
-                        <button onclick="clubManager.viewClubDetail('${club.club_id || club.vkz}')" class="btn btn-small btn-secondary">
+                        <button onclick="clubManager.viewClubDetail('${club.id}')" class="btn btn-small btn-secondary">
                             View Details
                         </button>
                     </td>
@@ -185,44 +186,37 @@ class ClubManager {
                 <div class="form-row">
                     <div>
                         <h4>Basic Information</h4>
-                        <p><strong>Club ID (VKZ):</strong> <code>${Utils.sanitizeHTML(club.club_id || club.vkz || 'N/A')}</code></p>
+                        <p><strong>Club ID:</strong> <code>${Utils.sanitizeHTML(club.id || 'N/A')}</code></p>
                         <p><strong>Name:</strong> ${Utils.sanitizeHTML(club.name || 'N/A')}</p>
-                        <p><strong>Full Name:</strong> ${Utils.sanitizeHTML(club.full_name || 'N/A')}</p>
+                        <p><strong>Short Name:</strong> ${Utils.sanitizeHTML(club.short_name || 'N/A')}</p>
                         <p><strong>Status:</strong> ${Utils.sanitizeHTML(club.status || 'N/A')}</p>
                     </div>
                     <div>
                         <h4>Location Information</h4>
                         <p><strong>Region:</strong> ${Utils.sanitizeHTML(club.region || 'N/A')}</p>
                         <p><strong>District:</strong> ${Utils.sanitizeHTML(club.district || 'N/A')}</p>
-                        <p><strong>City:</strong> ${Utils.sanitizeHTML(club.city || 'N/A')}</p>
-                        <p><strong>Postal Code:</strong> ${Utils.sanitizeHTML(club.postal_code || 'N/A')}</p>
+                        <p><strong>Founding Date:</strong> ${Utils.formatDate(club.founding_date)}</p>
                     </div>
                 </div>
                 <div class="form-row">
                     <div>
-                        <h4>Contact Information</h4>
-                        <p><strong>Address:</strong> ${Utils.sanitizeHTML(club.address || 'N/A')}</p>
-                        <p><strong>Phone:</strong> ${Utils.sanitizeHTML(club.phone || 'N/A')}</p>
-                        <p><strong>Email:</strong> ${club.email ? `<a href="mailto:${club.email}">${Utils.sanitizeHTML(club.email)}</a>` : 'N/A'}</p>
-                        <p><strong>Website:</strong> ${club.website ? `<a href="${club.website}" target="_blank">${Utils.sanitizeHTML(club.website)}</a>` : 'N/A'}</p>
-                    </div>
-                    <div>
-                        <h4>Membership Information</h4>
+                        <h4>Statistics</h4>
                         <p><strong>Member Count:</strong> 
                             ${club.member_count ? `<span class="badge badge-primary">${club.member_count}</span>` : 'N/A'}
                         </p>
-                        <p><strong>Founded:</strong> ${Utils.sanitizeHTML(club.founded_year || 'N/A')}</p>
-                        <p><strong>Federation:</strong> ${Utils.sanitizeHTML(club.federation || 'N/A')}</p>
-                        <p><strong>Last Updated:</strong> ${Utils.formatDate(club.last_updated)}</p>
+                        <p><strong>Average DWZ:</strong> 
+                            ${club.average_dwz ? `<span class="badge badge-secondary">${Math.round(club.average_dwz)}</span>` : 'N/A'}
+                        </p>
+                    </div>
+                    <div>
+                        <h4>Actions</h4>
+                        ${club.id ? `
+                            <a href="players.html#club-players" class="btn btn-primary">
+                                View Club Players
+                            </a>
+                        ` : ''}
                     </div>
                 </div>
-                ${club.club_id || club.vkz ? `
-                    <div class="mt-3">
-                        <a href="players.html#club-players" class="btn btn-primary">
-                            View Club Players
-                        </a>
-                    </div>
-                ` : ''}
             </div>
         `;
 
@@ -240,7 +234,7 @@ class ClubManager {
             
             const result = await api.getClub(clubId);
             modalBody.innerHTML = '<div id="club-detail-content"></div>';
-            this.displayClubDetail('club-detail-content', result);
+            this.displayClubDetail('club-detail-content', result.data || result);
             
         } catch (error) {
             const modalBody = document.querySelector('#club-detail-modal .modal-body');

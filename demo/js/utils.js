@@ -75,22 +75,25 @@ class Utils {
         });
     }
 
-    // Validate player ID format (C0101-1014)
+    // Validate player ID format (C0101-1014, UNKNOWN-12345, D300H-1014, etc.)
     static validatePlayerID(id) {
-        const playerRegex = /^C\d{4}-\d{4}$/;
+        // Allow format: <CLUBID>-<PERSONID> where CLUBID can be alphanumeric and PERSONID is numeric
+        const playerRegex = /^[A-Z0-9]+-\d+$/;
         return playerRegex.test(id);
     }
 
-    // Validate club ID format (C0101)
+    // Validate club ID format (C0101, UNKNOWN, D300H, etc.)
     static validateClubID(id) {
-        const clubRegex = /^C\d{4}$/;
+        // Allow alphanumeric club IDs 
+        const clubRegex = /^[A-Z0-9]+$/;
         return clubRegex.test(id);
     }
 
-    // Validate tournament ID format (C529-K00-HT1)
+    // Validate tournament ID format (C529-K00-HT1, C339-400-442, etc.)
     static validateTournamentID(id) {
-        const tournamentRegex = /^C\d{3}-[A-Z0-9]{3}-[A-Z0-9]{3}$/;
-        return tournamentRegex.test(id);
+        // Allow various tournament ID formats: alphanumeric with dashes
+        const tournamentRegex = /^[A-Z0-9]+-[A-Z0-9]+-[A-Z0-9]+$/;
+        return tournamentRegex.test(id) || /^[A-Z0-9]+-\d+-\d+$/.test(id);
     }
 
     // Create pagination info text

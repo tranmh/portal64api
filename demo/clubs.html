@@ -161,8 +161,8 @@
                                 <div class="form-group">
                                     <label class="form-label" for="lookup-club-id">Club ID (VKZ) *</label>
                                     <input type="text" id="lookup-club-id" name="club_id" class="form-input" 
-                                           placeholder="e.g., C0101" required>
-                                    <div id="lookup-club-id-error" class="form-error">Please enter a valid club ID (format: C####)</div>
+                                           placeholder="e.g., C0101, B000E, UNKNOWN" required>
+                                    <div id="lookup-club-id-error" class="form-error">Please enter a valid club ID (alphanumeric format)</div>
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label" for="lookup-format">Response format</label>
@@ -180,7 +180,7 @@
 
                         <div class="alert alert-info">
                             <h4>Club ID Format</h4>
-                            <p>Club IDs (VKZ) follow the format <code>C####</code> where # represents digits. For example: <code>C0101</code></p>
+                            <p>Club IDs can be in various formats: <code>C####</code> (traditional German), <code>B000E</code>, or other alphanumeric codes. Examples: <code>C0101</code>, <code>B000E</code>, <code>F2201</code></p>
                             <p>VKZ stands for "Vereins-Kennziffer" (Club Identification Number) in the German chess federation system.</p>
                         </div>
 

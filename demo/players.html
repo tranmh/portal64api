@@ -114,8 +114,8 @@
                                 <div class="form-group">
                                     <label class="form-label" for="lookup-player-id">Player ID *</label>
                                     <input type="text" id="lookup-player-id" name="player_id" class="form-input" 
-                                           placeholder="e.g., C0101-1014" required>
-                                    <div id="lookup-player-id-error" class="form-error">Please enter a valid player ID (format: C0101-1014)</div>
+                                           placeholder="e.g., UNKNOWN-10799083 or C0101-1014" required>
+                                    <div id="lookup-player-id-error" class="form-error">Please enter a valid player ID (format: CLUBID-PERSONID)</div>
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label" for="lookup-format">Response format</label>
@@ -133,7 +133,7 @@
 
                         <div class="alert alert-info">
                             <h4>Player ID Format</h4>
-                            <p>Player IDs follow the format <code>C####-####</code> where # represents digits. For example: <code>C0101-1014</code></p>
+                            <p>Player IDs follow the format <code>CLUBID-PERSONID</code> where CLUBID is the club identifier and PERSONID is a number. Examples: <code>UNKNOWN-10799083</code>, <code>C0101-1014</code>, <code>D300H-1234</code></p>
                         </div>
 
                         <div id="player-lookup-results" class="results">
@@ -155,8 +155,8 @@
                                 <div class="form-group">
                                     <label class="form-label" for="history-player-id">Player ID *</label>
                                     <input type="text" id="history-player-id" name="player_id" class="form-input" 
-                                           placeholder="e.g., C0101-1014" required>
-                                    <div id="history-player-id-error" class="form-error">Please enter a valid player ID (format: C0101-1014)</div>
+                                           placeholder="e.g., UNKNOWN-10799083 or C0101-1014" required>
+                                    <div id="history-player-id-error" class="form-error">Please enter a valid player ID (format: CLUBID-PERSONID)</div>
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label" for="history-format">Response format</label>

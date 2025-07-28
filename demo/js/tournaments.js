@@ -161,14 +161,15 @@ class TournamentManager {
             
             // Validate tournament ID
             if (!Utils.validateTournamentID(tournamentId)) {
-                Utils.showError('tournament-lookup-results', 'Invalid tournament ID format. Expected format: C529-K00-HT1');
+                Utils.showError('tournament-lookup-results', 'Invalid tournament ID format. Expected format: C529-K00-HT1 or C339-400-442');
                 return;
             }
             
             const result = await api.getTournament(tournamentId, format);
             
             if (format === 'json') {
-                this.displayTournamentDetail('tournament-lookup-results', result);
+                // API returns {success: true, data: {...}}
+                this.displayTournamentDetail('tournament-lookup-results', result.data || result);
             } else {
                 new CodeDisplayManager().displayResponse('tournament-lookup-results', result, 'Tournament Data (CSV)');
             }
@@ -221,13 +222,13 @@ class TournamentManager {
         tournaments.forEach(tournament => {
             html += `
                 <tr>
-                    <td><code>${Utils.sanitizeHTML(tournament.tournament_id || tournament.code || 'N/A')}</code></td>
+                    <td><code>${Utils.sanitizeHTML(tournament.id || tournament.code || 'N/A')}</code></td>
                     <td><strong>${Utils.sanitizeHTML(tournament.name || 'N/A')}</strong></td>
-                    <td>${Utils.formatDate(tournament.start_date || tournament.startedOn)}</td>
-                    <td>${Utils.formatDate(tournament.end_date || tournament.finishedOn)}</td>
-                    <td>${Utils.sanitizeHTML(tournament.organizer || tournament.club_name || 'N/A')}</td>
+                    <td>${Utils.formatDate(tournament.start_date)}</td>
+                    <td>${Utils.formatDate(tournament.end_date)}</td>
+                    <td>${Utils.sanitizeHTML(tournament.organization || 'N/A')}</td>
                     <td>
-                        <button onclick="tournamentManager.viewTournamentDetail('${tournament.tournament_id || tournament.code}')" class="btn btn-small btn-secondary">
+                        <button onclick="tournamentManager.viewTournamentDetail('${tournament.id || tournament.code}')" class="btn btn-small btn-secondary">
                             View Details
                         </button>
                     </td>
@@ -321,7 +322,7 @@ class TournamentManager {
             
             const result = await api.getTournament(tournamentId);
             modalBody.innerHTML = '<div id="tournament-detail-content"></div>';
-            this.displayTournamentDetail('tournament-detail-content', result);
+            this.displayTournamentDetail('tournament-detail-content', result.data || result);
             
         } catch (error) {
             const modalBody = document.querySelector('#tournament-detail-modal .modal-body');

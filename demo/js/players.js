@@ -75,14 +75,15 @@ class PlayerManager {
             
             // Validate player ID
             if (!Utils.validatePlayerID(playerId)) {
-                Utils.showError('player-lookup-results', 'Invalid player ID format. Expected format: C0101-1014');
+                Utils.showError('player-lookup-results', 'Invalid player ID format. Expected format: CLUBID-PERSONID (e.g., C0101-1014, UNKNOWN-10799083)');
                 return;
             }
             
             const result = await api.getPlayer(playerId, format);
             
             if (format === 'json') {
-                this.displayPlayerDetail('player-lookup-results', result);
+                // API returns {success: true, data: {...}}
+                this.displayPlayerDetail('player-lookup-results', result.data || result);
             } else {
                 new CodeDisplayManager().displayResponse('player-lookup-results', result, 'Player Data (CSV)');
             }
@@ -103,14 +104,15 @@ class PlayerManager {
             
             // Validate player ID
             if (!Utils.validatePlayerID(playerId)) {
-                Utils.showError('rating-history-results', 'Invalid player ID format. Expected format: C0101-1014');
+                Utils.showError('rating-history-results', 'Invalid player ID format. Expected format: CLUBID-PERSONID (e.g., C0101-1014, UNKNOWN-10799083)');
                 return;
             }
             
             const result = await api.getPlayerRatingHistory(playerId, format);
             
             if (format === 'json') {
-                this.displayRatingHistory('rating-history-results', result);
+                // API returns {success: true, data: [...]}
+                this.displayRatingHistory('rating-history-results', result.data || result);
             } else {
                 new CodeDisplayManager().displayResponse('rating-history-results', result, 'Rating History (CSV)');
             }
@@ -183,17 +185,26 @@ class PlayerManager {
         `;
 
         players.forEach(player => {
+            // Extract birth year from birth date
+            let birthYear = 'N/A';
+            if (player.birth) {
+                const birthDate = new Date(player.birth);
+                if (!isNaN(birthDate.getTime())) {
+                    birthYear = birthDate.getFullYear().toString();
+                }
+            }
+
             html += `
                 <tr>
-                    <td><code>${Utils.sanitizeHTML(player.player_id || 'N/A')}</code></td>
+                    <td><code>${Utils.sanitizeHTML(player.id || 'N/A')}</code></td>
                     <td><strong>${Utils.sanitizeHTML(player.name || 'N/A')}</strong></td>
-                    <td>${Utils.sanitizeHTML(player.club_name || 'N/A')}</td>
+                    <td>${Utils.sanitizeHTML(player.club || 'N/A')}</td>
                     <td>
                         ${player.current_dwz ? `<span class="badge badge-primary">${player.current_dwz}</span>` : 'N/A'}
                     </td>
-                    <td>${Utils.sanitizeHTML(player.birth_year || 'N/A')}</td>
+                    <td>${birthYear}</td>
                     <td>
-                        <button onclick="playerManager.viewPlayerDetail('${player.player_id}')" class="btn btn-small btn-secondary">
+                        <button onclick="playerManager.viewPlayerDetail('${player.id}')" class="btn btn-small btn-secondary">
                             View Details
                         </button>
                     </td>
@@ -214,6 +225,15 @@ class PlayerManager {
         const container = document.getElementById(containerId);
         if (!container) return;
 
+        // Extract birth year from birth date
+        let birthYear = 'N/A';
+        if (player.birth) {
+            const birthDate = new Date(player.birth);
+            if (!isNaN(birthDate.getTime())) {
+                birthYear = birthDate.getFullYear().toString();
+            }
+        }
+
         const html = `
             <div class="card">
                 <div class="card-header">
@@ -222,16 +242,18 @@ class PlayerManager {
                 <div class="form-row">
                     <div>
                         <h4>Basic Information</h4>
-                        <p><strong>Player ID:</strong> <code>${Utils.sanitizeHTML(player.player_id || 'N/A')}</code></p>
+                        <p><strong>Player ID:</strong> <code>${Utils.sanitizeHTML(player.id || 'N/A')}</code></p>
                         <p><strong>Name:</strong> ${Utils.sanitizeHTML(player.name || 'N/A')}</p>
-                        <p><strong>Birth Year:</strong> ${Utils.sanitizeHTML(player.birth_year || 'N/A')}</p>
+                        <p><strong>First Name:</strong> ${Utils.sanitizeHTML(player.firstname || 'N/A')}</p>
+                        <p><strong>Birth Year:</strong> ${birthYear}</p>
                         <p><strong>Gender:</strong> ${Utils.sanitizeHTML(player.gender || 'N/A')}</p>
+                        <p><strong>Nation:</strong> ${Utils.sanitizeHTML(player.nation || 'N/A')}</p>
                     </div>
                     <div>
                         <h4>Club Information</h4>
                         <p><strong>Club ID:</strong> <code>${Utils.sanitizeHTML(player.club_id || 'N/A')}</code></p>
-                        <p><strong>Club Name:</strong> ${Utils.sanitizeHTML(player.club_name || 'N/A')}</p>
-                        <p><strong>Membership Status:</strong> ${Utils.sanitizeHTML(player.membership_status || 'N/A')}</p>
+                        <p><strong>Club Name:</strong> ${Utils.sanitizeHTML(player.club || 'N/A')}</p>
+                        <p><strong>Status:</strong> ${Utils.sanitizeHTML(player.status || 'N/A')}</p>
                     </div>
                 </div>
                 <div class="form-row">
@@ -240,14 +262,12 @@ class PlayerManager {
                         <p><strong>Current DWZ:</strong> 
                             ${player.current_dwz ? `<span class="badge badge-primary">${player.current_dwz}</span>` : 'N/A'}
                         </p>
-                        <p><strong>Evaluation Date:</strong> ${Utils.formatDate(player.evaluation_date)}</p>
-                        <p><strong>Games Played:</strong> ${Utils.sanitizeHTML(player.games_played || 'N/A')}</p>
+                        <p><strong>DWZ Index:</strong> ${Utils.sanitizeHTML(player.dwz_index || 'N/A')}</p>
                     </div>
                     <div>
                         <h4>Additional Information</h4>
                         <p><strong>FIDE ID:</strong> ${Utils.sanitizeHTML(player.fide_id || 'N/A')}</p>
-                        <p><strong>Title:</strong> ${Utils.sanitizeHTML(player.title || 'N/A')}</p>
-                        <p><strong>Status:</strong> ${Utils.sanitizeHTML(player.status || 'N/A')}</p>
+                        <p><strong>Birth Date:</strong> ${Utils.formatDate(player.birth)}</p>
                     </div>
                 </div>
             </div>
@@ -322,9 +342,9 @@ class PlayerManager {
             new ModalManager().openModal('player-detail-modal');
             
             const result = await api.getPlayer(playerId);
-            this.displayPlayerDetail('player-detail-content', result);
+            this.displayPlayerDetail('player-detail-content', result.data || result);
             modalBody.innerHTML = '<div id="player-detail-content"></div>';
-            this.displayPlayerDetail('player-detail-content', result);
+            this.displayPlayerDetail('player-detail-content', result.data || result);
             
         } catch (error) {
             const modalBody = document.querySelector('#player-detail-modal .modal-body');
