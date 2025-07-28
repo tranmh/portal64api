@@ -17,9 +17,10 @@ func TestParseSearchParams(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	tests := []struct {
-		name     string
-		query    string
-		expected models.SearchRequest
+		name          string
+		query         string
+		expected      models.SearchRequest
+		expectError   bool
 	}{
 		{
 			name:  "Default parameters",
@@ -31,9 +32,10 @@ func TestParseSearchParams(t *testing.T) {
 				SortBy:    "name",
 				SortOrder: "asc",
 			},
+			expectError: false,
 		},
 		{
-			name:  "Custom parameters",
+			name:  "Custom parameters", 
 			query: "query=test&limit=50&offset=10&sort_by=dwz&sort_order=desc",
 			expected: models.SearchRequest{
 				Query:     "test",
@@ -42,28 +44,19 @@ func TestParseSearchParams(t *testing.T) {
 				SortBy:    "dwz",
 				SortOrder: "desc",
 			},
+			expectError: false,
 		},
 		{
-			name:  "Limit too high",
-			query: "limit=200",
-			expected: models.SearchRequest{
-				Query:     "",
-				Limit:     100, // Should be capped at 100
-				Offset:    0,
-				SortBy:    "name",
-				SortOrder: "asc",
-			},
+			name:        "Limit too high",
+			query:       "limit=200",
+			expected:    models.SearchRequest{}, // Ignored when error expected
+			expectError: true,
 		},
 		{
-			name:  "Invalid limit",
-			query: "limit=invalid",
-			expected: models.SearchRequest{
-				Query:     "",
-				Limit:     20, // Should use default
-				Offset:    0,
-				SortBy:    "name",
-				SortOrder: "asc",
-			},
+			name:        "Invalid limit",
+			query:       "limit=invalid",
+			expected:    models.SearchRequest{}, // Ignored when error expected
+			expectError: true,
 		},
 	}
 
@@ -82,14 +75,19 @@ func TestParseSearchParams(t *testing.T) {
 			c.Request = req
 
 			// Test
-			result := utils.ParseSearchParams(c)
+			result, err := utils.ParseSearchParams(c)
 
 			// Assert
-			assert.Equal(t, tt.expected.Query, result.Query)
-			assert.Equal(t, tt.expected.Limit, result.Limit)
-			assert.Equal(t, tt.expected.Offset, result.Offset)
-			assert.Equal(t, tt.expected.SortBy, result.SortBy)
-			assert.Equal(t, tt.expected.SortOrder, result.SortOrder)
+			if tt.expectError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expected.Query, result.Query)
+				assert.Equal(t, tt.expected.Limit, result.Limit)
+				assert.Equal(t, tt.expected.Offset, result.Offset)
+				assert.Equal(t, tt.expected.SortBy, result.SortBy)
+				assert.Equal(t, tt.expected.SortOrder, result.SortOrder)
+			}
 		})
 	}
 }
