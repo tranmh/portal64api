@@ -26,15 +26,23 @@ func (s *TournamentService) GetTournamentByID(tournamentID string) (*models.Tour
 		return nil, errors.NewNotFoundError("Tournament")
 	}
 
+	// Get participant count
+	participantCount, err := s.tournamentRepo.GetParticipantCount(tournament.ID)
+	if err != nil {
+		// Log error but don't fail the entire request
+		participantCount = 0
+	}
+
 	response := &models.TournamentResponse{
-		ID:           tournament.TCode,
-		Name:         tournament.TName,
-		Code:         tournament.TCode,
-		Type:         tournament.Type,
-		Rounds:       tournament.Rounds,
-		StartDate:    tournament.FinishedOn, // Adjust based on actual schema
-		EndDate:      tournament.FinishedOn,
-		Status:       getTournamentStatus(tournament),
+		ID:               tournament.TCode,
+		Name:             tournament.TName,
+		Code:             tournament.TCode,
+		Type:             tournament.Type,
+		Rounds:           tournament.Rounds,
+		StartDate:        tournament.FinishedOn, // Adjust based on actual schema
+		EndDate:          tournament.FinishedOn,
+		Status:           getTournamentStatus(tournament),
+		ParticipantCount: participantCount,
 	}
 
 	return response, nil
@@ -49,15 +57,23 @@ func (s *TournamentService) SearchTournaments(req models.SearchRequest) ([]model
 
 	responses := make([]models.TournamentResponse, len(tournaments))
 	for i, tournament := range tournaments {
+		// Get participant count
+		participantCount, err := s.tournamentRepo.GetParticipantCount(tournament.ID)
+		if err != nil {
+			// Log error but don't fail the entire request
+			participantCount = 0
+		}
+
 		responses[i] = models.TournamentResponse{
-			ID:        tournament.TCode,
-			Name:      tournament.TName,
-			Code:      tournament.TCode,
-			Type:      tournament.Type,
-			Rounds:    tournament.Rounds,
-			StartDate: tournament.FinishedOn,
-			EndDate:   tournament.FinishedOn,
-			Status:    getTournamentStatus(&tournament),
+			ID:               tournament.TCode,
+			Name:             tournament.TName,
+			Code:             tournament.TCode,
+			Type:             tournament.Type,
+			Rounds:           tournament.Rounds,
+			StartDate:        tournament.FinishedOn,
+			EndDate:          tournament.FinishedOn,
+			Status:           getTournamentStatus(&tournament),
+			ParticipantCount: participantCount,
 		}
 	}
 
@@ -107,15 +123,23 @@ func (s *TournamentService) GetTournamentsByDateRange(startDate, endDate time.Ti
 
 	responses := make([]models.TournamentResponse, len(tournaments))
 	for i, tournament := range tournaments {
+		// Get participant count
+		participantCount, err := s.tournamentRepo.GetParticipantCount(tournament.ID)
+		if err != nil {
+			// Log error but don't fail the entire request
+			participantCount = 0
+		}
+
 		responses[i] = models.TournamentResponse{
-			ID:        tournament.TCode,
-			Name:      tournament.TName,
-			Code:      tournament.TCode,
-			Type:      tournament.Type,
-			Rounds:    tournament.Rounds,
-			StartDate: tournament.FinishedOn,
-			EndDate:   tournament.FinishedOn,
-			Status:    getTournamentStatus(&tournament),
+			ID:               tournament.TCode,
+			Name:             tournament.TName,
+			Code:             tournament.TCode,
+			Type:             tournament.Type,
+			Rounds:           tournament.Rounds,
+			StartDate:        tournament.FinishedOn,
+			EndDate:          tournament.FinishedOn,
+			Status:           getTournamentStatus(&tournament),
+			ParticipantCount: participantCount,
 		}
 	}
 
@@ -145,15 +169,23 @@ func (s *TournamentService) GetRecentTournaments(days, limit int) ([]models.Tour
 
 	responses := make([]models.TournamentResponse, len(tournaments))
 	for i, tournament := range tournaments {
+		// Get participant count
+		participantCount, err := s.tournamentRepo.GetParticipantCount(tournament.ID)
+		if err != nil {
+			// Log error but don't fail the entire request
+			participantCount = 0
+		}
+
 		responses[i] = models.TournamentResponse{
-			ID:        tournament.TCode,
-			Name:      tournament.TName,
-			Code:      tournament.TCode,
-			Type:      tournament.Type,
-			Rounds:    tournament.Rounds,
-			StartDate: tournament.FinishedOn,
-			EndDate:   tournament.FinishedOn,
-			Status:    getTournamentStatus(&tournament),
+			ID:               tournament.TCode,
+			Name:             tournament.TName,
+			Code:             tournament.TCode,
+			Type:             tournament.Type,
+			Rounds:           tournament.Rounds,
+			StartDate:        tournament.FinishedOn,
+			EndDate:          tournament.FinishedOn,
+			Status:           getTournamentStatus(&tournament),
+			ParticipantCount: participantCount,
 		}
 	}
 

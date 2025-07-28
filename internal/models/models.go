@@ -121,6 +121,22 @@ func (Evaluation) TableName() string {
 	return "evaluation"
 }
 
+// Participant represents a tournament participant from the portal64_bdw database
+type Participant struct {
+	ID           uint `json:"id" gorm:"primaryKey;column:id"`
+	IDTournament uint `json:"id_tournament" gorm:"column:idTournament"`
+	IDPerson     uint `json:"id_person" gorm:"column:idPerson"`
+	No           int  `json:"no" gorm:"column:no"`
+	IDMembership uint `json:"id_membership" gorm:"column:idMembership"`
+	UseRating    *int `json:"use_rating" gorm:"column:useRating"`
+	UseRatingIndex *int `json:"use_rating_index" gorm:"column:useRatingIndex"`
+}
+
+// TableName returns the table name for Participant
+func (Participant) TableName() string {
+	return "participant"
+}
+
 // Turnier represents a tournament from the portal64_svw database
 type Turnier struct {
 	TID                int        `json:"tid" gorm:"primaryKey;column:TID"`

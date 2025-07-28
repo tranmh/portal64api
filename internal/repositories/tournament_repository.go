@@ -123,3 +123,11 @@ func (r *TournamentRepository) GetRecentTournaments(days int, limit int) ([]mode
 	
 	return tournaments, err
 }
+
+// GetParticipantCount gets the number of participants for a tournament
+func (r *TournamentRepository) GetParticipantCount(tournamentID uint) (int, error) {
+	var count int64
+	err := r.dbs.Portal64BDW.Model(&models.Participant{}).
+		Where("idTournament = ?", tournamentID).Count(&count).Error
+	return int(count), err
+}
