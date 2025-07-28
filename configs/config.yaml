@@ -12,23 +12,23 @@ database:
   mvdsb:
     host: "localhost"
     port: 3306
-    username: "portal64api"
-    password: "password"
+    username: "root"
+    password: ""
     database: "mvdsb"
     charset: "utf8mb4"
   
   portal64_bdw:
     host: "localhost"
     port: 3306
-    username: "portal64api"
-    password: "password"
+    username: "root"
+    password: ""
     database: "portal64_bdw"
     charset: "utf8mb4"
   
   portal64_svw:
     host: "localhost"
     port: 3306
-    username: "portal64api"
-    password: "password"
+    username: "root"
+    password: ""
     database: "portal64_svw"
     charset: "utf8mb4"

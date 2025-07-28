@@ -90,6 +90,7 @@ type Tournament struct {
 	Assessor2      uint      `json:"assessor2" gorm:"column:assessor2"`
 	LockedOn       *time.Time `json:"locked_on" gorm:"column:lockedOn"`
 	LockedBy       uint      `json:"locked_by" gorm:"column:lockedBy"`
+	IDMaster       uint      `json:"id_master" gorm:"column:idMaster"`
 	Import         string    `json:"import" gorm:"column:import"`
 }
 
@@ -209,6 +210,135 @@ type TournamentResponse struct {
 	ParticipantCount int       `json:"participant_count"`
 }
 
+// Enhanced TournamentResponse with comprehensive tournament data
+type EnhancedTournamentResponse struct {
+	// Basic tournament info
+	ID              string     `json:"id"`              // Format: C529-K00-HT1
+	Name            string     `json:"name"`
+	Code            string     `json:"code"`
+	Type            string     `json:"type"`
+	Organization    *OrganizationInfo `json:"organization"`
+	Rounds          int        `json:"rounds"`
+	StartDate       *time.Time `json:"start_date"`
+	EndDate         *time.Time `json:"end_date"`
+	FinishedOn      *time.Time `json:"finished_on"`
+	ComputedOn      *time.Time `json:"computed_on"`
+	RecomputedOn    *time.Time `json:"recomputed_on"`
+	Status          string     `json:"status"`
+	Note            string     `json:"note,omitempty"`
+	
+	// Assessors/Officials
+	Assessors       []PersonInfo `json:"assessors,omitempty"`
+	
+	// Participants
+	Participants    []ParticipantInfo `json:"participants"`
+	ParticipantCount int             `json:"participant_count"`
+	
+	// Games and Results  
+	Games           []RoundInfo `json:"games,omitempty"`
+	
+	// Evaluation data (if computed)
+	Evaluations     []EvaluationInfo `json:"evaluations,omitempty"`
+}
+
+// OrganizationInfo represents tournament organizing club/federation
+type OrganizationInfo struct {
+	ID          string `json:"id"`          // Format: C0101
+	Name        string `json:"name"`
+	ShortName   string `json:"short_name"`
+	VKZ         string `json:"vkz"`         // Vereinskennzeichen
+	Region      string `json:"region"`
+	District    string `json:"district"`
+}
+
+// PersonInfo represents a person (assessor, player, etc.)
+type PersonInfo struct {
+	ID        uint   `json:"id"`
+	Name      string `json:"name"`
+	Firstname string `json:"firstname"`
+	FullName  string `json:"full_name"`
+}
+
+// ParticipantInfo represents a tournament participant with full details
+type ParticipantInfo struct {
+	ID            uint         `json:"id"`
+	No            int          `json:"no"`           // Starting number
+	PersonID      uint         `json:"person_id"`
+	Name          string       `json:"name"`
+	Firstname     string       `json:"firstname"`
+	FullName      string       `json:"full_name"`
+	DateOfBirth   *time.Time   `json:"date_of_birth"`
+	Gender        string       `json:"gender"`
+	Nation        string       `json:"nation"`
+	FideID        uint         `json:"fide_id"`
+	Club          *ClubInfo    `json:"club"`
+	Rating        *RatingInfo  `json:"rating"`
+	State         int          `json:"state"`       // 0=blocked, 1=unknown, 2=ok
+}
+
+// ClubInfo represents club membership information
+type ClubInfo struct {
+	ID               uint   `json:"id"`
+	Name             string `json:"name"`
+	VKZ              string `json:"vkz"`
+	MembershipNumber int    `json:"membership_number"`
+}
+
+// RatingInfo represents rating information for a participant
+type RatingInfo struct {
+	DWZOld       *int `json:"dwz_old"`
+	DWZOldIndex  *int `json:"dwz_old_index"`
+	DWZNew       *int `json:"dwz_new"`
+	DWZNewIndex  *int `json:"dwz_new_index"`
+	ELO          *int `json:"elo"`
+	UseRating    *int `json:"use_rating"`
+	UseRatingIndex *int `json:"use_rating_index"`
+}
+
+// RoundInfo represents a tournament round with games
+type RoundInfo struct {
+	Round       int        `json:"round"`
+	Appointment string     `json:"appointment"`
+	Games       []GameInfo `json:"games"`
+}
+
+// GameInfo represents a single game
+type GameInfo struct {
+	ID          uint       `json:"id"`
+	Board       int        `json:"board"`
+	White       PlayerRef  `json:"white"`
+	Black       PlayerRef  `json:"black"`
+	Result      string     `json:"result"`
+	WhitePoints float64    `json:"white_points"`
+	BlackPoints float64    `json:"black_points"`
+}
+
+// PlayerRef represents a player reference in a game
+type PlayerRef struct {
+	ID       uint   `json:"id"`
+	No       int    `json:"no"`
+	Name     string `json:"name"`
+	FullName string `json:"full_name"`
+}
+
+// EvaluationInfo represents DWZ evaluation results
+type EvaluationInfo struct {
+	ID           uint    `json:"id"`
+	PersonID     uint    `json:"person_id"`
+	PlayerName   string  `json:"player_name"`
+	ECoefficient int     `json:"e_coefficient"`
+	We           float64 `json:"we"`
+	Achievement  int     `json:"achievement"`
+	Level        int     `json:"level"`
+	Games        int     `json:"games"`
+	UnratedGames int     `json:"unrated_games"`
+	Points       float64 `json:"points"`
+	DWZOld       int     `json:"dwz_old"`
+	DWZOldIndex  int     `json:"dwz_old_index"`
+	DWZNew       int     `json:"dwz_new"`
+	DWZNewIndex  int     `json:"dwz_new_index"`
+}
+
 // SearchRequest represents search parameters
 type SearchRequest struct {
 	Query        string `json:"query" form:"query"`
@@ -235,4 +365,64 @@ type Meta struct {
 	Limit  int `json:"limit"`
 	Offset int `json:"offset"`
 	Count  int `json:"count"`
+}
+
+// Database models for additional tournament data
+
+// Game represents a game from the database
+type Game struct {
+	ID                      uint      `json:"id" gorm:"primaryKey;column:id"`
+	IDTournament           uint      `json:"id_tournament" gorm:"column:idTournament"`
+	IDAppointment          uint      `json:"id_appointment" gorm:"column:idAppointment"`
+	IDResultsDisplayRating uint      `json:"id_results_display_rating" gorm:"column:idResultsDisplayRating"`
+	Board                  int       `json:"board" gorm:"column:board"`
+}
+
+// TableName returns the table name for Game
+func (Game) TableName() string {
+	return "game"
+}
+
+// Result represents a game result from the database
+type Result struct {
+	ID           uint    `json:"id" gorm:"primaryKey;column:id"`
+	IDPerson     uint    `json:"id_person" gorm:"column:idPerson"`
+	IDTournament uint    `json:"id_tournament" gorm:"column:idTournament"`
+	IDGame       uint    `json:"id_game" gorm:"column:idGame"`
+	Color        string  `json:"color" gorm:"column:color"`
+	Points       float64 `json:"points" gorm:"column:points"`
+	Rating       int     `json:"rating" gorm:"column:rating"`
+}
+
+// TableName returns the table name for Result
+func (Result) TableName() string {
+	return "results"
+}
+
+// Appointment represents a tournament appointment/round from the database
+type Appointment struct {
+	ID           uint   `json:"id" gorm:"primaryKey;column:id"`
+	IDTournament uint   `json:"id_tournament" gorm:"column:idTournament"`
+	Round        int    `json:"round" gorm:"column:round"`
+	Appointment  string `json:"appointment" gorm:"column:appointment"`
+}
+
+// TableName returns the table name for Appointment
+func (Appointment) TableName() string {
+	return "appointment"
+}
+
+// ResultsDisplay represents result display information
+type ResultsDisplay struct {
+	ID          uint    `json:"id" gorm:"primaryKey;column:id"`
+	Display     string  `json:"display" gorm:"column:display"`
+	PointsWhite float64 `json:"points_white" gorm:"column:pointsWhite"`
+	PointsBlack float64 `json:"points_black" gorm:"column:pointsBlack"`
+	RatingWhite int     `json:"rating_white" gorm:"column:ratingWhite"`
+	RatingBlack int     `json:"rating_black" gorm:"column:ratingBlack"`
+}
+
+// TableName returns the table name for ResultsDisplay
+func (ResultsDisplay) TableName() string {
+	return "resultsDisplay"
 }

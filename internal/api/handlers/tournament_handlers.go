@@ -24,13 +24,13 @@ func NewTournamentHandler(tournamentService *services.TournamentService) *Tourna
 
 // GetTournament godoc
 // @Summary Get tournament by ID
-// @Description Get a tournament by its ID/code (format: C529-K00-HT1)
+// @Description Get a tournament by its ID/code (format: C529-K00-HT1) with comprehensive details
 // @Tags tournaments
 // @Accept json
 // @Produce json,text/csv
 // @Param id path string true "Tournament ID (format: C529-K00-HT1)"
 // @Param format query string false "Response format (json or csv)" Enums(json,csv)
-// @Success 200 {object} models.TournamentResponse
+// @Success 200 {object} models.EnhancedTournamentResponse
 // @Failure 400 {object} models.Response
 // @Failure 404 {object} models.Response
 // @Router /api/v1/tournaments/{id} [get]

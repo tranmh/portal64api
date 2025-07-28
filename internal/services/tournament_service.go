@@ -20,7 +20,18 @@ func NewTournamentService(tournamentRepo *repositories.TournamentRepository) *To
 }
 
 // GetTournamentByID gets a tournament by its code/ID
-func (s *TournamentService) GetTournamentByID(tournamentID string) (*models.TournamentResponse, error) {
+func (s *TournamentService) GetTournamentByID(tournamentID string) (*models.EnhancedTournamentResponse, error) {
+	// Get comprehensive tournament data
+	tournament, err := s.tournamentRepo.GetEnhancedTournamentData(tournamentID)
+	if err != nil {
+		return nil, errors.NewNotFoundError("Tournament")
+	}
+
+	return tournament, nil
+}
+
+// GetBasicTournamentByID gets basic tournament info (for backward compatibility)
+func (s *TournamentService) GetBasicTournamentByID(tournamentID string) (*models.TournamentResponse, error) {
 	tournament, err := s.tournamentRepo.GetTournamentByCode(tournamentID)
 	if err != nil {
 		return nil, errors.NewNotFoundError("Tournament")
