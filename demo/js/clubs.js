@@ -44,8 +44,9 @@ class ClubManager {
             const params = Utils.getFormData(form);
             
             const result = await api.searchClubs(params);
-            this.currentResults = result.data || result;
-            this.currentMeta = result.meta;
+            // Fix: API returns {success: true, data: {data: [...], meta: {...}}}
+            this.currentResults = result.data?.data || result.data || result;
+            this.currentMeta = result.data?.meta || result.meta;
             
             this.displayClubResults('club-search-results', this.currentResults, this.currentMeta);
             
@@ -65,6 +66,7 @@ class ClubManager {
             const result = await api.getAllClubs(format);
             
             if (format === 'json') {
+                // Fix: API returns {success: true, data: [...]} for getAllClubs
                 this.displayClubResults('all-clubs-results', result.data || result);
             } else {
                 new CodeDisplayManager().displayResponse('all-clubs-results', result, 'All Clubs (CSV)');

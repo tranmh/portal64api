@@ -53,8 +53,9 @@ class PlayerManager {
             const params = Utils.getFormData(form);
             
             const result = await api.searchPlayers(params);
-            this.currentResults = result.data || result;
-            this.currentMeta = result.meta;
+            // Fix: API returns {success: true, data: {data: [...], meta: {...}}}
+            this.currentResults = result.data?.data || result.data || result;
+            this.currentMeta = result.data?.meta || result.meta;
             
             this.displayPlayerResults('player-search-results', this.currentResults, this.currentMeta);
             
@@ -137,8 +138,9 @@ class PlayerManager {
             delete formData.club_id;
             
             const result = await api.getClubPlayers(clubId, formData);
-            this.currentResults = result.data || result;
-            this.currentMeta = result.meta;
+            // Fix: API returns {success: true, data: {data: [...], meta: {...}}}
+            this.currentResults = result.data?.data || result.data || result;
+            this.currentMeta = result.data?.meta || result.meta;
             
             this.displayPlayerResults('club-players-results', this.currentResults, this.currentMeta);
             

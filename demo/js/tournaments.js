@@ -62,8 +62,9 @@ class TournamentManager {
             const params = Utils.getFormData(form);
             
             const result = await api.searchTournaments(params);
-            this.currentResults = result.data || result;
-            this.currentMeta = result.meta;
+            // Fix: API returns {success: true, data: {data: [...], meta: {...}}}
+            this.currentResults = result.data?.data || result.data || result;
+            this.currentMeta = result.data?.meta || result.meta;
             
             this.displayTournamentResults('tournament-search-results', this.currentResults, this.currentMeta);
             
@@ -84,6 +85,7 @@ class TournamentManager {
             const result = await api.getUpcomingTournaments(limit, format);
             
             if (format === 'json') {
+                // Fix: API returns {success: true, data: [...]} for upcoming tournaments
                 this.displayTournamentResults('upcoming-tournaments-results', result.data || result);
             } else {
                 new CodeDisplayManager().displayResponse('upcoming-tournaments-results', result, 'Upcoming Tournaments (CSV)');
@@ -107,6 +109,7 @@ class TournamentManager {
             const result = await api.getRecentTournaments(days, limit, format);
             
             if (format === 'json') {
+                // Fix: API returns {success: true, data: [...]} for recent tournaments
                 this.displayTournamentResults('recent-tournaments-results', result.data || result);
             } else {
                 new CodeDisplayManager().displayResponse('recent-tournaments-results', result, 'Recent Tournaments (CSV)');
@@ -136,8 +139,9 @@ class TournamentManager {
             delete formData.end_date;
             
             const result = await api.getTournamentsByDateRange(startDate, endDate, formData);
-            this.currentResults = result.data || result;
-            this.currentMeta = result.meta;
+            // Fix: API returns {success: true, data: {data: [...], meta: {...}}}
+            this.currentResults = result.data?.data || result.data || result;
+            this.currentMeta = result.data?.meta || result.meta;
             
             this.displayTournamentResults('date-range-tournaments-results', this.currentResults, this.currentMeta);
             
