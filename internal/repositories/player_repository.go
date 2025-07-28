@@ -28,7 +28,7 @@ func (r *PlayerRepository) GetPlayerByID(vkz string, personID uint) (*models.Per
 	// Get current club membership
 	var membership models.Mitgliedschaft
 	var org models.Organisation
-	err := r.dbs.MVDSB.Where("person = ? AND bis IS NULL AND status = 1", personID).
+	err := r.dbs.MVDSB.Where("person = ? AND bis IS NULL AND status = 0", personID).
 		Order("von DESC").First(&membership).Error
 	if err == nil {
 		r.dbs.MVDSB.Where("id = ?", membership.Organisation).First(&org)
@@ -47,7 +47,7 @@ func (r *PlayerRepository) SearchPlayers(req models.SearchRequest) ([]models.Per
 	var players []models.Person
 	var total int64
 
-	query := r.dbs.MVDSB.Model(&models.Person{}).Where("status = 1")
+	query := r.dbs.MVDSB.Model(&models.Person{}).Where("status = 0")
 
 	// Add search filter
 	if req.Query != "" {
@@ -79,13 +79,13 @@ func (r *PlayerRepository) SearchPlayers(req models.SearchRequest) ([]models.Per
 func (r *PlayerRepository) GetPlayersByClub(vkz string, req models.SearchRequest) ([]models.Person, int64, error) {
 	// First get the organization ID by VKZ
 	var org models.Organisation
-	if err := r.dbs.MVDSB.Where("vkz = ? AND status = 1", vkz).First(&org).Error; err != nil {
+	if err := r.dbs.MVDSB.Where("vkz = ? AND status = 0", vkz).First(&org).Error; err != nil {
 		return nil, 0, err
 	}
 
 	// Get current memberships for this organization
 	var memberships []models.Mitgliedschaft
-	memberQuery := r.dbs.MVDSB.Where("organisation = ? AND bis IS NULL AND status = 1", org.ID)
+	memberQuery := r.dbs.MVDSB.Where("organisation = ? AND bis IS NULL AND status = 0", org.ID)
 	if err := memberQuery.Find(&memberships).Error; err != nil {
 		return nil, 0, err
 	}
@@ -103,7 +103,7 @@ func (r *PlayerRepository) GetPlayersByClub(vkz string, req models.SearchRequest
 	var players []models.Person
 	var total int64
 
-	query := r.dbs.MVDSB.Model(&models.Person{}).Where("id IN ? AND status = 1", personIDs)
+	query := r.dbs.MVDSB.Model(&models.Person{}).Where("id IN ? AND status = 0", personIDs)
 
 	// Add search filter
 	if req.Query != "" {

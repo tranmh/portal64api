@@ -20,7 +20,7 @@ func NewClubRepository(dbs *database.Databases) *ClubRepository {
 // GetClubByVKZ gets a club by its VKZ (Club ID)
 func (r *ClubRepository) GetClubByVKZ(vkz string) (*models.Organisation, error) {
 	var org models.Organisation
-	err := r.dbs.MVDSB.Where("vkz = ? AND status = 1", vkz).First(&org).Error
+	err := r.dbs.MVDSB.Where("vkz = ? AND status = 0", vkz).First(&org).Error
 	return &org, err
 }
 
@@ -29,7 +29,7 @@ func (r *ClubRepository) SearchClubs(req models.SearchRequest) ([]models.Organis
 	var clubs []models.Organisation
 	var total int64
 
-	query := r.dbs.MVDSB.Model(&models.Organisation{}).Where("status = 1 AND organisationsart = 20")
+	query := r.dbs.MVDSB.Model(&models.Organisation{}).Where("status = 0 AND organisationsart = 20")
 
 	// Add search filter
 	if req.Query != "" {
@@ -71,7 +71,7 @@ func (r *ClubRepository) SearchClubs(req models.SearchRequest) ([]models.Organis
 func (r *ClubRepository) GetClubMemberCount(organizationID uint) (int64, error) {
 	var count int64
 	err := r.dbs.MVDSB.Model(&models.Mitgliedschaft{}).
-		Where("organisation = ? AND bis IS NULL AND status = 1", organizationID).
+		Where("organisation = ? AND bis IS NULL AND status = 0", organizationID).
 		Count(&count).Error
 	return count, err
 }
@@ -100,7 +100,7 @@ func (r *ClubRepository) GetClubAverageDWZ(organizationID uint) (float64, error)
 			INNER JOIN mvdsb.mitgliedschaft m ON e.idPerson = m.person
 			WHERE m.organisation = ? 
 				AND m.bis IS NULL 
-				AND m.status = 1
+				AND m.status = 0
 				AND e.dwzNew > 0
 		) latest_evaluations
 		WHERE latest_dwz > 0
@@ -112,7 +112,7 @@ func (r *ClubRepository) GetClubAverageDWZ(organizationID uint) (float64, error)
 // GetAllClubs gets all clubs for listing
 func (r *ClubRepository) GetAllClubs() ([]models.Organisation, error) {
 	var clubs []models.Organisation
-	err := r.dbs.MVDSB.Where("status = 1 AND organisationsart = 20 AND vkz != ''").
+	err := r.dbs.MVDSB.Where("status = 0 AND organisationsart = 20 AND vkz != ''").
 		Order("name ASC").Find(&clubs).Error
 	return clubs, err
 }
