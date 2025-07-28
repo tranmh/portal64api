@@ -121,3 +121,4 @@ docs/generated/
 
 # Windows PowerShell debugging
 build-errors.log
+node_modules

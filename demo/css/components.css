@@ -1,0 +1,328 @@
+/* Reusable Components */
+
+/* Tabs */
+.tabs {
+    margin-bottom: 2rem;
+}
+
+.tab-nav {
+    display: flex;
+    border-bottom: 2px solid var(--border-color);
+    margin-bottom: 2rem;
+    overflow-x: auto;
+}
+
+.tab-nav-item {
+    padding: 1rem 2rem;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--medium-gray);
+    transition: var(--transition);
+    white-space: nowrap;
+    text-decoration: none;
+}
+
+.tab-nav-item:hover {
+    color: var(--primary-black);
+    background-color: var(--light-gray);
+}
+
+.tab-nav-item.active {
+    color: var(--primary-black);
+    border-bottom-color: var(--primary-black);
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* Tables */
+.table-container {
+    overflow-x: auto;
+    margin: 2rem 0;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--pure-white);
+}
+
+.table th,
+.table td {
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.table th {
+    background-color: var(--light-gray);
+    font-weight: 600;
+    color: var(--primary-black);
+    position: sticky;
+    top: 0;
+}
+
+.table tr:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+.table-striped tbody tr:nth-child(even) {
+    background-color: rgba(0, 0, 0, 0.01);
+}
+
+/* Code Display */
+.code-container {
+    background: var(--secondary-black);
+    color: var(--light-gray);
+    border-radius: 8px;
+    margin: 1rem 0;
+    position: relative;
+}
+
+.code-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid var(--medium-gray);
+    background: var(--dark-gray);
+    border-radius: 8px 8px 0 0;
+}
+
+.code-title {
+    color: var(--pure-white);
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin: 0;
+}
+
+.code-copy {
+    background: none;
+    border: 1px solid var(--medium-gray);
+    color: var(--light-gray);
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: var(--transition);
+}
+
+.code-copy:hover {
+    background: var(--medium-gray);
+    color: var(--pure-white);
+}
+
+.code-content {
+    padding: 1rem;
+    overflow-x: auto;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    white-space: pre-wrap;
+    word-break: break-all;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+/* Alerts and Messages */
+.alert {
+    padding: 1rem 1.5rem;
+    border-radius: 6px;
+    margin: 1rem 0;
+    border-left: 4px solid;
+    font-weight: 500;
+}
+
+.alert-success {
+    background-color: #d4edda;
+    border-color: #28a745;
+    color: #155724;
+}
+
+.alert-error {
+    background-color: #f8d7da;
+    border-color: #dc3545;
+    color: #721c24;
+}
+
+.alert-warning {
+    background-color: #fff3cd;
+    border-color: #ffc107;
+    color: #856404;
+}
+
+.alert-info {
+    background-color: #d1ecf1;
+    border-color: #17a2b8;
+    color: #0c5460;
+}
+
+/* Pagination */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 2rem 0;
+}
+
+.pagination-info {
+    color: var(--medium-gray);
+    font-size: 0.9rem;
+    margin-right: 1rem;
+}
+
+.pagination-btn {
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    background: var(--pure-white);
+    color: var(--secondary-black);
+    text-decoration: none;
+    border-radius: 4px;
+    transition: var(--transition);
+    font-size: 0.9rem;
+}
+
+.pagination-btn:hover:not(.disabled) {
+    background: var(--primary-black);
+    color: var(--pure-white);
+    border-color: var(--primary-black);
+}
+
+.pagination-btn.active {
+    background: var(--primary-black);
+    color: var(--pure-white);
+    border-color: var(--primary-black);
+}
+
+.pagination-btn.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Modal/Dialog */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal.show {
+    display: block;
+}
+
+.modal-content {
+    background-color: var(--pure-white);
+    margin: 5% auto;
+    padding: 0;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-title {
+    margin: 0;
+    color: var(--primary-black);
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--medium-gray);
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-close:hover {
+    color: var(--primary-black);
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.modal-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+}
+
+/* Badge/Tag */
+.badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.badge-primary {
+    background-color: var(--primary-black);
+    color: var(--pure-white);
+}
+
+.badge-secondary {
+    background-color: var(--medium-gray);
+    color: var(--pure-white);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .tab-nav {
+        flex-wrap: wrap;
+    }
+    
+    .tab-nav-item {
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+    }
+    
+    .modal-content {
+        margin: 10% auto;
+        width: 95%;
+    }
+    
+    .table th,
+    .table td {
+        padding: 8px 12px;
+        font-size: 0.9rem;
+    }
+}

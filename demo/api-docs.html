@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal64 API Demo - Documentation</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/forms.css">
+    <link rel="stylesheet" href="css/components.css">
+</head>
+<body class="docs-page">
+    <header class="header">
+        <div class="container">
+            <h1>API Documentation</h1>
+            <p>Complete reference for the Portal64 DWZ Chess Rating API</p>
+            <p><a href="index.html" style="color: var(--light-gray); text-decoration: underline;">← Back to Dashboard</a></p>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="container">
+            <div class="tabs">
+                <nav class="tab-nav">
+                    <button class="tab-nav-item" data-tab="overview">Overview</button>
+                    <button class="tab-nav-item" data-tab="health">Health</button>
+                    <button class="tab-nav-item" data-tab="players-api">Players API</button>
+                    <button class="tab-nav-item" data-tab="clubs-api">Clubs API</button>
+                    <button class="tab-nav-item" data-tab="tournaments-api">Tournaments API</button>
+                    <button class="tab-nav-item" data-tab="swagger">Swagger UI</button>
+                </nav>
+
+                <!-- Overview Tab -->
+                <div id="overview" class="tab-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">API Overview</h2>
+                        </div>
+                        
+                        <h3>Base Information</h3>
+                        <div class="table-container">
+                            <table class="table">
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Base URL</strong></td>
+                                        <td><code>http://localhost:8080</code></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>API Version</strong></td>
+                                        <td>v1</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Content Type</strong></td>
+                                        <td><code>application/json</code></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Authentication</strong></td>
+                                        <td>None required</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h3>Response Formats</h3>
+                        <p>All endpoints support multiple response formats:</p>
+                        <ul>
+                            <li><strong>JSON</strong> (default): Standard JSON response with metadata</li>
+                            <li><strong>CSV</strong>: Comma-separated values for data export</li>
+                        </ul>
+                        
+                        <p>To specify format, use either:</p>
+                        <ul>
+                            <li>Query parameter: <code>?format=csv</code></li>
+                            <li>Accept header: <code>Accept: text/csv</code></li>
+                        </ul>
+
+                        <h3>Pagination</h3>
+                        <p>Search endpoints support pagination with the following parameters:</p>
+                        <div class="table-container">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Parameter</th>
+                                        <th>Type</th>
+                                        <th>Default</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>limit</code></td>
+                                        <td>integer</td>
+                                        <td>20</td>
+                                        <td>Number of items per page (max 100)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>offset</code></td>
+                                        <td>integer</td>
+                                        <td>0</td>
+                                        <td>Number of items to skip</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h3>Sorting</h3>
+                        <p>Most search endpoints support sorting:</p>
+                        <div class="table-container">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Parameter</th>
+                                        <th>Type</th>
+                                        <th>Default</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>sort_by</code></td>
+                                        <td>string</td>
+                                        <td>varies</td>
+                                        <td>Field to sort by</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>sort_order</code></td>
+                                        <td>string</td>
+                                        <td>asc</td>
+                                        <td>Sort direction (asc/desc)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h3>Error Handling</h3>
+                        <p>The API uses standard HTTP status codes:</p>
+                        <div class="table-container">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Status Code</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>200</code></td>
+                                        <td>Success</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>400</code></td>
+                                        <td>Bad Request - Invalid parameters</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>404</code></td>
+                                        <td>Not Found - Resource doesn't exist</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>500</code></td>
+                                        <td>Internal Server Error</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <p>Error responses include details in JSON format:</p>
+                        <div class="code-container">
+                            <div class="code-header">
+                                <h4 class="code-title">Error Response Example</h4>
+                                <button class="code-copy">Copy</button>
+                            </div>
+                            <div class="code-content">{
+  "success": false,
+  "error": "Invalid player ID format",
+  "code": 400
+}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Health Tab -->
+                <div id="health" class="tab-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Health Check Endpoint</h2>
+                        </div>
+                        
+                        <h3>GET /health</h3>
+                        <p>Check if the API is running and healthy.</p>
+                        
+                        <h4>Request</h4>
+                        <div class="code-container">
+                            <div class="code-header">
+                                <h4 class="code-title">HTTP Request</h4>
+                                <button class="code-copy">Copy</button>
+                            </div>
+                            <div class="code-content">GET /health HTTP/1.1
+Host: localhost:8080
+Accept: application/json</div>
+                        </div>
+
+                        <h4>Response</h4>
+                        <div class="code-container">
+                            <div class="code-header">
+                                <h4 class="code-title">Response Example</h4>
+                                <button class="code-copy">Copy</button>
+                            </div>
+                            <div class="code-content">{
+  "status": "healthy",
+  "version": "1.0.0"
+}</div>
+                        </div>
+
+                        <h4>Test this endpoint</h4>
+                        <button onclick="testHealthEndpoint()" class="btn btn-primary">Test Health Check</button>
+                        <div id="health-test-result" class="mt-2"></div>
+                    </div>
+                </div>
+
+                <!-- Players API Tab -->
+                <div id="players-api" class="tab-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Players API Endpoints</h2>
+                        </div>
+
+                        <!-- Search Players -->
+                        <h3>GET /api/v1/players</h3>
+                        <p>Search for players with pagination and filtering.</p>
+                        
+                        <h4>Parameters</h4>
+                        <div class="table-container">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Parameter</th>
+                                        <th>Type</th>
+                                        <th>Required</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>query</code></td>
+                                        <td>string</td>
+                                        <td>No</td>
+                                        <td>Search term for player names</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>limit</code></td>
+                                        <td>integer</td>
+                                        <td>No</td>
+                                        <td>Results per page (default: 20, max: 100)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>offset</code></td>
+                                        <td>integer</td>
+                                        <td>No</td>
+                                        <td>Number of results to skip (default: 0)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>sort_by</code></td>
+                                        <td>string</td>
+                                        <td>No</td>
+                                        <td>Sort field: name, current_dwz, birth_year, club_name</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>sort_order</code></td>
+                                        <td>string</td>
+                                        <td>No</td>
+                                        <td>Sort order: asc, desc (default: asc)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>format</code></td>
+                                        <td>string</td>
+                                        <td>No</td>
+                                        <td>Response format: json, csv</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h4>Example Request</h4>
+                        <div class="code-container">
+                            <div class="code-header">
+                                <h4 class="code-title">cURL Example</h4>
+                                <button class="code-copy">Copy</button>
+                            </div>
+                            <div class="code-content">curl -X GET "http://localhost:8080/api/v1/players?query=Mueller&limit=10&sort_by=current_dwz&sort_order=desc" \
+  -H "Accept: application/json"</div>
+                        </div>
+
+                        <!-- Get Player -->
+                        <h3>GET /api/v1/players/{id}</h3>
+                        <p>Get detailed information for a specific player.</p>
+                        
+                        <h4>Path Parameters</h4>
+                        <div class="table-container">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Parameter</th>
+                                        <th>Type</th>
+                                        <th>Required</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>id</code></td>
+                                        <td>string</td>
+                                        <td>Yes</td>
+                                        <td>Player ID in format C####-#### (e.g., C0101-1014)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h4>Example Request</h4>
+                        <div class="code-container">
+                            <div class="code-header">
+                                <h4 class="code-title">cURL Example</h4>
+                                <button class="code-copy">Copy</button>
+                            </div>
+                            <div class="code-content">curl -X GET "http://localhost:8080/api/v1/players/C0101-1014" \
+  -H "Accept: application/json"</div>
+                        </div>
+
+                        <!-- Get Player Rating History -->
+                        <h3>GET /api/v1/players/{id}/rating-history</h3>
+                        <p>Get the complete DWZ rating history for a player.</p>
+                        
+                        <h4>Path Parameters</h4>
+                        <div class="table-container">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Parameter</th>
+                                        <th>Type</th>
+                                        <th>Required</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>id</code></td>
+                                        <td>string</td>
+                                        <td>Yes</td>
+                                        <td>Player ID in format C####-#### (e.g., C0101-1014)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Get Club Players -->
+                        <h3>GET /api/v1/clubs/{id}/players</h3>
+                        <p>Get all players belonging to a specific club.</p>
+                        
+                        <h4>Path Parameters</h4>
+                        <div class="table-container">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Parameter</th>
+                                        <th>Type</th>
+                                        <th>Required</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>id</code></td>
+                                        <td>string</td>
+                                        <td>Yes</td>
+                                        <td>Club ID in format C#### (e.g., C0101)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <p>This endpoint also supports the same query parameters as the players search endpoint for filtering and pagination.</p>
+                    </div>
+                </div>
+
+                <!-- Clubs API Tab -->
+                <div id="clubs-api" class="tab-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Clubs API Endpoints</h2>
+                        </div>
+
+                        <!-- Search Clubs -->
+                        <h3>GET /api/v1/clubs</h3>
+                        <p>Search for clubs with filtering and pagination.</p>
+                        
+                        <h4>Parameters</h4>
+                        <div class="table-container">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Parameter</th>
+                                        <th>Type</th>
+                                        <th>Required</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>query</code></td>
+                                        <td>string</td>
+                                        <td>No</td>
+                                        <td>Search term for club names, VKZ, or location</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>filter_by</code></td>
+                                        <td>string</td>
+                                        <td>No</td>
+                                        <td>Filter field: region, district</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>filter_value</code></td>
+                                        <td>string</td>
+                                        <td>No</td>
+                                        <td>Value to filter by</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>sort_by</code></td>
+                                        <td>string</td>
+                                        <td>No</td>
+                                        <td>Sort field: name, region, district, member_count</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h4>Example Request</h4>
+                        <div class="code-container">
+                            <div class="code-header">
+                                <h4 class="code-title">cURL Example</h4>
+                                <button class="code-copy">Copy</button>
+                            </div>
+                            <div class="code-content">curl -X GET "http://localhost:8080/api/v1/clubs?query=Stuttgart&filter_by=region&filter_value=Baden-Württemberg" \
+  -H "Accept: application/json"</div>
+                        </div>
+
+                        <!-- Get All Clubs -->
+                        <h3>GET /api/v1/clubs/all</h3>
+                        <p>Get all active clubs in the system.</p>
+                        
+                        <h4>Parameters</h4>
+                        <div class="table-container">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Parameter</th>
+                                        <th>Type</th>
+                                        <th>Required</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>format</code></td>
+                                        <td>string</td>
+                                        <td>No</td>
+                                        <td>Response format: json, csv</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Get Club -->
+                        <h3>GET /api/v1/clubs/{id}</h3>
+                        <p>Get detailed information for a specific club.</p>
+                        
+                        <h4>Path Parameters</h4>
+                        <div class="table-container">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Parameter</th>
+                                        <th>Type</th>
+                                        <th>Required</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>id</code></td>
+                                        <td>string</td>
+                                        <td>Yes</td>
+                                        <td>Club ID (VKZ) in format C#### (e.g., C0101)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h4>Example Request</h4>
+                        <div class="code-container">
+                            <div class="code-header">
+                                <h4 class="code-title">cURL Example</h4>
+                                <button class="code-copy">Copy</button>
+                            </div>
+                            <div class="code-content">curl -X GET "http://localhost:8080/api/v1/clubs/C0101" \
+  -H "Accept: application/json"</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tournaments API Tab -->
+                <div id="tournaments-api" class="tab-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Tournaments API Endpoints</h2>
+                        </div>
+
+                        <!-- Search Tournaments -->
+                        <h3>GET /api/v1/tournaments</h3>
+                        <p>Search for tournaments with filtering and pagination.</p>
+                        
+                        <h4>Parameters</h4>
+                        <div class="table-container">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Parameter</th>
+                                        <th>Type</th>
+                                        <th>Required</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>query</code></td>
+                                        <td>string</td>
+                                        <td>No</td>
+                                        <td>Search term for tournament names or codes</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>filter_by</code></td>
+                                        <td>string</td>
+                                        <td>No</td>
+                                        <td>Filter field: year</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>filter_value</code></td>
+                                        <td>string</td>
+                                        <td>No</td>
+                                        <td>Value to filter by (e.g., 2024)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>sort_by</code></td>
+                                        <td>string</td>
+                                        <td>No</td>
+                                        <td>Sort field: finishedOn (default), startedOn, name, participant_count</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>sort_order</code></td>
+                                        <td>string</td>
+                                        <td>No</td>
+                                        <td>Sort order: desc (default), asc</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Get Upcoming Tournaments -->
+                        <h3>GET /api/v1/tournaments/upcoming</h3>
+                        <p>Get tournaments that are open for registration.</p>
+                        
+                        <h4>Parameters</h4>
+                        <div class="table-container">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Parameter</th>
+                                        <th>Type</th>
+                                        <th>Required</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>limit</code></td>
+                                        <td>integer</td>
+                                        <td>No</td>
+                                        <td>Maximum tournaments to return (default: 20)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Get Recent Tournaments -->
+                        <h3>GET /api/v1/tournaments/recent</h3>
+                        <p>Get recently finished tournaments.</p>
+                        
+                        <h4>Parameters</h4>
+                        <div class="table-container">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Parameter</th>
+                                        <th>Type</th>
+                                        <th>Required</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>days</code></td>
+                                        <td>integer</td>
+                                        <td>No</td>
+                                        <td>Days to look back (default: 30)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>limit</code></td>
+                                        <td>integer</td>
+                                        <td>No</td>
+                                        <td>Maximum tournaments to return (default: 20)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Get Tournaments by Date Range -->
+                        <h3>GET /api/v1/tournaments/date-range</h3>
+                        <p>Get tournaments within a specific date range.</p>
+                        
+                        <h4>Parameters</h4>
+                        <div class="table-container">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Parameter</th>
+                                        <th>Type</th>
+                                        <th>Required</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>start_date</code></td>
+                                        <td>string</td>
+                                        <td>Yes</td>
+                                        <td>Start date in YYYY-MM-DD format</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>end_date</code></td>
+                                        <td>string</td>
+                                        <td>Yes</td>
+                                        <td>End date in YYYY-MM-DD format</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h4>Example Request</h4>
+                        <div class="code-container">
+                            <div class="code-header">
+                                <h4 class="code-title">cURL Example</h4>
+                                <button class="code-copy">Copy</button>
+                            </div>
+                            <div class="code-content">curl -X GET "http://localhost:8080/api/v1/tournaments/date-range?start_date=2024-01-01&end_date=2024-12-31&limit=50" \
+  -H "Accept: application/json"</div>
+                        </div>
+
+                        <!-- Get Tournament -->
+                        <h3>GET /api/v1/tournaments/{id}</h3>
+                        <p>Get detailed information for a specific tournament.</p>
+                        
+                        <h4>Path Parameters</h4>
+                        <div class="table-container">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Parameter</th>
+                                        <th>Type</th>
+                                        <th>Required</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>id</code></td>
+                                        <td>string</td>
+                                        <td>Yes</td>
+                                        <td>Tournament ID in format C###-###-### (e.g., C529-K00-HT1)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Swagger UI Tab -->
+                <div id="swagger" class="tab-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Interactive API Documentation</h2>
+                        </div>
+                        
+                        <p>The API provides interactive Swagger/OpenAPI documentation for testing endpoints directly.</p>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <a href="http://localhost:8080/swagger/" target="_blank" class="btn btn-primary">
+                                    Open Swagger UI
+                                </a>
+                            </div>
+                            <div class="form-group">
+                                <a href="http://localhost:8080/swagger/doc.json" target="_blank" class="btn btn-secondary">
+                                    View OpenAPI JSON
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <h4>📘 Interactive Testing</h4>
+                            <p>The Swagger UI allows you to test all API endpoints directly in your browser with real data. You can modify parameters, execute requests, and see the responses in real-time.</p>
+                        </div>
+
+                        <h3>Features</h3>
+                        <ul>
+                            <li><strong>Try it out</strong>: Execute API calls directly from the documentation</li>
+                            <li><strong>Parameter testing</strong>: Modify query parameters and request bodies</li>
+                            <li><strong>Response examples</strong>: See actual API responses</li>
+                            <li><strong>Schema definitions</strong>: View data models and structures</li>
+                            <li><strong>Export options</strong>: Download OpenAPI specification</li>
+                        </ul>
+
+                        <h3>Access URLs</h3>
+                        <div class="table-container">
+                            <table class="table">
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Swagger UI</strong></td>
+                                        <td><a href="http://localhost:8080/swagger/" target="_blank">http://localhost:8080/swagger/</a></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>OpenAPI JSON</strong></td>
+                                        <td><a href="http://localhost:8080/swagger/doc.json" target="_blank">http://localhost:8080/swagger/doc.json</a></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 Portal64 API Demo. Complete API documentation.</p>
+        </div>
+    </footer>
+
+    <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/main.js"></script>
+    
+    <script>
+        async function testHealthEndpoint() {
+            try {
+                Utils.showLoading('health-test-result');
+                const result = await api.healthCheck();
+                new CodeDisplayManager().displayResponse('health-test-result', result, 'Health Check Response');
+            } catch (error) {
+                Utils.showError('health-test-result', `Health check failed: ${error.message}`);
+            }
+        }
+    </script>
+</body>
+</html>

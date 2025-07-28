@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal64 API Demo - Tournaments</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/forms.css">
+    <link rel="stylesheet" href="css/components.css">
+</head>
+<body class="tournament-page">
+    <header class="header">
+        <div class="container">
+            <h1>Tournaments API</h1>
+            <p>Access tournament data and results from the DWZ chess system</p>
+            <p><a href="index.html" style="color: var(--light-gray); text-decoration: underline;">← Back to Dashboard</a></p>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="container">
+            <div class="tabs">
+                <nav class="tab-nav">
+                    <button class="tab-nav-item" data-tab="search-tournaments">Search Tournaments</button>
+                    <button class="tab-nav-item" data-tab="upcoming-tournaments">Upcoming</button>
+                    <button class="tab-nav-item" data-tab="recent-tournaments">Recent</button>
+                    <button class="tab-nav-item" data-tab="date-range-tournaments">Date Range</button>
+                    <button class="tab-nav-item" data-tab="tournament-lookup">Tournament Lookup</button>
+                </nav>
+
+                <!-- Search Tournaments Tab -->
+                <div id="search-tournaments" class="tab-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Search Tournaments</h2>
+                        </div>
+                        <p>Search for tournaments by name, code, or other criteria with advanced filtering options.</p>
+                        
+                        <form id="tournament-search-form" class="search-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label" for="search-query">Search Query</label>
+                                    <input type="text" id="search-query" name="query" class="form-input" 
+                                           placeholder="Enter tournament name or code...">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="search-limit">Results per page</label>
+                                    <select id="search-limit" name="limit" class="form-select">
+                                        <option value="10">10</option>
+                                        <option value="20" selected>20</option>
+                                        <option value="50">50</option>
+                                        <option value="100">100</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">&nbsp;</label>
+                                    <button type="submit" class="btn btn-primary">Search Tournaments</button>
+                                </div>
+                            </div>
+
+                            <button type="button" class="advanced-toggle">Show Advanced Options</button>
+                            
+                            <div class="advanced-search">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label" for="search-offset">Offset (pagination)</label>
+                                        <input type="number" id="search-offset" name="offset" class="form-input" 
+                                               value="0" min="0">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="search-sort-by">Sort by</label>
+                                        <select id="search-sort-by" name="sort_by" class="form-select">
+                                            <option value="finishedOn" selected>Finish Date</option>
+                                            <option value="startedOn">Start Date</option>
+                                            <option value="name">Name</option>
+                                            <option value="participant_count">Participants</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="search-sort-order">Sort order</label>
+                                        <select id="search-sort-order" name="sort_order" class="form-select">
+                                            <option value="desc" selected>Descending</option>
+                                            <option value="asc">Ascending</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label" for="search-filter-by">Filter by</label>
+                                        <select id="search-filter-by" name="filter_by" class="form-select">
+                                            <option value="">No filter</option>
+                                            <option value="year">Year</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="search-filter-value">Filter value</label>
+                                        <input type="text" id="search-filter-value" name="filter_value" class="form-input" 
+                                               placeholder="e.g., 2024">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="search-format">Response format</label>
+                                        <select id="search-format" name="format" class="form-select">
+                                            <option value="json" selected>JSON</option>
+                                            <option value="csv">CSV</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+
+                        <div id="tournament-search-results" class="results">
+                            <!-- Search results will be displayed here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Upcoming Tournaments Tab -->
+                <div id="upcoming-tournaments" class="tab-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Upcoming Tournaments</h2>
+                        </div>
+                        <p>Get tournaments that are open for registration or starting soon.</p>
+                        
+                        <form id="upcoming-tournaments-form" class="search-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label" for="upcoming-limit">Maximum tournaments</label>
+                                    <select id="upcoming-limit" name="limit" class="form-select">
+                                        <option value="10">10</option>
+                                        <option value="20" selected>20</option>
+                                        <option value="50">50</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="upcoming-format">Response format</label>
+                                    <select id="upcoming-format" name="format" class="form-select">
+                                        <option value="json" selected>JSON</option>
+                                        <option value="csv">CSV</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">&nbsp;</label>
+                                    <button type="submit" class="btn btn-primary">Get Upcoming Tournaments</button>
+                                </div>
+                            </div>
+                        </form>
+
+                        <div id="upcoming-tournaments-results" class="results">
+                            <!-- Upcoming tournaments will be displayed here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Tournaments Tab -->
+                <div id="recent-tournaments" class="tab-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Recent Tournaments</h2>
+                        </div>
+                        <p>Get tournaments that have finished recently.</p>
+                        
+                        <form id="recent-tournaments-form" class="search-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label" for="recent-days">Days to look back</label>
+                                    <select id="recent-days" name="days" class="form-select">
+                                        <option value="7">7 days</option>
+                                        <option value="14">14 days</option>
+                                        <option value="30" selected>30 days</option>
+                                        <option value="60">60 days</option>
+                                        <option value="90">90 days</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="recent-limit">Maximum tournaments</label>
+                                    <select id="recent-limit" name="limit" class="form-select">
+                                        <option value="10">10</option>
+                                        <option value="20" selected>20</option>
+                                        <option value="50">50</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">&nbsp;</label>
+                                    <button type="submit" class="btn btn-primary">Get Recent Tournaments</button>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label" for="recent-format">Response format</label>
+                                    <select id="recent-format" name="format" class="form-select">
+                                        <option value="json" selected>JSON</option>
+                                        <option value="csv">CSV</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </form>
+
+                        <div id="recent-tournaments-results" class="results">
+                            <!-- Recent tournaments will be displayed here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Date Range Tournaments Tab -->
+                <div id="date-range-tournaments" class="tab-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Tournaments by Date Range</h2>
+                        </div>
+                        <p>Get tournaments within a specific date range with advanced search options.</p>
+                        
+                        <form id="date-range-tournaments-form" class="search-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label" for="date-range-start">Start Date *</label>
+                                    <input type="date" id="date-range-start" name="start_date" class="form-input" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="date-range-end">End Date *</label>
+                                    <input type="date" id="date-range-end" name="end_date" class="form-input" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">&nbsp;</label>
+                                    <button type="submit" class="btn btn-primary">Get Tournaments</button>
+                                </div>
+                            </div>
+
+                            <button type="button" class="advanced-toggle">Show Advanced Options</button>
+                            
+                            <div class="advanced-search">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label" for="date-range-query">Search query</label>
+                                        <input type="text" id="date-range-query" name="query" class="form-input" 
+                                               placeholder="Filter by tournament name...">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="date-range-limit">Results per page</label>
+                                        <select id="date-range-limit" name="limit" class="form-select">
+                                            <option value="10">10</option>
+                                            <option value="20" selected>20</option>
+                                            <option value="50">50</option>
+                                            <option value="100">100</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="date-range-offset">Offset</label>
+                                        <input type="number" id="date-range-offset" name="offset" class="form-input" 
+                                               value="0" min="0">
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label" for="date-range-sort-by">Sort by</label>
+                                        <select id="date-range-sort-by" name="sort_by" class="form-select">
+                                            <option value="finishedOn" selected>Finish Date</option>
+                                            <option value="startedOn">Start Date</option>
+                                            <option value="name">Name</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="date-range-sort-order">Sort order</label>
+                                        <select id="date-range-sort-order" name="sort_order" class="form-select">
+                                            <option value="desc" selected>Descending</option>
+                                            <option value="asc">Ascending</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="date-range-format">Response format</label>
+                                        <select id="date-range-format" name="format" class="form-select">
+                                            <option value="json" selected>JSON</option>
+                                            <option value="csv">CSV</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+
+                        <div id="date-range-tournaments-results" class="results">
+                            <!-- Date range tournaments will be displayed here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tournament Lookup Tab -->
+                <div id="tournament-lookup" class="tab-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Individual Tournament Lookup</h2>
+                        </div>
+                        <p>Look up detailed information for a specific tournament using its Tournament ID.</p>
+                        
+                        <form id="tournament-lookup-form" class="search-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label" for="lookup-tournament-id">Tournament ID *</label>
+                                    <input type="text" id="lookup-tournament-id" name="tournament_id" class="form-input" 
+                                           placeholder="e.g., C529-K00-HT1" required>
+                                    <div id="lookup-tournament-id-error" class="form-error">Please enter a valid tournament ID (format: C###-###-###)</div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="lookup-format">Response format</label>
+                                    <select id="lookup-format" name="format" class="form-select">
+                                        <option value="json" selected>JSON</option>
+                                        <option value="csv">CSV</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">&nbsp;</label>
+                                    <button type="submit" class="btn btn-primary">Get Tournament Details</button>
+                                </div>
+                            </div>
+                        </form>
+
+                        <div class="alert alert-info">
+                            <h4>Tournament ID Format</h4>
+                            <p>Tournament IDs follow the format <code>C###-###-###</code> where # can be letters or numbers. For example: <code>C529-K00-HT1</code></p>
+                            <p>Each tournament receives a unique identifier when registered in the DWZ system.</p>
+                        </div>
+
+                        <div id="tournament-lookup-results" class="results">
+                            <!-- Tournament details will be displayed here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Tournament Detail Modal -->
+    <div id="tournament-detail-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Tournament Details</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="tournament-detail-content"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary modal-close">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 Portal64 API Demo. Tournament management interface.</p>
+        </div>
+    </footer>
+
+    <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/tournaments.js"></script>
+</body>
+</html>

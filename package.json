@@ -1,0 +1,27 @@
+{
+  "name": "portal64api-frontend-tests",
+  "version": "1.0.0",
+  "description": "Frontend testing setup for Portal64 API demo pages",
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:debug": "jest --debug",
+    "test:verbose": "jest --verbose",
+    "test:ci": "jest --ci --coverage --watchAll=false"
+  },
+  "devDependencies": {
+    "@babel/preset-env": "^7.28.0",
+    "@testing-library/dom": "^9.3.0",
+    "@testing-library/jest-dom": "^5.16.5",
+    "@testing-library/user-event": "^14.4.3",
+    "babel-jest": "^29.5.0",
+    "identity-obj-proxy": "^3.0.0",
+    "jest": "^29.5.0",
+    "jest-environment-jsdom": "^29.5.0",
+    "jest-fetch-mock": "^3.0.3",
+    "jsdom": "^22.1.0",
+    "jsdom-global": "^3.0.2",
+    "msw": "^1.2.1"
+  }
+}

@@ -87,6 +87,14 @@ func SetupRoutes(dbs *database.Databases) *gin.Engine {
 		c.Redirect(http.StatusMovedPermanently, "/swagger/")
 	})
 
+	// Static files for demo interface
+	router.Static("/demo", "./demo")
+	
+	// Redirect root to demo
+	router.GET("/", func(c *gin.Context) {
+		c.Redirect(http.StatusMovedPermanently, "/demo/")
+	})
+
 	// Health check endpoint
 	router.GET("/health", handlers.HealthCheck)
 

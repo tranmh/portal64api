@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal64 API Demo - Dashboard</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/forms.css">
+    <link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <h1>Portal64 API Demo</h1>
+            <p>DWZ Chess Rating System API Testing Interface</p>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="container">
+            <!-- Health Check Section -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">API Health Status</h2>
+                </div>
+                <div id="health-result">
+                    <!-- Health check result will be displayed here -->
+                </div>
+                <button onclick="performHealthCheck()" class="btn btn-secondary">Refresh Health Check</button>
+            </div>
+
+            <!-- Navigation Section -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Available API Endpoints</h2>
+                </div>
+                <p>Explore and test all available API endpoints for the DWZ chess rating system.</p>
+                
+                <div class="nav-grid">
+                    <a href="players.html" class="nav-card">
+                        <h3>👤 Players</h3>
+                        <p>Search for chess players, view detailed profiles, and access rating histories. Test endpoints for individual player lookups and comprehensive search functionality.</p>
+                    </a>
+
+                    <a href="clubs.html" class="nav-card">
+                        <h3>🏛️ Clubs</h3>
+                        <p>Browse chess clubs and organizations. Search clubs by name or region, view club details, and list all members of specific chess clubs.</p>
+                    </a>
+
+                    <a href="tournaments.html" class="nav-card">
+                        <h3>🏆 Tournaments</h3>
+                        <p>Access tournament data including upcoming events, recent results, and detailed tournament information. Search tournaments by various criteria.</p>
+                    </a>
+
+                    <a href="api-docs.html" class="nav-card">
+                        <h3>📚 API Documentation</h3>
+                        <p>Interactive API documentation with request/response examples, parameter descriptions, and live testing capabilities for all endpoints.</p>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Quick API Test Section -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Quick API Test</h2>
+                </div>
+                <p>Test common API endpoints quickly from this dashboard:</p>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <button onclick="testPlayersEndpoint()" class="btn btn-primary">Test Players Search</button>
+                    </div>
+                    <div class="form-group">
+                        <button onclick="testClubsEndpoint()" class="btn btn-primary">Test Clubs Search</button>
+                    </div>
+                    <div class="form-group">
+                        <button onclick="testTournamentsEndpoint()" class="btn btn-primary">Test Tournaments</button>
+                    </div>
+                </div>
+
+                <div id="quick-test-result" class="mt-3">
+                    <!-- Quick test results will be displayed here -->
+                </div>
+            </div>
+
+            <!-- API Information -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">API Information</h2>
+                </div>
+                <div class="form-row">
+                    <div>
+                        <h4>Base URL</h4>
+                        <p><code>http://localhost:8080</code></p>
+                        
+                        <h4>Available Formats</h4>
+                        <p>All endpoints support both JSON and CSV output formats. Use the <code>format</code> query parameter or set the <code>Accept</code> header.</p>
+                        
+                        <h4>Authentication</h4>
+                        <p>No authentication required. This is a public API for chess rating data.</p>
+                    </div>
+                    <div>
+                        <h4>Rate Limits</h4>
+                        <p>No rate limits currently implemented.</p>
+                        
+                        <h4>Pagination</h4>
+                        <p>Search endpoints support pagination with <code>limit</code> and <code>offset</code> parameters. Maximum limit is 100 items per page.</p>
+                        
+                        <h4>Error Handling</h4>
+                        <p>Errors return appropriate HTTP status codes with JSON error messages containing details about the failure.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 Portal64 API Demo. DWZ Chess Rating System Interface.</p>
+        </div>
+    </footer>
+
+    <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/main.js"></script>
+    
+    <script>
+        // Quick test functions
+        async function testPlayersEndpoint() {
+            try {
+                Utils.showLoading('quick-test-result');
+                const result = await api.searchPlayers({ limit: 5 });
+                new CodeDisplayManager().displayResponse('quick-test-result', result, 'Players Search Result');
+            } catch (error) {
+                Utils.showError('quick-test-result', `Players test failed: ${error.message}`);
+            }
+        }
+
+        async function testClubsEndpoint() {
+            try {
+                Utils.showLoading('quick-test-result');
+                const result = await api.searchClubs({ limit: 5 });
+                new CodeDisplayManager().displayResponse('quick-test-result', result, 'Clubs Search Result');
+            } catch (error) {
+                Utils.showError('quick-test-result', `Clubs test failed: ${error.message}`);
+            }
+        }
+
+        async function testTournamentsEndpoint() {
+            try {
+                Utils.showLoading('quick-test-result');
+                const result = await api.searchTournaments({ limit: 5 });
+                new CodeDisplayManager().displayResponse('quick-test-result', result, 'Tournaments Search Result');
+            } catch (error) {
+                Utils.showError('quick-test-result', `Tournaments test failed: ${error.message}`);
+            }
+        }
+    </script>
+</body>
+</html>
