@@ -1,17 +1,24 @@
 {
   "name": "portal64api-frontend-tests",
   "version": "1.0.0",
-  "description": "Frontend testing setup for Portal64 API demo pages",
+  "description": "Frontend and E2E testing setup for Portal64 API demo pages",
   "scripts": {
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "test:debug": "jest --debug",
     "test:verbose": "jest --verbose",
-    "test:ci": "jest --ci --coverage --watchAll=false"
+    "test:ci": "jest --ci --coverage --watchAll=false",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:debug": "playwright test --debug",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:report": "playwright show-report",
+    "test:all": "npm run test && npm run test:e2e"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.28.0",
+    "@playwright/test": "^1.40.0",
     "@testing-library/dom": "^9.3.0",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/user-event": "^14.4.3",
