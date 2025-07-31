@@ -205,9 +205,9 @@ func getGenderString(gender int) string {
 // getPlayerStatus converts status code to string
 func getPlayerStatus(status uint) string {
 	switch status {
-	case 1:
-		return "active"
 	case 0:
+		return "active"
+	case 1:
 		return "inactive"
 	default:
 		return "unknown"
