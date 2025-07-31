@@ -43,6 +43,50 @@ class PlayerManager {
                 this.getClubPlayers();
             });
         }
+
+        // Handle URL parameters for direct navigation from clubs page
+        this.handleURLParameters();
+    }
+
+    handleURLParameters() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const hash = window.location.hash;
+        
+        console.log('URL Params:', urlParams.toString());
+        console.log('Hash:', hash);
+        
+        // Check if we have club_id parameter and club-players hash
+        const clubId = urlParams.get('club_id');
+        console.log('Club ID from URL:', clubId);
+        
+        if (clubId && hash.includes('club-players')) {
+            console.log('Auto-loading club players for:', clubId);
+            
+            // Switch to club-players tab
+            const clubPlayersTab = document.querySelector('[data-tab="club-players"]');
+            if (clubPlayersTab) {
+                console.log('Found club-players tab, clicking...');
+                clubPlayersTab.click();
+            } else {
+                console.log('Club-players tab not found');
+            }
+            
+            // Populate club ID field and automatically search
+            setTimeout(() => {
+                const clubIdField = document.getElementById('club-id');
+                if (clubIdField) {
+                    console.log('Found club-id field, setting value:', clubId);
+                    clubIdField.value = clubId;
+                    // Automatically trigger the search
+                    console.log('Triggering getClubPlayers...');
+                    this.getClubPlayers();
+                } else {
+                    console.log('Club-id field not found');
+                }
+            }, 500); // Increased timeout to 500ms
+        } else {
+            console.log('No auto-load conditions met. ClubId:', clubId, 'Hash includes club-players:', hash.includes('club-players'));
+        }
     }
 
     async searchPlayers() {

@@ -79,7 +79,7 @@ func (r *PlayerRepository) SearchPlayers(req models.SearchRequest) ([]models.Per
 func (r *PlayerRepository) GetPlayersByClub(vkz string, req models.SearchRequest) ([]models.Person, int64, error) {
 	// First get the organization ID by VKZ
 	var org models.Organisation
-	if err := r.dbs.MVDSB.Where("vkz = ? AND status = 0", vkz).First(&org).Error; err != nil {
+	if err := r.dbs.MVDSB.Where("vkz = ?", vkz).First(&org).Error; err != nil {
 		return nil, 0, err
 	}
 

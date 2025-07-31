@@ -24,7 +24,17 @@ class TabManager {
             });
         });
 
-        // Show first tab by default
+        // Check for hash in URL and switch to that tab
+        const hash = window.location.hash.replace('#', '').split('?')[0]; // Remove query params from hash
+        if (hash) {
+            const hashTab = document.querySelector(`[data-tab="${hash}"]`);
+            if (hashTab) {
+                this.switchTab(hash, tabNavItems, tabContents);
+                return;
+            }
+        }
+
+        // Show first tab by default if no hash match
         if (tabNavItems.length > 0) {
             const firstTab = tabNavItems[0].getAttribute('data-tab');
             this.switchTab(firstTab, tabNavItems, tabContents);

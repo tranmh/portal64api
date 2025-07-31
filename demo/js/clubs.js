@@ -211,7 +211,7 @@ class ClubManager {
                     <div>
                         <h4>Actions</h4>
                         ${club.id ? `
-                            <a href="players.html#club-players" class="btn btn-primary">
+                            <a href="players.html?club_id=${encodeURIComponent(club.id)}#club-players" class="btn btn-primary">
                                 View Club Players
                             </a>
                         ` : ''}
