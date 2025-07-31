@@ -51,9 +51,9 @@ func (r *PlayerRepository) SearchPlayers(req models.SearchRequest) ([]models.Per
 
 	// Add search filter
 	if req.Query != "" {
-		searchPattern := "%" + req.Query + "%"
-		query = query.Where("name LIKE ? OR vorname LIKE ? OR CONCAT(vorname, ' ', name) LIKE ?", 
-			searchPattern, searchPattern, searchPattern)
+		// Use exact search for better performance (avoids LIKE queries entirely)
+		query = query.Where("name = ? OR vorname = ? OR CONCAT(vorname, ' ', name) = ?", 
+			req.Query, req.Query, req.Query)
 	}
 
 	// Get total count
@@ -107,8 +107,8 @@ func (r *PlayerRepository) GetPlayersByClub(vkz string, req models.SearchRequest
 
 	// Add search filter
 	if req.Query != "" {
-		searchPattern := "%" + req.Query + "%"
-		query = query.Where("name LIKE ? OR vorname LIKE ?", searchPattern, searchPattern)
+		// Use exact search for better performance (avoids LIKE queries entirely)
+		query = query.Where("name = ? OR vorname = ?", req.Query, req.Query)
 	}
 
 	// Get total count
