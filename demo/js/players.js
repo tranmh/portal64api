@@ -339,30 +339,39 @@ class PlayerManager {
                 <table class="table table-striped">
                     <thead>
                         <tr>
-                            <th>Evaluation Date</th>
-                            <th>DWZ Rating</th>
-                            <th>Games Played</th>
-                            <th>Tournament</th>
+                            <th>Evaluation ID</th>
+                            <th>Old DWZ</th>
+                            <th>New DWZ</th>
                             <th>Rating Change</th>
+                            <th>Games</th>
+                            <th>Points</th>
+                            <th>Achievement</th>
+                            <th>Tournament ID</th>
                         </tr>
                     </thead>
                     <tbody>
         `;
 
         history.forEach(entry => {
+            const ratingChange = entry.dwz_new - entry.dwz_old;
+            
             html += `
                 <tr>
-                    <td>${Utils.formatDate(entry.evaluation_date)}</td>
-                    <td><span class="badge badge-primary">${entry.dwz_rating || 'N/A'}</span></td>
-                    <td>${Utils.sanitizeHTML(entry.games_played || 'N/A')}</td>
-                    <td>${Utils.sanitizeHTML(entry.tournament_name || 'N/A')}</td>
+                    <td>${Utils.sanitizeHTML(entry.id || 'N/A')}</td>
+                    <td><span class="badge badge-secondary">${entry.dwz_old || 'N/A'}</span></td>
+                    <td><span class="badge badge-primary">${entry.dwz_new || 'N/A'}</span></td>
                     <td>
-                        ${entry.rating_change ? 
-                            `<span class="badge ${entry.rating_change > 0 ? 'badge-success' : 'badge-secondary'}">
-                                ${entry.rating_change > 0 ? '+' : ''}${entry.rating_change}
-                            </span>` : 'N/A'
+                        ${ratingChange !== 0 ? 
+                            `<span class="badge ${ratingChange > 0 ? 'badge-success' : 'badge-danger'}">
+                                ${ratingChange > 0 ? '+' : ''}${ratingChange}
+                            </span>` : 
+                            '<span class="badge badge-secondary">0</span>'
                         }
                     </td>
+                    <td>${Utils.sanitizeHTML(entry.games || 'N/A')}</td>
+                    <td>${Utils.sanitizeHTML(entry.points || 'N/A')}</td>
+                    <td>${Utils.sanitizeHTML(entry.achievement || 'N/A')}</td>
+                    <td>${Utils.sanitizeHTML(entry.id_master || 'N/A')}</td>
                 </tr>
             `;
         });
