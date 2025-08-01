@@ -42,7 +42,8 @@
                 if (players.length > 0) {
                     html += '<ul>';
                     players.forEach(player => {
-                        html += '<li><strong>' + (player.name || 'N/A') + '</strong> - ID: ' + (player.id || 'N/A') + ' - Club: ' + (player.club || 'N/A') + '</li>';
+                        const fullName = ((player.firstname || '') + ' ' + (player.name || '')).trim() || 'N/A';
+                        html += '<li><strong>' + fullName + '</strong> - ID: ' + (player.id || 'N/A') + ' - Club: ' + (player.club || 'N/A') + '</li>';
                     });
                     html += '</ul>';
                 }

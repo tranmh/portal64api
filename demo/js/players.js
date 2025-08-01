@@ -241,7 +241,7 @@ class PlayerManager {
             html += `
                 <tr>
                     <td><code>${Utils.sanitizeHTML(player.id || 'N/A')}</code></td>
-                    <td><strong>${Utils.sanitizeHTML(player.name || 'N/A')}</strong></td>
+                    <td><strong>${Utils.sanitizeHTML(((player.firstname || '') + ' ' + (player.name || '')).trim() || 'N/A')}</strong></td>
                     <td>${Utils.sanitizeHTML(player.club || 'N/A')}</td>
                     <td>
                         ${player.current_dwz ? `<span class="badge badge-primary">${player.current_dwz}</span>` : 'N/A'}
@@ -281,7 +281,7 @@ class PlayerManager {
         const html = `
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">Player Details: ${Utils.sanitizeHTML(player.name || 'Unknown')}</h3>
+                    <h3 class="card-title">Player Details: ${Utils.sanitizeHTML(((player.firstname || '') + ' ' + (player.name || '')).trim() || 'Unknown')}</h3>
                 </div>
                 <div class="form-row">
                     <div>
