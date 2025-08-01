@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal64 API Demo - Vereinsprofil</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/forms.css">
+    <link rel="stylesheet" href="css/components.css">
+</head>
+<body class="club-profile-page">
+    <header class="header">
+        <div class="container">
+            <h1>Vereinsprofil</h1>
+            <p>Umfassende Übersicht über Schachvereine mit Spielern, Statistiken und Details</p>
+            <p><a href="index.html" style="color: var(--light-gray); text-decoration: underline;">← Zurück zum Dashboard</a></p>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="container">
+            <!-- Club Search Form -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Vereinsprofil anzeigen</h2>
+                </div>
+                <p>Geben Sie eine Vereins-ID (VKZ) ein, um das umfassende Vereinsprofil anzuzeigen.</p>
+                
+                <form id="club-profile-form" class="search-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="club-id">Vereins-ID (VKZ) *</label>
+                            <input type="text" id="club-id" name="club_id" class="form-input" 
+                                   placeholder="z.B., C0101, B000E, C0327" required>
+                            <div id="club-id-error" class="form-error">Bitte geben Sie eine gültige Vereins-ID ein</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">&nbsp;</label>
+                            <button type="submit" class="btn btn-primary">Vereinsprofil laden</button>
+                        </div>
+                    </div>
+                </form>
+
+                <div class="alert alert-info">
+                    <h4>Beispiel Vereins-IDs</h4>
+                    <p>Probieren Sie diese Vereins-IDs aus: <code>C0101</code>, <code>C0327</code>, <code>B000E</code></p>
+                    <p>Das Vereinsprofil zeigt Grundinformationen, Spielerliste, Bewertungsstatistiken, Kontaktdaten und weitere Details.</p>
+                </div>
+            </div>
+
+            <!-- Club Profile Display -->
+            <div id="club-profile-results" class="results">
+                <!-- Club profile will be displayed here -->
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 Portal64 API Demo. Vereinsprofil-Schnittstelle.</p>
+        </div>
+    </footer>
+
+    <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/club-profile.js"></script>
+</body>
+</html>

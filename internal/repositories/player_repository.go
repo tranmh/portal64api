@@ -307,3 +307,57 @@ func (r *PlayerRepository) GetPlayerCurrentMembership(personID uint) (*models.Mi
 		Order("von DESC").First(&membership).Error
 	return &membership, err
 }
+
+// FormatPlayerID formats player ID in VKZ-XXX format
+func (r *PlayerRepository) FormatPlayerID(pkz, vkz string) string {
+	if pkz != "" {
+		return pkz
+	}
+	return "UNKNOWN"
+}
+
+// FormatGender formats gender code to string  
+func (r *PlayerRepository) FormatGender(gender int) string {
+	switch gender {
+	case 1:
+		return "male"
+	case 2:
+		return "female"
+	default:
+		return "unknown"
+	}
+}
+
+// GetPlayerCurrentDWZ gets the current DWZ rating for a player
+func (r *PlayerRepository) GetPlayerCurrentDWZ(personID uint) int {
+	var evaluation models.Evaluation
+	err := r.dbs.Portal64BDW.Where("idPerson = ?", personID).
+		Order("id DESC").First(&evaluation).Error
+	if err != nil {
+		return 0
+	}
+	return evaluation.DWZNew
+}
+
+// GetPlayerDWZIndex gets the current DWZ index for a player
+func (r *PlayerRepository) GetPlayerDWZIndex(personID uint) int {
+	var evaluation models.Evaluation
+	err := r.dbs.Portal64BDW.Where("idPerson = ?", personID).
+		Order("id DESC").First(&evaluation).Error
+	if err != nil {
+		return 0
+	}
+	return evaluation.DWZNewIndex
+}
+
+// GetPlayerStatus formats player status
+func (r *PlayerRepository) GetPlayerStatus(status uint) string {
+	switch status {
+	case 0:
+		return "active"
+	case 1:
+		return "inactive"
+	default:
+		return "unknown"
+	}
+}

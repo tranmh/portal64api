@@ -27,6 +27,7 @@ func SetupRoutes(dbs *database.Databases) *gin.Engine {
 	// Create services
 	playerService := services.NewPlayerService(playerRepo, clubRepo)
 	clubService := services.NewClubService(clubRepo)
+	clubService.SetPlayerRepository(playerRepo) // Set player repo for club profile functionality
 	tournamentService := services.NewTournamentService(tournamentRepo)
 
 	// Create handlers
@@ -115,6 +116,7 @@ func SetupRoutes(dbs *database.Databases) *gin.Engine {
 			clubs.GET("/all", clubHandler.GetAllClubs)
 			clubs.GET("/:id", clubHandler.GetClub)
 			clubs.GET("/:id/players", playerHandler.GetPlayersByClub)
+			clubs.GET("/:id/profile", clubHandler.GetClubProfile)
 		}
 
 		// Tournament routes

@@ -160,6 +160,9 @@ class ClubManager {
                         <button onclick="clubManager.viewClubDetail('${club.id}')" class="btn btn-small btn-secondary">
                             Details anzeigen
                         </button>
+                        <a href="club-profile.html?club_id=${encodeURIComponent(club.id)}" class="btn btn-small btn-primary">
+                            Vollprofil
+                        </a>
                     </td>
                 </tr>
             `;
@@ -249,6 +252,9 @@ class ClubManager {
                         ${club.id ? `
                             <a href="players.html?club_id=${encodeURIComponent(club.id)}#club-players" class="btn btn-primary">
                                 View Club Players
+                            </a>
+                            <a href="club-profile.html?club_id=${encodeURIComponent(club.id)}" class="btn btn-secondary">
+                                Vollständiges Profil
                             </a>
                         ` : ''}
                     </div>

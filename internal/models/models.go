@@ -197,6 +197,57 @@ type ClubResponse struct {
 	Status           string    `json:"status"`
 }
 
+// ClubProfileResponse represents a comprehensive club profile in API responses
+type ClubProfileResponse struct {
+	// Basic club information
+	Club             ClubResponse          `json:"club"`
+	
+	// Players and statistics
+	Players          []PlayerResponse      `json:"players"`
+	PlayerCount      int                   `json:"player_count"`
+	ActivePlayerCount int                  `json:"active_player_count"`
+	
+	// Rating statistics
+	RatingStats      ClubRatingStats       `json:"rating_stats"`
+	
+	// Recent tournaments (if available)
+	RecentTournaments []TournamentResponse  `json:"recent_tournaments,omitempty"`
+	TournamentCount   int                  `json:"tournament_count"`
+	
+	// Additional club information
+	Teams            []ClubTeam           `json:"teams,omitempty"`
+	Contact          ClubContact          `json:"contact,omitempty"`
+}
+
+// ClubRatingStats represents rating statistics for a club
+type ClubRatingStats struct {
+	AverageDWZ       float64 `json:"average_dwz"`
+	MedianDWZ        float64 `json:"median_dwz"`
+	HighestDWZ       int     `json:"highest_dwz"`
+	LowestDWZ        int     `json:"lowest_dwz"`
+	PlayersWithDWZ   int     `json:"players_with_dwz"`
+	RatingDistribution map[string]int `json:"rating_distribution"`
+}
+
+// ClubTeam represents a team within a club
+type ClubTeam struct {
+	ID           string `json:"id"`
+	Name         string `json:"name"`
+	League       string `json:"league"`
+	Division     string `json:"division"`
+	PlayerCount  int    `json:"player_count"`
+}
+
+// ClubContact represents contact information for a club
+type ClubContact struct {
+	Website      string `json:"website,omitempty"`
+	Email        string `json:"email,omitempty"`
+	Phone        string `json:"phone,omitempty"`
+	Address      string `json:"address,omitempty"`
+	MeetingPlace string `json:"meeting_place,omitempty"`
+	MeetingTime  string `json:"meeting_time,omitempty"`
+}
+
 // TournamentResponse represents a tournament in API responses
 type TournamentResponse struct {
 	ID              string     `json:"id"`              // Format: C529-K00-HT1
@@ -427,3 +478,82 @@ type ResultsDisplay struct {
 func (ResultsDisplay) TableName() string {
 	return "resultsDisplay"
 }
+
+// Address models for contact information
+
+// Adressen represents the main address table linking organizations/persons to addresses
+type Adressen struct {
+	ID           uint `json:"id" gorm:"primaryKey;column:id"`
+	UUID         string `json:"uuid" gorm:"column:uuid"`
+	Organisation uint `json:"organisation" gorm:"column:organisation"`
+	Person       uint `json:"person" gorm:"column:person"`
+	Typ          uint `json:"typ" gorm:"column:typ"`
+	IstPerson    uint `json:"ist_person" gorm:"column:istperson"`
+	Funktion     uint `json:"funktion" gorm:"column:funktion"`
+	Status       uint `json:"status" gorm:"column:status"`
+	BeaPerson    uint `json:"bea_person" gorm:"column:beaperson"`
+	Beatimestamp time.Time `json:"beatimestamp" gorm:"column:beatimestamp"`
+}
+
+// TableName returns the table name for Adressen
+func (Adressen) TableName() string {
+	return "adressen"
+}
+
+// Adr represents address detail records (phone, email, website, etc.)
+type Adr struct {
+	ID           uint   `json:"id" gorm:"primaryKey;column:id"`
+	IDAdressen   uint   `json:"id_adressen" gorm:"column:id_adressen"`
+	IDArt        uint   `json:"id_art" gorm:"column:id_art"`
+	Wert         string `json:"wert" gorm:"column:wert"`
+	Status       uint   `json:"status" gorm:"column:status"`
+	Beatimestamp time.Time `json:"beatimestamp" gorm:"column:beatimestamp"`
+	BeaPerson    uint   `json:"bea_person" gorm:"column:beaperson"`
+}
+
+// TableName returns the table name for Adr
+func (Adr) TableName() string {
+	return "adr"
+}
+
+// AdrArt represents address types (email, phone, website, etc.)
+type AdrArt struct {
+	ID           uint   `json:"id" gorm:"primaryKey;column:id"`
+	Bezeichnung  string `json:"bezeichnung" gorm:"column:bezeichnung"`
+	Test         string `json:"test" gorm:"column:test"`
+	Status       uint   `json:"status" gorm:"column:status"`
+	Beatimestamp time.Time `json:"beatimestamp" gorm:"column:beatimestamp"`
+	BeaPerson    uint   `json:"bea_person" gorm:"column:beaperson"`
+}
+
+// TableName returns the table name for AdrArt
+func (AdrArt) TableName() string {
+	return "adr_art"
+}
+
+// Address type constants
+const (
+	AdrArtName         = 1   // Name
+	AdrArtStrasse      = 2   // Straße (Street)
+	AdrArtPLZ          = 3   // Postleitzahl (Postal Code)
+	AdrArtOrt          = 4   // Ort (City)
+	AdrArtLand         = 5   // Land (Country)
+	AdrArtTelefon1     = 6   // Telefon 1 (Phone 1)
+	AdrArtTelefon2     = 7   // Telefon 2 (Phone 2)
+	AdrArtTelefon3     = 8   // Telefon 3 (Phone 3)
+	AdrArtFax          = 9   // Fax
+	AdrArtEmail1       = 10  // E-Mail 1
+	AdrArtEmail2       = 11  // E-Mail 2
+	AdrArtZusatz       = 12  // Zusatz (Additional)
+	AdrArtBemerkung    = 13  // Bemerkung (Remarks)
+	AdrArtHomepage     = 15  // Homepage (Website)
+	AdrArtUebungsabend = 16  // Übungsabend (Practice Evening)
+	AdrArtBreite       = 17  // geogr. Breite (Latitude)
+	AdrArtLaenge       = 18  // geogr. Länge (Longitude)
+	AdrArtVereinsitz   = 19  // Vereinssitz (Club Seat)
+	AdrArtRegister     = 20  // Vereinsregister (Club Register)
+	AdrArtUStNr        = 21  // Umsatzsteuernr (VAT Number)
+	AdrArtGeburt       = 22  // Geburtsdatum (Birth Date)
+	AdrArtBewirtschaftet = 23 // bewirtschaftet (Managed)
+	AdrArtBehindertengerecht = 24 // behindertengerecht (Wheelchair Accessible)
+)

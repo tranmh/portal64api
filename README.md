@@ -142,6 +142,7 @@ The API will be available at `http://localhost:8080`
 - `GET /api/v1/clubs` - Search clubs
 - `GET /api/v1/clubs/{id}` - Get club by ID (e.g., `C0101`)
 - `GET /api/v1/clubs/{club_id}/players` - Get players in a club
+- `GET /api/v1/clubs/{id}/profile` - Get comprehensive club profile with players and statistics
 - `GET /api/v1/clubs/all` - Get all clubs
 
 #### Tournaments

@@ -22,3 +22,5 @@ Missing Features:
 2. Translate all pages for /demo to German. So "normal" users would see German only. Keep everything else belonging to a developer like REST-API documentation, swagger, code etc. in English. // DONE 
 3. For Club players list, the default sort order of the player is DWZ, since it the internal ranking of the club directly. Club players should be sorted by DWZ rating (strongest first). // DONE
 4. Showing player details for a certain tournement like this page https://www.schachbund.de/turnier/C531-634-S25.html is missing. So we know details about the tournement itself for the moment. But we do not know about which players change the DWZ how and also the tournament details with its result per player like this: https://www.schachbund.de/turnier/C531-634-S25/Ergebnisse.html // DONE
+5. Implement routes and also add to /demo which show somethings like this: https://schach.in/sc-muehlacker-1923/ for a certain club. // DONE
+6. For every regions you have officials / functionaries and their addresses like this https://www.svw.info/adressen/praesidium for region C. Implement the possibility to access those addresses. See tables adr, adresse and adressen.

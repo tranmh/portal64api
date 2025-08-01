@@ -116,3 +116,85 @@ func (r *ClubRepository) GetAllClubs() ([]models.Organisation, error) {
 		Order("name ASC").Find(&clubs).Error
 	return clubs, err
 }
+
+// GetClubContactInfo gets contact information for a club
+func (r *ClubRepository) GetClubContactInfo(organisationID uint) (map[string]string, error) {
+	contactInfo := make(map[string]string)
+	
+	// Query to get all contact information for the organization
+	query := `
+		SELECT adr.id_art, adr.wert, art.bezeichnung 
+		FROM adressen addr
+		JOIN adr ON addr.id = adr.id_adressen
+		JOIN adr_art art ON adr.id_art = art.id
+		WHERE addr.organisation = ? AND addr.status = 0 AND adr.status = 0
+		ORDER BY adr.id_art`
+	
+	var results []struct {
+		IDArt       uint   `gorm:"column:id_art"`
+		Wert        string `gorm:"column:wert"`
+		Bezeichnung string `gorm:"column:bezeichnung"`
+	}
+	
+	err := r.dbs.MVDSB.Raw(query, organisationID).Scan(&results).Error
+	if err != nil {
+		return contactInfo, err
+	}
+	
+	// Map the results to contact information
+	for _, result := range results {
+		if result.Wert != "" {
+			switch result.IDArt {
+			case models.AdrArtHomepage:
+				contactInfo["website"] = result.Wert
+			case models.AdrArtEmail1:
+				contactInfo["email"] = result.Wert
+			case models.AdrArtEmail2:
+				if contactInfo["email"] == "" {
+					contactInfo["email"] = result.Wert
+				} else {
+					contactInfo["email2"] = result.Wert
+				}
+			case models.AdrArtTelefon1:
+				contactInfo["phone"] = result.Wert
+			case models.AdrArtTelefon2:
+				if contactInfo["phone"] == "" {
+					contactInfo["phone"] = result.Wert
+				} else {
+					contactInfo["phone2"] = result.Wert
+				}
+			case models.AdrArtFax:
+				contactInfo["fax"] = result.Wert
+			case models.AdrArtStrasse:
+				contactInfo["street"] = result.Wert
+			case models.AdrArtPLZ:
+				contactInfo["postal_code"] = result.Wert
+			case models.AdrArtOrt:
+				contactInfo["city"] = result.Wert
+			case models.AdrArtUebungsabend:
+				contactInfo["meeting_time"] = result.Wert
+			case models.AdrArtZusatz:
+				contactInfo["additional"] = result.Wert
+			case models.AdrArtBemerkung:
+				contactInfo["remarks"] = result.Wert
+			}
+		}
+	}
+	
+	// Combine address components if available
+	if street, hasStreet := contactInfo["street"]; hasStreet {
+		address := street
+		if postal, hasPostal := contactInfo["postal_code"]; hasPostal {
+			if city, hasCity := contactInfo["city"]; hasCity {
+				address += fmt.Sprintf(", %s %s", postal, city)
+			} else {
+				address += fmt.Sprintf(", %s", postal)
+			}
+		} else if city, hasCity := contactInfo["city"]; hasCity {
+			address += fmt.Sprintf(", %s", city)
+		}
+		contactInfo["address"] = address
+	}
+	
+	return contactInfo, nil
+}

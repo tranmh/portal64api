@@ -138,3 +138,45 @@ func (h *ClubHandler) GetAllClubs(c *gin.Context) {
 
 	utils.HandleResponse(c, clubs, "all_clubs.csv")
 }
+
+// GetClubProfile godoc
+// @Summary Get comprehensive club profile
+// @Description Get a comprehensive club profile with players, statistics, and other details
+// @Tags clubs
+// @Accept json
+// @Produce json,text/csv
+// @Param id path string true "Club ID (format: C0101)"
+// @Param format query string false "Response format (json or csv)" Enums(json,csv)
+// @Success 200 {object} models.ClubProfileResponse
+// @Failure 400 {object} models.Response
+// @Failure 404 {object} models.Response
+// @Router /api/v1/clubs/{id}/profile [get]
+func (h *ClubHandler) GetClubProfile(c *gin.Context) {
+	clubID := c.Param("id")
+	
+	// If clubID is empty, this should be a 404 (not found)
+	if clubID == "" {
+		utils.SendJSONResponse(c, http.StatusNotFound, 
+			errors.NewNotFoundError("Club not found"))
+		return
+	}
+	
+	// Validate club ID format
+	if err := utils.ValidateClubID(clubID); err != nil {
+		utils.SendJSONResponse(c, http.StatusBadRequest, err)
+		return
+	}
+	
+	profile, err := h.clubService.GetClubProfile(clubID)
+	if err != nil {
+		if apiErr, ok := err.(errors.APIError); ok {
+			utils.SendJSONResponse(c, apiErr.Code, apiErr)
+			return
+		}
+		utils.SendJSONResponse(c, http.StatusInternalServerError, 
+			errors.NewInternalServerError("Failed to get club profile"))
+		return
+	}
+
+	utils.HandleResponse(c, profile, "club_profile.csv")
+}

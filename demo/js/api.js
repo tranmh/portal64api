@@ -88,6 +88,10 @@ class Portal64API {
         return this.request(`/api/v1/clubs/${id}/players?${queryString}`);
     }
 
+    async getClubProfile(id, format = 'json') {
+        return this.request(`/api/v1/clubs/${id}/profile?format=${format}`);
+    }
+
     // Tournament endpoints
     async searchTournaments(params = {}) {
         const queryString = new URLSearchParams(params).toString();
