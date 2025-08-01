@@ -111,4 +111,8 @@ class Portal64API {
     async getTournament(id, format = 'json') {
         return this.request(`/api/v1/tournaments/${id}?format=${format}`);
     }
+
+    async getTournamentPlayers(id, format = 'json') {
+        return this.request(`/api/v1/tournaments/${id}?format=${format}`);
+    }
 }

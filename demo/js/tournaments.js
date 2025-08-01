@@ -52,6 +52,15 @@ class TournamentManager {
                 this.getTournament();
             });
         }
+
+        // Tournament players form handler
+        const tournamentPlayersForm = document.getElementById('tournament-players-form');
+        if (tournamentPlayersForm) {
+            tournamentPlayersForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.getTournamentPlayers();
+            });
+        }
     }
 
     async searchTournaments() {
@@ -176,6 +185,35 @@ class TournamentManager {
             
         } catch (error) {
             Utils.showError('tournament-lookup-results', `Turnier-Abfrage fehlgeschlagen: ${error.message}`);
+        }
+    }
+
+    async getTournamentPlayers() {
+        try {
+            Utils.showLoading('tournament-players-results');
+            
+            const form = document.getElementById('tournament-players-form');
+            const formData = Utils.getFormData(form);
+            const tournamentId = formData.tournament_id;
+            const format = formData.format || 'json';
+            
+            // Validate tournament ID
+            if (!Utils.validateTournamentID(tournamentId)) {
+                Utils.showError('tournament-players-results', 'Ungültiges Turnier-ID Format. Erwartetes Format: C529-K00-HT1 oder C339-400-442');
+                return;
+            }
+            
+            const result = await api.getTournamentPlayers(tournamentId, format);
+            
+            if (format === 'json') {
+                // API returns {success: true, data: {...}}
+                this.displayTournamentPlayersDetail('tournament-players-results', result.data || result);
+            } else {
+                new CodeDisplayManager().displayResponse('tournament-players-results', result, 'Turnier-Spielerdaten (CSV)');
+            }
+            
+        } catch (error) {
+            Utils.showError('tournament-players-results', `Turnier-Spieler-Abfrage fehlgeschlagen: ${error.message}`);
         }
     }
 
@@ -378,6 +416,230 @@ class TournamentManager {
         `;
 
         container.innerHTML = html;
+    }
+
+    displayTournamentPlayersDetail(containerId, tournament) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        if (!tournament || !tournament.participants) {
+            container.innerHTML = `
+                <div class="alert alert-info">
+                    <h4>Keine Teilnehmer gefunden</h4>
+                    <p>Für dieses Turnier wurden keine Teilnehmerdaten gefunden.</p>
+                </div>
+            `;
+            return;
+        }
+
+        let html = `
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Turnier: ${Utils.sanitizeHTML(tournament.name || 'Unbekannt')}</h3>
+                    <p><strong>ID:</strong> <code>${Utils.sanitizeHTML(tournament.id || 'N/A')}</code> | 
+                       <strong>Teilnehmer:</strong> ${tournament.participant_count || 0} | 
+                       <strong>Status:</strong> <span class="badge ${tournament.status === 'computed' ? 'badge-success' : 'badge-secondary'}">${tournament.status || 'N/A'}</span></p>
+                </div>
+        `;
+
+        // Tournament Players Tab Navigation
+        html += `
+            <div class="tabs">
+                <nav class="tab-nav" style="margin-bottom: 20px;">
+                    <button class="tab-nav-item active" data-tab="participants-list">Teilnehmerliste</button>
+                    ${tournament.evaluations && tournament.evaluations.length > 0 ? 
+                        '<button class="tab-nav-item" data-tab="dwz-changes">DWZ-Änderungen</button>' : ''}
+                    ${tournament.games && tournament.games.length > 0 ? 
+                        '<button class="tab-nav-item" data-tab="tournament-results">Spielergebnisse</button>' : ''}
+                </nav>
+        `;
+
+        // Participants List Tab
+        html += `
+            <div id="participants-list" class="tab-content active">
+                <h4>Teilnehmerliste (${tournament.participants.length} Spieler)</h4>
+                <div class="table-container">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Nr.</th>
+                                <th>Name</th>
+                                <th>Verein</th>
+                                <th>Start-DWZ</th>
+                                <th>Geburtsdatum</th>
+                                <th>Nation</th>
+                                <th>FIDE-ID</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+        `;
+
+        tournament.participants.forEach(participant => {
+            const statusClass = participant.state === 2 ? 'badge-success' : 
+                               participant.state === 1 ? 'badge-warning' : 'badge-error';
+            const statusText = participant.state === 2 ? 'OK' : 
+                              participant.state === 1 ? 'Unbekannt' : 'Gesperrt';
+            
+            html += `
+                <tr>
+                    <td><strong>${participant.no || 'N/A'}</strong></td>
+                    <td><strong>${Utils.sanitizeHTML(participant.full_name || 'N/A')}</strong></td>
+                    <td>${Utils.sanitizeHTML(participant.club?.name || 'N/A')}</td>
+                    <td>${participant.rating?.use_rating ? 
+                         `<span class="badge badge-primary">${participant.rating.use_rating}</span>` : 'N/A'}</td>
+                    <td>${Utils.formatDate(participant.date_of_birth)}</td>
+                    <td>${Utils.sanitizeHTML(participant.nation || 'N/A')}</td>
+                    <td>${participant.fide_id ? `<code>${participant.fide_id}</code>` : 'N/A'}</td>
+                    <td><span class="badge ${statusClass}">${statusText}</span></td>
+                </tr>
+            `;
+        });
+
+        html += `
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+
+        // DWZ Changes Tab (if evaluations exist)
+        if (tournament.evaluations && tournament.evaluations.length > 0) {
+            html += `
+                <div id="dwz-changes" class="tab-content">
+                    <h4>DWZ-Änderungen (${tournament.evaluations.length} Bewertungen)</h4>
+                    <p>Zeigt, wie sich die Deutsche Wertungszahl (DWZ) für jeden Spieler durch dieses Turnier geändert hat.</p>
+                    <div class="table-container">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Spieler</th>
+                                    <th>DWZ Alt</th>
+                                    <th>DWZ Neu</th>
+                                    <th>Änderung</th>
+                                    <th>Partien</th>
+                                    <th>Punkte</th>
+                                    <th>Leistung</th>
+                                    <th>We</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+            `;
+
+            tournament.evaluations.forEach(evaluation => {
+                const dwzChange = evaluation.dwz_new - evaluation.dwz_old;
+                const changeClass = dwzChange > 0 ? 'text-success' : dwzChange < 0 ? 'text-danger' : '';
+                const changeText = dwzChange > 0 ? `+${dwzChange}` : dwzChange.toString();
+                
+                html += `
+                    <tr>
+                        <td><strong>${Utils.sanitizeHTML(evaluation.player_name || 'N/A')}</strong></td>
+                        <td><span class="badge badge-secondary">${evaluation.dwz_old || 'N/A'}</span></td>
+                        <td><span class="badge badge-primary">${evaluation.dwz_new || 'N/A'}</span></td>
+                        <td><strong class="${changeClass}">${changeText}</strong></td>
+                        <td>${evaluation.games || 0}</td>
+                        <td>${evaluation.points || 0}</td>
+                        <td>${evaluation.achievement || 'N/A'}</td>
+                        <td>${evaluation.we ? evaluation.we.toFixed(2) : 'N/A'}</td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Tournament Results Tab (if games exist)
+        if (tournament.games && tournament.games.length > 0) {
+            html += `
+                <div id="tournament-results" class="tab-content">
+                    <h4>Spielergebnisse (${tournament.games.length} Runden)</h4>
+                    <p>Detaillierte Ergebnisse aller Spiele nach Runden sortiert.</p>
+            `;
+
+            tournament.games.forEach(round => {
+                html += `
+                    <div class="card" style="margin-bottom: 20px;">
+                        <div class="card-header">
+                            <h5>Runde ${round.round}</h5>
+                            ${round.appointment ? `<p><strong>Termin:</strong> ${Utils.sanitizeHTML(round.appointment)}</p>` : ''}
+                        </div>
+                        <div class="table-container">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Brett</th>
+                                        <th>Weiß</th>
+                                        <th>Schwarz</th>
+                                        <th>Ergebnis</th>
+                                        <th>Punkte W</th>
+                                        <th>Punkte S</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                `;
+
+                round.games.forEach(game => {
+                    html += `
+                        <tr>
+                            <td><strong>${game.board}</strong></td>
+                            <td>${Utils.sanitizeHTML(game.white?.name || 'N/A')} (${game.white?.no || 'N/A'})</td>
+                            <td>${Utils.sanitizeHTML(game.black?.name || 'N/A')} (${game.black?.no || 'N/A'})</td>
+                            <td><strong>${Utils.sanitizeHTML(game.result || 'N/A')}</strong></td>
+                            <td>${game.white_points !== undefined ? game.white_points : 'N/A'}</td>
+                            <td>${game.black_points !== undefined ? game.black_points : 'N/A'}</td>
+                        </tr>
+                    `;
+                });
+
+                html += `
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += `</div>`;
+        }
+
+        html += `
+                </div>
+            </div>
+        `;
+
+        container.innerHTML = html;
+
+        // Initialize sub-tabs functionality
+        this.initializeSubTabs(containerId);
+    }
+
+    // Initialize sub-tabs functionality for tournament players detail
+    initializeSubTabs(containerId) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        const tabButtons = container.querySelectorAll('.tab-nav-item');
+        const tabContents = container.querySelectorAll('.tab-content');
+
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                // Remove active class from all buttons and tabs
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                tabContents.forEach(content => content.classList.remove('active'));
+
+                // Add active class to clicked button and corresponding tab
+                button.classList.add('active');
+                const targetTab = container.querySelector(`#${button.dataset.tab}`);
+                if (targetTab) {
+                    targetTab.classList.add('active');
+                }
+            });
+        });
     }
 
     async viewTournamentDetail(tournamentId) {

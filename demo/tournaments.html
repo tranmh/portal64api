@@ -26,6 +26,7 @@
                     <button class="tab-nav-item" data-tab="recent-tournaments">Kürzlich</button>
                     <button class="tab-nav-item" data-tab="date-range-tournaments">Datumsbereich</button>
                     <button class="tab-nav-item" data-tab="tournament-lookup">Turnier-Abfrage</button>
+                    <button class="tab-nav-item" data-tab="tournament-players">Turnier-Spieler</button>
                 </nav>
 
                 <!-- Search Tournaments Tab -->
@@ -321,6 +322,54 @@
 
                         <div id="tournament-lookup-results" class="results">
                             <!-- Tournament details will be displayed here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tournament Players Tab -->
+                <div id="tournament-players" class="tab-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Turnier-Spieler und Ergebnisse</h2>
+                        </div>
+                        <p>Zeigen Sie Spielerdetails, DWZ-Änderungen und Ergebnisse für ein bestimmtes Turnier an.</p>
+                        
+                        <form id="tournament-players-form" class="search-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label" for="players-tournament-id">Turnier-ID *</label>
+                                    <input type="text" id="players-tournament-id" name="tournament_id" class="form-input" 
+                                           placeholder="z.B., C529-K00-HT1 oder C339-400-442" required>
+                                    <div id="players-tournament-id-error" class="form-error">Bitte geben Sie eine gültige Turnier-ID ein</div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="players-format">Antwortformat</label>
+                                    <select id="players-format" name="format" class="form-select">
+                                        <option value="json" selected>JSON</option>
+                                        <option value="csv">CSV</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">&nbsp;</label>
+                                    <button type="submit" class="btn btn-primary">Spieler-Details abrufen</button>
+                                </div>
+                            </div>
+                        </form>
+
+                        <div class="alert alert-info">
+                            <h4>Spieler-Details anzeigen</h4>
+                            <p>Diese Funktion zeigt detaillierte Informationen über alle Teilnehmer eines Turniers an, einschließlich:</p>
+                            <ul>
+                                <li><strong>Teilnehmerliste:</strong> Alle Turnierspieler mit Namen, Verein und Startrating</li>
+                                <li><strong>DWZ-Änderungen:</strong> Wie sich die Deutsche Wertungszahl (DWZ) für jeden Spieler geändert hat</li>
+                                <li><strong>Spielergebnisse:</strong> Detaillierte Ergebnisse pro Spieler und Runde</li>
+                                <li><strong>Statistiken:</strong> Punkte, Performanz und andere Turnierstatistiken</li>
+                            </ul>
+                            <p>Ähnlich den Informationen auf: <a href="https://www.schachbund.de/turnier/C531-634-S25.html" target="_blank">schachbund.de Turnierdetails</a></p>
+                        </div>
+
+                        <div id="tournament-players-results" class="results">
+                            <!-- Tournament players and results will be displayed here -->
                         </div>
                     </div>
                 </div>
