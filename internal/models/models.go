@@ -58,6 +58,7 @@ type Mitgliedschaft struct {
 	UUID         string    `json:"uuid" gorm:"column:uuid"`
 	Person       uint      `json:"person" gorm:"column:person"`
 	Organisation uint      `json:"organisation" gorm:"column:organisation"`
+	Spielernummer uint     `json:"spielernummer" gorm:"column:spielernummer"`
 	Von          *time.Time `json:"von" gorm:"column:von"`
 	Bis          *time.Time `json:"bis" gorm:"column:bis"`
 	Spielberechtigung uint `json:"spielberechtigung" gorm:"column:spielberechtigung"`
@@ -169,7 +170,7 @@ func (Turnier) TableName() string {
 
 // PlayerResponse represents a player in API responses
 type PlayerResponse struct {
-	ID         string    `json:"id"`         // Format: C0101-1014
+	ID         string    `json:"id"`         // Format: C0101-123 (3-digit membership number)
 	Name       string    `json:"name"`
 	Firstname  string    `json:"firstname"`
 	Club       string    `json:"club"`

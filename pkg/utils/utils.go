@@ -145,8 +145,8 @@ func ValidateTournamentID(tournamentID string) error {
 	
 	return nil
 }
-func GeneratePlayerID(vkz string, personID uint) string {
-	return fmt.Sprintf("%s-%d", vkz, personID)
+func GeneratePlayerID(vkz string, spielernummer uint) string {
+	return fmt.Sprintf("%s-%03d", vkz, spielernummer)
 }
 
 // ParsePlayerID parses a player ID into VKZ and person ID

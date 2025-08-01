@@ -26,13 +26,13 @@ func NewPlayerService(playerRepo interfaces.PlayerRepositoryInterface, clubRepo 
 // GetPlayerByID gets a player by their ID
 func (s *PlayerService) GetPlayerByID(playerID string) (*models.PlayerResponse, error) {
 	// Parse player ID
-	vkz, personID, err := utils.ParsePlayerID(playerID)
+	vkz, spielernummer, err := utils.ParsePlayerID(playerID)
 	if err != nil {
 		return nil, errors.NewBadRequestError("Invalid player ID format")
 	}
 
 	// Get player data
-	person, org, evaluation, err := s.playerRepo.GetPlayerByID(vkz, personID)
+	person, org, evaluation, err := s.playerRepo.GetPlayerByID(vkz, spielernummer)
 	if err != nil {
 		return nil, errors.NewNotFoundError("Player")
 	}
@@ -91,7 +91,14 @@ func (s *PlayerService) SearchPlayers(req models.SearchRequest) ([]models.Player
 		if club, err := s.getPlayerCurrentClub(player.ID); err == nil && club != nil {
 			responses[i].Club = club.Name
 			responses[i].ClubID = club.VKZ
-			responses[i].ID = utils.GeneratePlayerID(club.VKZ, player.ID)
+			
+			// Get membership to retrieve spielernummer
+			if membership, err := s.getPlayerCurrentMembership(player.ID); err == nil && membership != nil {
+				responses[i].ID = utils.GeneratePlayerID(club.VKZ, membership.Spielernummer)
+			} else {
+				// Fallback to UNKNOWN if spielernummer is not available
+				responses[i].ID = fmt.Sprintf("UNKNOWN-%d", player.ID)
+			}
 		}
 
 		// Try to get DWZ information
@@ -127,8 +134,17 @@ func (s *PlayerService) GetPlayersByClub(clubID string, req models.SearchRequest
 	// Convert to response format
 	responses := make([]models.PlayerResponse, len(players))
 	for i, player := range players {
+		// Get membership to retrieve spielernummer
+		var playerID string
+		if membership, err := s.getPlayerCurrentMembership(player.ID); err == nil && membership != nil {
+			playerID = utils.GeneratePlayerID(clubID, membership.Spielernummer)
+		} else {
+			// Fallback to UNKNOWN if spielernummer is not available
+			playerID = fmt.Sprintf("UNKNOWN-%d", player.ID)
+		}
+		
 		responses[i] = models.PlayerResponse{
-			ID:        utils.GeneratePlayerID(clubID, player.ID),
+			ID:        playerID,
 			Name:      player.Name,
 			Firstname: player.Vorname,
 			Club:      club.Name,
@@ -159,13 +175,19 @@ func (s *PlayerService) GetPlayersByClub(clubID string, req models.SearchRequest
 
 // GetPlayerRatingHistory gets rating history for a player
 func (s *PlayerService) GetPlayerRatingHistory(playerID string) ([]models.Evaluation, error) {
-	// Parse player ID
-	_, personID, err := utils.ParsePlayerID(playerID)
+	// Parse player ID to get VKZ and spielernummer
+	vkz, spielernummer, err := utils.ParsePlayerID(playerID)
 	if err != nil {
 		return nil, errors.NewBadRequestError("Invalid player ID format")
 	}
 
-	evaluations, err := s.playerRepo.GetPlayerRatingHistory(personID)
+	// Get player data to find the actual person ID
+	person, _, _, err := s.playerRepo.GetPlayerByID(vkz, spielernummer)
+	if err != nil {
+		return nil, errors.NewNotFoundError("Player")
+	}
+
+	evaluations, err := s.playerRepo.GetPlayerRatingHistory(person.ID)
 	if err != nil {
 		return nil, errors.NewInternalServerError("Failed to get rating history")
 	}
@@ -178,6 +200,11 @@ func (s *PlayerService) GetPlayerRatingHistory(playerID string) ([]models.Evalua
 // getPlayerCurrentClub gets the current club for a player
 func (s *PlayerService) getPlayerCurrentClub(personID uint) (*models.Organisation, error) {
 	return s.playerRepo.GetPlayerCurrentClub(personID)
+}
+
+// getPlayerCurrentMembership gets the current membership for a player
+func (s *PlayerService) getPlayerCurrentMembership(personID uint) (*models.Mitgliedschaft, error) {
+	return s.playerRepo.GetPlayerCurrentMembership(personID)
 }
 
 // getPlayerLatestEvaluation gets the latest DWZ evaluation for a player

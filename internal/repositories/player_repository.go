@@ -17,26 +17,31 @@ func NewPlayerRepository(dbs *database.Databases) *PlayerRepository {
 	return &PlayerRepository{dbs: dbs}
 }
 
-// GetPlayerByID gets a player by their ID (VKZ-PersonID format)
-func (r *PlayerRepository) GetPlayerByID(vkz string, personID uint) (*models.Person, *models.Organisation, *models.Evaluation, error) {
-	// Get person from MVDSB database
-	var person models.Person
-	if err := r.dbs.MVDSB.Where("id = ?", personID).First(&person).Error; err != nil {
+// GetPlayerByID gets a player by their ID (VKZ-Spielernummer format)
+func (r *PlayerRepository) GetPlayerByID(vkz string, spielernummer uint) (*models.Person, *models.Organisation, *models.Evaluation, error) {
+	// First, get the organization by VKZ
+	var org models.Organisation
+	if err := r.dbs.MVDSB.Where("vkz = ?", vkz).First(&org).Error; err != nil {
 		return nil, nil, nil, err
 	}
 
-	// Get current club membership
+	// Get the membership by organization and spielernummer
 	var membership models.Mitgliedschaft
-	var org models.Organisation
-	err := r.dbs.MVDSB.Where("person = ? AND bis IS NULL AND status = 0", personID).
-		Order("von DESC").First(&membership).Error
-	if err == nil {
-		r.dbs.MVDSB.Where("id = ?", membership.Organisation).First(&org)
+	err := r.dbs.MVDSB.Where("organisation = ? AND spielernummer = ? AND bis IS NULL AND status = 0", org.ID, spielernummer).
+		First(&membership).Error
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	// Get person from MVDSB database using the person ID from membership
+	var person models.Person
+	if err := r.dbs.MVDSB.Where("id = ?", membership.Person).First(&person).Error; err != nil {
+		return nil, nil, nil, err
 	}
 
 	// Get latest DWZ evaluation from Portal64_BDW
 	var evaluation models.Evaluation
-	r.dbs.Portal64BDW.Where("idPerson = ?", personID).
+	r.dbs.Portal64BDW.Where("idPerson = ?", membership.Person).
 		Order("id DESC").First(&evaluation)
 
 	return &person, &org, &evaluation, nil
@@ -160,4 +165,12 @@ func (r *PlayerRepository) GetPlayerCurrentClub(personID uint) (*models.Organisa
 	}
 
 	return &org, nil
+}
+
+// GetPlayerCurrentMembership gets the current membership for a player including spielernummer
+func (r *PlayerRepository) GetPlayerCurrentMembership(personID uint) (*models.Mitgliedschaft, error) {
+	var membership models.Mitgliedschaft
+	err := r.dbs.MVDSB.Where("person = ? AND bis IS NULL AND status = 0", personID).
+		Order("von DESC").First(&membership).Error
+	return &membership, err
 }
