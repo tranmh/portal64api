@@ -65,7 +65,7 @@ func (h *ClubHandler) GetClub(c *gin.Context) {
 // @Param query query string false "Search query"
 // @Param limit query int false "Limit (max 100)" default(20)
 // @Param offset query int false "Offset" default(0)
-// @Param sort_by query string false "Sort by field" default(name)
+// @Param sort_by query string false "Sort by field" default(vkz)
 // @Param sort_order query string false "Sort order (asc/desc)" default(asc)
 // @Param filter_by query string false "Filter by field (region, district)"
 // @Param filter_value query string false "Filter value"
@@ -74,7 +74,7 @@ func (h *ClubHandler) GetClub(c *gin.Context) {
 // @Failure 400 {object} models.Response
 // @Router /api/v1/clubs [get]
 func (h *ClubHandler) SearchClubs(c *gin.Context) {
-	req, err := utils.ParseSearchParams(c)
+	req, err := utils.ParseSearchParamsWithDefaults(c, "vkz", "asc")
 	if err != nil {
 		if apiErr, ok := err.(errors.APIError); ok {
 			utils.SendJSONResponse(c, apiErr.Code, apiErr)

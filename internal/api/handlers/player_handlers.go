@@ -163,8 +163,8 @@ func (h *PlayerHandler) GetPlayerRatingHistory(c *gin.Context) {
 // @Param query query string false "Search query"
 // @Param limit query int false "Limit (max 100)" default(20)
 // @Param offset query int false "Offset" default(0)
-// @Param sort_by query string false "Sort by field" default(name)
-// @Param sort_order query string false "Sort order (asc/desc)" default(asc)
+// @Param sort_by query string false "Sort by field" default(current_dwz)
+// @Param sort_order query string false "Sort order (asc/desc)" default(desc)
 // @Param active query bool false "Show only active players with valid club memberships" default(true)
 // @Param format query string false "Response format (json or csv)" Enums(json,csv)
 // @Success 200 {object} models.Response{data=[]models.PlayerResponse,meta=models.Meta}
@@ -180,7 +180,7 @@ func (h *PlayerHandler) GetPlayersByClub(c *gin.Context) {
 		return
 	}
 	
-	req, err := utils.ParseSearchParams(c)
+	req, err := utils.ParseSearchParamsWithDefaults(c, "current_dwz", "desc")
 	if err != nil {
 		if apiErr, ok := err.(errors.APIError); ok {
 			utils.SendJSONResponse(c, apiErr.Code, apiErr)
