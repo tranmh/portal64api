@@ -242,7 +242,76 @@ class TournamentManager {
             </div>
         `;
 
+        // Add pagination controls if meta exists
+        if (meta) {
+            const paginationCallback = this.getPaginationCallback(containerId);
+            html += Utils.createPaginationControls(meta, containerId, paginationCallback);
+        }
+
         container.innerHTML = html;
+    }
+
+    // Get the appropriate pagination callback function name based on container ID
+    getPaginationCallback(containerId) {
+        switch(containerId) {
+            case 'tournament-search-results':
+                return 'tournamentManager.searchTournamentsWithOffset';
+            case 'date-range-tournaments-results':
+                return 'tournamentManager.getTournamentsByDateRangeWithOffset';
+            default:
+                return 'tournamentManager.searchTournamentsWithOffset';
+        }
+    }
+
+    // Pagination handler for tournament search
+    async searchTournamentsWithOffset(offset, containerId) {
+        try {
+            Utils.showLoading(containerId);
+            
+            const form = document.getElementById('tournament-search-form');
+            const params = Utils.getFormData(form);
+            params.offset = offset;
+            
+            const result = await api.searchTournaments(params);
+            this.currentResults = result.data?.data || result.data || result;
+            this.currentMeta = result.data?.meta || result.meta;
+            
+            this.displayTournamentResults(containerId, this.currentResults, this.currentMeta);
+            
+        } catch (error) {
+            Utils.showError(containerId, `Search failed: ${error.message}`);
+        }
+    }
+
+    // Pagination handler for date range tournaments
+    async getTournamentsByDateRangeWithOffset(offset, containerId) {
+        try {
+            Utils.showLoading(containerId);
+            
+            const form = document.getElementById('date-range-tournaments-form');
+            const formData = Utils.getFormData(form);
+            const startDate = formData.start_date;
+            const endDate = formData.end_date;
+            
+            if (!startDate || !endDate) {
+                Utils.showError(containerId, 'Both start date and end date are required.');
+                return;
+            }
+            
+            // Remove dates from params and add offset
+            delete formData.start_date;
+            delete formData.end_date;
+            formData.offset = offset;
+            
+            const result = await api.getTournamentsByDateRange(startDate, endDate, formData);
+            this.currentResults = result.data?.data || result.data || result;
+            this.currentMeta = result.data?.meta || result.meta;
+            
+            this.displayTournamentResults(containerId, this.currentResults, this.currentMeta);
+            
+        } catch (error) {
+            Utils.showError(containerId, `Failed to get tournaments by date range: ${error.message}`);
+        }
     }
 
     displayTournamentDetail(containerId, tournament) {

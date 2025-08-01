@@ -211,6 +211,12 @@
     cursor: not-allowed;
 }
 
+.pagination-ellipsis {
+    padding: 8px 4px;
+    color: var(--medium-gray);
+    font-size: 0.9rem;
+}
+
 /* Modal/Dialog */
 .modal {
     display: none;

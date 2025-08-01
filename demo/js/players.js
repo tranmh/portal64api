@@ -262,7 +262,73 @@ class PlayerManager {
             </div>
         `;
 
+        // Add pagination controls
+        const paginationCallback = this.getPaginationCallback(containerId);
+        html += Utils.createPaginationControls(meta, containerId, paginationCallback);
+
         container.innerHTML = html;
+    }
+
+    // Get the appropriate pagination callback function name based on container ID
+    getPaginationCallback(containerId) {
+        switch(containerId) {
+            case 'player-search-results':
+                return 'playerManager.searchPlayersWithOffset';
+            case 'club-players-results':
+                return 'playerManager.getClubPlayersWithOffset';
+            default:
+                return 'playerManager.searchPlayersWithOffset';
+        }
+    }
+
+    // Pagination handler for player search
+    async searchPlayersWithOffset(offset, containerId) {
+        try {
+            Utils.showLoading(containerId);
+            
+            const form = document.getElementById('player-search-form');
+            const params = Utils.getFormData(form);
+            params.offset = offset;
+            
+            const result = await api.searchPlayers(params);
+            this.currentResults = result.data?.data || result.data || result;
+            this.currentMeta = result.data?.meta || result.meta;
+            
+            this.displayPlayerResults(containerId, this.currentResults, this.currentMeta);
+            
+        } catch (error) {
+            Utils.showError(containerId, `Search failed: ${error.message}`);
+        }
+    }
+
+    // Pagination handler for club players
+    async getClubPlayersWithOffset(offset, containerId) {
+        try {
+            Utils.showLoading(containerId);
+            
+            const form = document.getElementById('club-players-form');
+            const formData = Utils.getFormData(form);
+            const clubId = formData.club_id;
+            
+            // Validate club ID
+            if (!Utils.validateClubID(clubId)) {
+                Utils.showError(containerId, 'Invalid club ID format. Expected format: C0101');
+                return;
+            }
+            
+            // Remove club_id from params and add offset
+            delete formData.club_id;
+            formData.offset = offset;
+            
+            const result = await api.getClubPlayers(clubId, formData);
+            this.currentResults = result.data?.data || result.data || result;
+            this.currentMeta = result.data?.meta || result.meta;
+            
+            this.displayPlayerResults(containerId, this.currentResults, this.currentMeta);
+            
+        } catch (error) {
+            Utils.showError(containerId, `Club players lookup failed: ${error.message}`);
+        }
     }
 
     displayPlayerDetail(containerId, player) {

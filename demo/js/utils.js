@@ -173,4 +173,81 @@ class Utils {
         const errorInputs = formElement.querySelectorAll('.form-input.error, .form-select.error');
         errorInputs.forEach(el => el.classList.remove('error'));
     }
+
+    // Create pagination controls HTML
+    static createPaginationControls(meta, containerId, onPageChangeCallback) {
+        if (!meta || !meta.total || meta.total <= meta.limit) {
+            return ''; // No pagination needed
+        }
+
+        const { offset = 0, limit = 20, total = 0 } = meta;
+        const currentPage = Math.floor(offset / limit) + 1;
+        const totalPages = Math.ceil(total / limit);
+        
+        let html = `
+            <div class="pagination">
+                <div class="pagination-info">
+                    ${Utils.getPaginationInfo(meta)}
+                </div>
+        `;
+
+        // Previous button
+        const prevOffset = Math.max(0, offset - limit);
+        html += `
+            <button class="pagination-btn ${currentPage === 1 ? 'disabled' : ''}" 
+                    onclick="${onPageChangeCallback}(${prevOffset}, '${containerId}')"
+                    ${currentPage === 1 ? 'disabled' : ''}>
+                ← Previous
+            </button>
+        `;
+
+        // Page numbers (show current page and some surrounding pages)
+        const startPage = Math.max(1, currentPage - 2);
+        const endPage = Math.min(totalPages, currentPage + 2);
+
+        // First page if not in range
+        if (startPage > 1) {
+            html += `
+                <button class="pagination-btn" onclick="${onPageChangeCallback}(0, '${containerId}')">1</button>
+            `;
+            if (startPage > 2) {
+                html += `<span class="pagination-ellipsis">...</span>`;
+            }
+        }
+
+        // Page range
+        for (let page = startPage; page <= endPage; page++) {
+            const pageOffset = (page - 1) * limit;
+            html += `
+                <button class="pagination-btn ${page === currentPage ? 'active' : ''}" 
+                        onclick="${onPageChangeCallback}(${pageOffset}, '${containerId}')">
+                    ${page}
+                </button>
+            `;
+        }
+
+        // Last page if not in range
+        if (endPage < totalPages) {
+            if (endPage < totalPages - 1) {
+                html += `<span class="pagination-ellipsis">...</span>`;
+            }
+            const lastPageOffset = (totalPages - 1) * limit;
+            html += `
+                <button class="pagination-btn" onclick="${onPageChangeCallback}(${lastPageOffset}, '${containerId}')">${totalPages}</button>
+            `;
+        }
+
+        // Next button
+        const nextOffset = Math.min((totalPages - 1) * limit, offset + limit);
+        html += `
+            <button class="pagination-btn ${currentPage === totalPages ? 'disabled' : ''}" 
+                    onclick="${onPageChangeCallback}(${nextOffset}, '${containerId}')"
+                    ${currentPage === totalPages ? 'disabled' : ''}>
+                Next →
+            </button>
+        `;
+
+        html += `</div>`;
+        return html;
+    }
 }

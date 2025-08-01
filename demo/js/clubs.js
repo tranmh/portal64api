@@ -171,7 +171,43 @@ class ClubManager {
             </div>
         `;
 
+        // Add pagination controls if meta exists
+        if (meta) {
+            const paginationCallback = this.getPaginationCallback(containerId);
+            html += Utils.createPaginationControls(meta, containerId, paginationCallback);
+        }
+
         container.innerHTML = html;
+    }
+
+    // Get the appropriate pagination callback function name based on container ID
+    getPaginationCallback(containerId) {
+        switch(containerId) {
+            case 'club-search-results':
+                return 'clubManager.searchClubsWithOffset';
+            default:
+                return 'clubManager.searchClubsWithOffset';
+        }
+    }
+
+    // Pagination handler for club search
+    async searchClubsWithOffset(offset, containerId) {
+        try {
+            Utils.showLoading(containerId);
+            
+            const form = document.getElementById('club-search-form');
+            const params = Utils.getFormData(form);
+            params.offset = offset;
+            
+            const result = await api.searchClubs(params);
+            this.currentResults = result.data?.data || result.data || result;
+            this.currentMeta = result.data?.meta || result.meta;
+            
+            this.displayClubResults(containerId, this.currentResults, this.currentMeta);
+            
+        } catch (error) {
+            Utils.showError(containerId, `Search failed: ${error.message}`);
+        }
     }
 
     displayClubDetail(containerId, club) {

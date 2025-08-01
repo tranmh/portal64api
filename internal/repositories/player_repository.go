@@ -111,32 +111,136 @@ func (r *PlayerRepository) GetPlayersByClub(vkz string, req models.SearchRequest
 	var players []models.Person
 	var total int64
 
-	query := r.dbs.MVDSB.Model(&models.Person{}).Where("id IN ? AND status = 0", personIDs)
-
-	// Add search filter
-	if req.Query != "" {
-		// Use range-based prefix matching for better performance and index usage
-		upperBound := req.Query + "zz"
-		query = query.Where(
-			"(name >= ? AND name < ?) OR (vorname >= ? AND vorname < ?)", 
-			req.Query, upperBound, req.Query, upperBound)
-	}
-
-	// Get total count
-	query.Count(&total)
-
-	// Apply sorting and pagination
-	orderBy := "name ASC"
-	if req.SortBy != "" {
+	// Handle special sorting cases that require JOINs or special field handling
+	if req.SortBy == "current_dwz" {
+		// For DWZ sorting, we need to join with evaluations from Portal64_BDW database
+		// Since we can't easily join across databases in GORM, we'll fetch players first,
+		// then sort them in memory after getting their DWZ ratings
+		query := r.dbs.MVDSB.Model(&models.Person{}).Where("id IN ? AND status = 0", personIDs)
+		
+		// Add search filter
+		if req.Query != "" {
+			upperBound := req.Query + "zz"
+			query = query.Where(
+				"(name >= ? AND name < ?) OR (vorname >= ? AND vorname < ?)", 
+				req.Query, upperBound, req.Query, upperBound)
+		}
+		
+		// Get total count
+		query.Count(&total)
+		
+		// Get all matching players (without pagination for sorting)
+		var allPlayers []models.Person
+		err := query.Find(&allPlayers).Error
+		if err != nil {
+			return nil, 0, err
+		}
+		
+		// Get latest evaluations for all players and sort
+		type PlayerWithDWZ struct {
+			Player models.Person
+			DWZ    int
+		}
+		
+		playersWithDWZ := make([]PlayerWithDWZ, len(allPlayers))
+		for i, player := range allPlayers {
+			var evaluation models.Evaluation
+			r.dbs.Portal64BDW.Where("idPerson = ?", player.ID).
+				Order("id DESC").First(&evaluation)
+			
+			playersWithDWZ[i] = PlayerWithDWZ{
+				Player: player,
+				DWZ:    evaluation.DWZNew,
+			}
+		}
+		
+		// Sort by DWZ
+		for i := 0; i < len(playersWithDWZ)-1; i++ {
+			for j := i + 1; j < len(playersWithDWZ); j++ {
+				shouldSwap := false
+				if req.SortOrder == "desc" {
+					shouldSwap = playersWithDWZ[i].DWZ < playersWithDWZ[j].DWZ
+				} else {
+					shouldSwap = playersWithDWZ[i].DWZ > playersWithDWZ[j].DWZ
+				}
+				if shouldSwap {
+					playersWithDWZ[i], playersWithDWZ[j] = playersWithDWZ[j], playersWithDWZ[i]
+				}
+			}
+		}
+		
+		// Apply pagination
+		start := req.Offset
+		end := req.Offset + req.Limit
+		if start > len(playersWithDWZ) {
+			start = len(playersWithDWZ)
+		}
+		if end > len(playersWithDWZ) {
+			end = len(playersWithDWZ)
+		}
+		
+		// Extract paginated players
+		players = make([]models.Person, end-start)
+		for i := start; i < end; i++ {
+			players[i-start] = playersWithDWZ[i].Player
+		}
+		
+		return players, total, nil
+		
+	} else if req.SortBy == "birth_year" {
+		// For birth year sorting, we need to extract year from geburtsdatum
+		query := r.dbs.MVDSB.Model(&models.Person{}).Where("id IN ? AND status = 0", personIDs)
+		
+		// Add search filter
+		if req.Query != "" {
+			upperBound := req.Query + "zz"
+			query = query.Where(
+				"(name >= ? AND name < ?) OR (vorname >= ? AND vorname < ?)", 
+				req.Query, upperBound, req.Query, upperBound)
+		}
+		
+		// Get total count
+		query.Count(&total)
+		
+		// Use SQL YEAR function for sorting by birth year
 		direction := "ASC"
 		if req.SortOrder == "desc" {
 			direction = "DESC"
 		}
-		orderBy = fmt.Sprintf("%s %s", req.SortBy, direction)
-	}
+		orderBy := fmt.Sprintf("YEAR(geburtsdatum) %s", direction)
+		
+		err := query.Order(orderBy).Limit(req.Limit).Offset(req.Offset).Find(&players).Error
+		return players, total, err
+		
+	} else {
+		// Standard sorting for other fields
+		query := r.dbs.MVDSB.Model(&models.Person{}).Where("id IN ? AND status = 0", personIDs)
 
-	err := query.Order(orderBy).Limit(req.Limit).Offset(req.Offset).Find(&players).Error
-	return players, total, err
+		// Add search filter
+		if req.Query != "" {
+			// Use range-based prefix matching for better performance and index usage
+			upperBound := req.Query + "zz"
+			query = query.Where(
+				"(name >= ? AND name < ?) OR (vorname >= ? AND vorname < ?)", 
+				req.Query, upperBound, req.Query, upperBound)
+		}
+
+		// Get total count
+		query.Count(&total)
+
+		// Apply sorting and pagination
+		orderBy := "name ASC"
+		if req.SortBy != "" {
+			direction := "ASC"
+			if req.SortOrder == "desc" {
+				direction = "DESC"
+			}
+			orderBy = fmt.Sprintf("%s %s", req.SortBy, direction)
+		}
+
+		err := query.Order(orderBy).Limit(req.Limit).Offset(req.Offset).Find(&players).Error
+		return players, total, err
+	}
 }
 
 // GetPlayerRatingHistory gets rating history for a player
