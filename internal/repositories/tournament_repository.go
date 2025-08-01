@@ -27,7 +27,7 @@ func (r *TournamentRepository) GetTournamentByCode(code string) (*models.Tournam
 
 // SearchTournaments searches for tournaments
 func (r *TournamentRepository) SearchTournaments(req models.SearchRequest) ([]models.Tournament, int64, error) {
-	var tournaments []models.Tournament
+	tournaments := make([]models.Tournament, 0)
 	var total int64
 
 	query := r.dbs.Portal64BDW.Model(&models.Tournament{})

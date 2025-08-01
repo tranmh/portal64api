@@ -26,7 +26,7 @@ func (r *ClubRepository) GetClubByVKZ(vkz string) (*models.Organisation, error) 
 
 // SearchClubs searches for clubs by name or VKZ
 func (r *ClubRepository) SearchClubs(req models.SearchRequest) ([]models.Organisation, int64, error) {
-	var clubs []models.Organisation
+	clubs := make([]models.Organisation, 0)
 	var total int64
 
 	query := r.dbs.MVDSB.Model(&models.Organisation{}).Where("status = 0 AND organisationsart = 20")
@@ -111,7 +111,7 @@ func (r *ClubRepository) GetClubAverageDWZ(organizationID uint) (float64, error)
 
 // GetAllClubs gets all clubs for listing
 func (r *ClubRepository) GetAllClubs() ([]models.Organisation, error) {
-	var clubs []models.Organisation
+	clubs := make([]models.Organisation, 0)
 	err := r.dbs.MVDSB.Where("status = 0 AND organisationsart = 20 AND vkz != ''").
 		Order("name ASC").Find(&clubs).Error
 	return clubs, err

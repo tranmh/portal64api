@@ -23,17 +23,20 @@ func SetupRoutes(dbs *database.Databases) *gin.Engine {
 	playerRepo := repositories.NewPlayerRepository(dbs)
 	clubRepo := repositories.NewClubRepository(dbs)
 	tournamentRepo := repositories.NewTournamentRepository(dbs)
+	addressRepo := repositories.NewAddressRepository(dbs)
 
 	// Create services
 	playerService := services.NewPlayerService(playerRepo, clubRepo)
 	clubService := services.NewClubService(clubRepo)
 	clubService.SetPlayerRepository(playerRepo) // Set player repo for club profile functionality
 	tournamentService := services.NewTournamentService(tournamentRepo)
+	addressService := services.NewAddressService(addressRepo)
 
 	// Create handlers
 	playerHandler := handlers.NewPlayerHandler(playerService)
 	clubHandler := handlers.NewClubHandler(clubService)
 	tournamentHandler := handlers.NewTournamentHandler(tournamentService)
+	addressHandler := handlers.NewAddressHandler(addressService)
 
 	// Create router
 	router := gin.New()
@@ -127,6 +130,15 @@ func SetupRoutes(dbs *database.Databases) *gin.Engine {
 			tournaments.GET("/recent", tournamentHandler.GetRecentTournaments)
 			tournaments.GET("/date-range", tournamentHandler.GetTournamentsByDateRange)
 			tournaments.GET("/:id", tournamentHandler.GetTournament)
+		}
+
+		// Address routes
+		addresses := v1.Group("/addresses")
+		{
+			addresses.GET("/regions", addressHandler.GetAvailableRegions)
+			addresses.GET("/:region", addressHandler.GetRegionAddresses)
+			addresses.GET("/:region/types", addressHandler.GetAddressTypes)
+			addresses.GET("/:region/:type", addressHandler.GetRegionAddressesByType)
 		}
 	}
 

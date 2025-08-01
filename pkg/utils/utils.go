@@ -477,3 +477,8 @@ func HandleResponse(c *gin.Context, data interface{}, filename string) {
 		SendJSONResponse(c, http.StatusOK, data)
 	}
 }
+
+// UintToString converts a uint to string
+func UintToString(value uint) string {
+	return strconv.FormatUint(uint64(value), 10)
+}

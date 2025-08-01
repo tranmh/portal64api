@@ -49,7 +49,7 @@ func (r *PlayerRepository) GetPlayerByID(vkz string, spielernummer uint) (*model
 
 // SearchPlayers searches for players by name
 func (r *PlayerRepository) SearchPlayers(req models.SearchRequest, showActive bool) ([]models.Person, int64, error) {
-	var players []models.Person
+	players := make([]models.Person, 0)
 	var total int64
 
 	// Start with basic person query
@@ -99,7 +99,7 @@ func (r *PlayerRepository) GetPlayersByClub(vkz string, req models.SearchRequest
 		return nil, 0, err
 	}
 
-	var players []models.Person
+	players := make([]models.Person, 0)
 	var total int64
 
 	// Handle special sorting cases that require JOINs or special field handling
@@ -121,7 +121,7 @@ func (r *PlayerRepository) GetPlayersByClub(vkz string, req models.SearchRequest
 		query.Count(&total)
 		
 		// Get all matching players (without pagination for sorting)
-		var allPlayers []models.Person
+		allPlayers := make([]models.Person, 0)
 		err := query.Find(&allPlayers).Error
 		if err != nil {
 			return nil, 0, err

@@ -57,6 +57,11 @@
                         <p>Greifen Sie auf Turnierdaten zu, einschließlich kommender Veranstaltungen, aktueller Ergebnisse und detaillierter Turnierinformationen. Suchen Sie Turniere nach verschiedenen Kriterien.</p>
                     </a>
 
+                    <a href="addresses.html" class="nav-card">
+                        <h3>📇 Adressen</h3>
+                        <p>Erkunden Sie Funktionäre und Amtsträger in verschiedenen Regionen. Suchen Sie nach Kontaktinformationen für Präsidium, Vorstand und andere Funktionen.</p>
+                    </a>
+
                     <a href="api-docs.html" class="nav-card">
                         <h3>📚 API Documentation</h3>
                         <p>Interactive API documentation with request/response examples, parameter descriptions, and live testing capabilities for all endpoints.</p>
@@ -80,6 +85,9 @@
                     </div>
                     <div class="form-group">
                         <button onclick="testTournamentsEndpoint()" class="btn btn-primary">Turniere testen</button>
+                    </div>
+                    <div class="form-group">
+                        <button onclick="testAddressesEndpoint()" class="btn btn-primary">Adressen testen</button>
                     </div>
                 </div>
 
@@ -158,6 +166,16 @@
                 new CodeDisplayManager().displayResponse('quick-test-result', result, 'Turniersuche Ergebnis');
             } catch (error) {
                 Utils.showError('quick-test-result', `Turniertest fehlgeschlagen: ${error.message}`);
+            }
+        }
+
+        async function testAddressesEndpoint() {
+            try {
+                Utils.showLoading('quick-test-result');
+                const result = await api.getAvailableRegions();
+                new CodeDisplayManager().displayResponse('quick-test-result', result, 'Regionen Ergebnis');
+            } catch (error) {
+                Utils.showError('quick-test-result', `Adressentest fehlgeschlagen: ${error.message}`);
             }
         }
     </script>

@@ -119,4 +119,23 @@ class Portal64API {
     async getTournamentPlayers(id, format = 'json') {
         return this.request(`/api/v1/tournaments/${id}?format=${format}`);
     }
+
+    // Address endpoints
+    async getAvailableRegions(format = 'json') {
+        return this.request(`/api/v1/addresses/regions?format=${format}`);
+    }
+
+    async getRegionAddresses(region, params = {}) {
+        const queryString = new URLSearchParams(params).toString();
+        return this.request(`/api/v1/addresses/${region}?${queryString}`);
+    }
+
+    async getRegionAddressTypes(region, format = 'json') {
+        return this.request(`/api/v1/addresses/${region}/types?format=${format}`);
+    }
+
+    async getRegionAddressesByType(region, type, params = {}) {
+        const queryString = new URLSearchParams(params).toString();
+        return this.request(`/api/v1/addresses/${region}/${type}?${queryString}`);
+    }
 }

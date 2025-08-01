@@ -557,3 +557,56 @@ const (
 	AdrArtBewirtschaftet = 23 // bewirtschaftet (Managed)
 	AdrArtBehindertengerecht = 24 // behindertengerecht (Wheelchair Accessible)
 )
+
+// Address response models
+
+// RegionAddressResponse represents an address entry for a region
+type RegionAddressResponse struct {
+	ID                    uint            `json:"id"`
+	UUID                  string          `json:"uuid"`
+	Name                  string          `json:"name"`                     // Full name (person or organisation)
+	PersonName            string          `json:"person_name,omitempty"`
+	PersonFirstname       string          `json:"person_firstname,omitempty"`
+	OrganisationName      string          `json:"organisation_name,omitempty"`
+	OrganisationShortname string          `json:"organisation_shortname,omitempty"`
+	Region                string          `json:"region"`
+	FunctionName          string          `json:"function_name"`
+	FunctionID            uint            `json:"function_id"`
+	OrganisationID        uint            `json:"organisation_id,omitempty"`
+	PersonID              uint            `json:"person_id,omitempty"`
+	ContactDetails        []ContactDetail `json:"contact_details"`
+}
+
+// ContactDetail represents a single contact detail (phone, email, etc.)
+type ContactDetail struct {
+	Type  string `json:"type"`   // e.g., "Email 1", "Telefon 1", "Homepage"
+	Value string `json:"value"`  // The actual contact value
+}
+
+// RegionInfo represents information about a region
+type RegionInfo struct {
+	Code         string `json:"code"`          // e.g., "C", "B", "W"
+	Name         string `json:"name"`          // e.g., "Gesamtverband", "Baden"
+	AddressCount int    `json:"address_count"` // Number of addresses in this region
+}
+
+// AddressTypeInfo represents information about an address/function type
+type AddressTypeInfo struct {
+	ID    uint   `json:"id"`
+	Name  string `json:"name"`  // e.g., "Präsident", "Schriftführer"
+	Count int    `json:"count"` // Number of entries of this type
+}
+
+// Funktion represents a function/role table
+type Funktion struct {
+	ID           uint      `json:"id" gorm:"primaryKey;column:id"`
+	Bezeichnung  string    `json:"bezeichnung" gorm:"column:bezeichnung"`
+	Status       uint      `json:"status" gorm:"column:status"`
+	Beatimestamp time.Time `json:"beatimestamp" gorm:"column:beatimestamp"`
+	BeaPerson    uint      `json:"bea_person" gorm:"column:beaperson"`
+}
+
+// TableName returns the table name for Funktion
+func (Funktion) TableName() string {
+	return "funktion"
+}
