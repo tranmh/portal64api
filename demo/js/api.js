@@ -8,7 +8,7 @@ class Portal64API {
         };
     }
 
-    // Generic API request method
+    // Generic API request method with timeout handling
     async request(endpoint, options = {}) {
         const url = `${this.baseURL}${endpoint}`;
         const config = {
@@ -18,7 +18,17 @@ class Portal64API {
         };
 
         try {
-            const response = await fetch(url, config);
+            // Create a timeout promise (increased to handle slow database)
+            const timeoutPromise = new Promise((_, reject) => {
+                setTimeout(() => reject(new Error('Request timeout - the server is taking longer than expected. Please try again.')), 45000); // 45 second timeout
+            });
+
+            // Race between fetch and timeout
+            const response = await Promise.race([
+                fetch(url, config),
+                timeoutPromise
+            ]);
+
             const data = await response.json();
             
             if (!response.ok) {

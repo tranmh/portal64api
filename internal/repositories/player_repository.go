@@ -49,11 +49,14 @@ func (r *PlayerRepository) SearchPlayers(req models.SearchRequest) ([]models.Per
 
 	query := r.dbs.MVDSB.Model(&models.Person{}).Where("status = 0")
 
-	// Add search filter
+	// Add search filter with efficient prefix matching (like the old PHP code)
 	if req.Query != "" {
-		// Use exact search for better performance (avoids LIKE queries entirely)
-		query = query.Where("name = ? OR vorname = ? OR CONCAT(vorname, ' ', name) = ?", 
-			req.Query, req.Query, req.Query)
+		// Use range-based prefix matching for better performance and index usage
+		// This matches the original PHP implementation: name >= 'query' AND name < 'queryzz'
+		upperBound := req.Query + "zz"
+		query = query.Where(
+			"(name >= ? AND name < ?) OR (vorname >= ? AND vorname < ?)", 
+			req.Query, upperBound, req.Query, upperBound)
 	}
 
 	// Get total count
@@ -107,8 +110,11 @@ func (r *PlayerRepository) GetPlayersByClub(vkz string, req models.SearchRequest
 
 	// Add search filter
 	if req.Query != "" {
-		// Use exact search for better performance (avoids LIKE queries entirely)
-		query = query.Where("name = ? OR vorname = ?", req.Query, req.Query)
+		// Use range-based prefix matching for better performance and index usage
+		upperBound := req.Query + "zz"
+		query = query.Where(
+			"(name >= ? AND name < ?) OR (vorname >= ? AND vorname < ?)", 
+			req.Query, upperBound, req.Query, upperBound)
 	}
 
 	// Get total count
@@ -134,4 +140,24 @@ func (r *PlayerRepository) GetPlayerRatingHistory(personID uint) ([]models.Evalu
 	err := r.dbs.Portal64BDW.Where("idPerson = ?", personID).
 		Order("id DESC").Find(&evaluations).Error
 	return evaluations, err
+}
+
+// GetPlayerCurrentClub gets the current club for a player
+func (r *PlayerRepository) GetPlayerCurrentClub(personID uint) (*models.Organisation, error) {
+	// Get current club membership
+	var membership models.Mitgliedschaft
+	err := r.dbs.MVDSB.Where("person = ? AND bis IS NULL AND status = 0", personID).
+		Order("von DESC").First(&membership).Error
+	if err != nil {
+		return nil, err
+	}
+
+	// Get organization details
+	var org models.Organisation
+	err = r.dbs.MVDSB.Where("id = ?", membership.Organisation).First(&org).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return &org, nil
 }

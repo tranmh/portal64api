@@ -8,6 +8,7 @@ type PlayerRepositoryInterface interface {
 	SearchPlayers(req models.SearchRequest) ([]models.Person, int64, error)
 	GetPlayersByClub(vkz string, req models.SearchRequest) ([]models.Person, int64, error)
 	GetPlayerRatingHistory(personID uint) ([]models.Evaluation, error)
+	GetPlayerCurrentClub(personID uint) (*models.Organisation, error)
 }
 
 // ClubRepositoryInterface defines the interface for club repository operations

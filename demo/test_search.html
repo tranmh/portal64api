@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Player Search</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .loading { color: blue; }
+        .error { color: red; }
+        .success { color: green; }
+        button { padding: 10px 20px; margin: 5px; }
+        #results { margin-top: 20px; padding: 10px; border: 1px solid #ccc; }
+    </style>
+</head>
+<body>
+    <h1>Test Player Search</h1>
+    
+    <button onclick="testSearch('Tran')">Search for "Tran"</button>
+    <button onclick="testSearch('Test')">Search for "Test"</button>
+    <button onclick="testSearch('X')">Search for "X"</button>
+    
+    <div id="results"></div>
+
+    <script>
+        async function testSearch(query) {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<div class="loading">Searching for "' + query + '"... This may take 15-30 seconds.</div>';
+            
+            try {
+                // Custom timeout implementation
+                const timeoutPromise = new Promise((_, reject) => {
+                    setTimeout(() => reject(new Error('Request timeout after 30 seconds')), 30000);
+                });
+
+                const fetchPromise = fetch('http://localhost:8080/api/v1/players?query=' + encodeURIComponent(query) + '&limit=3')
+                    .then(response => response.json());
+
+                const result = await Promise.race([fetchPromise, timeoutPromise]);
+                
+                const players = result.data?.data || result.data || [];
+                
+                let html = '<div class="success">Search completed! Found ' + (players.length || 0) + ' players:</div>';
+                if (players.length > 0) {
+                    html += '<ul>';
+                    players.forEach(player => {
+                        html += '<li><strong>' + (player.name || 'N/A') + '</strong> - ID: ' + (player.id || 'N/A') + ' - Club: ' + (player.club || 'N/A') + '</li>';
+                    });
+                    html += '</ul>';
+                }
+                
+                resultsDiv.innerHTML = html;
+                
+            } catch (error) {
+                resultsDiv.innerHTML = '<div class="error">Error: ' + error.message + '</div>';
+            }
+        }
+    </script>
+</body>
+</html>

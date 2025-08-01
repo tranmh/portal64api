@@ -177,8 +177,7 @@ func (s *PlayerService) GetPlayerRatingHistory(playerID string) ([]models.Evalua
 
 // getPlayerCurrentClub gets the current club for a player
 func (s *PlayerService) getPlayerCurrentClub(personID uint) (*models.Organisation, error) {
-	// This would require a membership query - simplified for now
-	return nil, fmt.Errorf("not implemented")
+	return s.playerRepo.GetPlayerCurrentClub(personID)
 }
 
 // getPlayerLatestEvaluation gets the latest DWZ evaluation for a player
