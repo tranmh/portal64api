@@ -8,7 +8,7 @@ class Utils {
             container.innerHTML = `
                 <div class="loading show">
                     <div class="spinner"></div>
-                    <p>Loading...</p>
+                    <p>Lädt...</p>
                 </div>
             `;
         }
@@ -28,7 +28,7 @@ class Utils {
         if (container) {
             container.innerHTML = `
                 <div class="alert alert-error">
-                    <h4>Error</h4>
+                    <h4>Fehler</h4>
                     <p>${message}</p>
                 </div>
             `;
@@ -41,7 +41,7 @@ class Utils {
         if (container) {
             container.innerHTML = `
                 <div class="alert alert-success">
-                    <h4>Success</h4>
+                    <h4>Erfolg</h4>
                     <p>${message}</p>
                 </div>
             `;
@@ -102,7 +102,7 @@ class Utils {
         const { offset = 0, limit = 20, total = 0 } = meta;
         const start = offset + 1;
         const end = Math.min(offset + limit, total);
-        return `Showing ${start}-${end} of ${total} results`;
+        return `Zeige ${start}-${end} von ${total} Ergebnissen`;
     }
 
     // Debounce function for search inputs
@@ -197,7 +197,7 @@ class Utils {
             <button class="pagination-btn ${currentPage === 1 ? 'disabled' : ''}" 
                     onclick="${onPageChangeCallback}(${prevOffset}, '${containerId}')"
                     ${currentPage === 1 ? 'disabled' : ''}>
-                ← Previous
+                ← Vorherige
             </button>
         `;
 
@@ -243,7 +243,7 @@ class Utils {
             <button class="pagination-btn ${currentPage === totalPages ? 'disabled' : ''}" 
                     onclick="${onPageChangeCallback}(${nextOffset}, '${containerId}')"
                     ${currentPage === totalPages ? 'disabled' : ''}>
-                Next →
+                Nächste →
             </button>
         `;
 

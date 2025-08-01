@@ -69,7 +69,7 @@ class TournamentManager {
             this.displayTournamentResults('tournament-search-results', this.currentResults, this.currentMeta);
             
         } catch (error) {
-            Utils.showError('tournament-search-results', `Search failed: ${error.message}`);
+            Utils.showError('tournament-search-results', `Suche fehlgeschlagen: ${error.message}`);
         }
     }
 
@@ -88,11 +88,11 @@ class TournamentManager {
                 // Fix: API returns {success: true, data: [...]} for upcoming tournaments
                 this.displayTournamentResults('upcoming-tournaments-results', result.data || result);
             } else {
-                new CodeDisplayManager().displayResponse('upcoming-tournaments-results', result, 'Upcoming Tournaments (CSV)');
+                new CodeDisplayManager().displayResponse('upcoming-tournaments-results', result, 'Kommende Turniere (CSV)');
             }
             
         } catch (error) {
-            Utils.showError('upcoming-tournaments-results', `Failed to get upcoming tournaments: ${error.message}`);
+            Utils.showError('upcoming-tournaments-results', `Fehler beim Abrufen kommender Turniere: ${error.message}`);
         }
     }
 
@@ -112,11 +112,11 @@ class TournamentManager {
                 // Fix: API returns {success: true, data: [...]} for recent tournaments
                 this.displayTournamentResults('recent-tournaments-results', result.data || result);
             } else {
-                new CodeDisplayManager().displayResponse('recent-tournaments-results', result, 'Recent Tournaments (CSV)');
+                new CodeDisplayManager().displayResponse('recent-tournaments-results', result, 'Kürzliche Turniere (CSV)');
             }
             
         } catch (error) {
-            Utils.showError('recent-tournaments-results', `Failed to get recent tournaments: ${error.message}`);
+            Utils.showError('recent-tournaments-results', `Fehler beim Abrufen kürzlicher Turniere: ${error.message}`);
         }
     }
 
@@ -130,7 +130,7 @@ class TournamentManager {
             const endDate = formData.end_date;
             
             if (!startDate || !endDate) {
-                Utils.showError('date-range-tournaments-results', 'Both start date and end date are required.');
+                Utils.showError('date-range-tournaments-results', 'Sowohl Start- als auch Enddatum sind erforderlich.');
                 return;
             }
             
@@ -146,7 +146,7 @@ class TournamentManager {
             this.displayTournamentResults('date-range-tournaments-results', this.currentResults, this.currentMeta);
             
         } catch (error) {
-            Utils.showError('date-range-tournaments-results', `Failed to get tournaments by date range: ${error.message}`);
+            Utils.showError('date-range-tournaments-results', `Fehler beim Abrufen der Turniere nach Datumsbereich: ${error.message}`);
         }
     }
 
@@ -161,7 +161,7 @@ class TournamentManager {
             
             // Validate tournament ID
             if (!Utils.validateTournamentID(tournamentId)) {
-                Utils.showError('tournament-lookup-results', 'Invalid tournament ID format. Expected format: C529-K00-HT1 or C339-400-442');
+                Utils.showError('tournament-lookup-results', 'Ungültiges Turnier-ID Format. Erwartetes Format: C529-K00-HT1 oder C339-400-442');
                 return;
             }
             
@@ -171,11 +171,11 @@ class TournamentManager {
                 // API returns {success: true, data: {...}}
                 this.displayTournamentDetail('tournament-lookup-results', result.data || result);
             } else {
-                new CodeDisplayManager().displayResponse('tournament-lookup-results', result, 'Tournament Data (CSV)');
+                new CodeDisplayManager().displayResponse('tournament-lookup-results', result, 'Turnierdaten (CSV)');
             }
             
         } catch (error) {
-            Utils.showError('tournament-lookup-results', `Tournament lookup failed: ${error.message}`);
+            Utils.showError('tournament-lookup-results', `Turnier-Abfrage fehlgeschlagen: ${error.message}`);
         }
     }
 
@@ -186,8 +186,8 @@ class TournamentManager {
         if (!tournaments || tournaments.length === 0) {
             container.innerHTML = `
                 <div class="alert alert-info">
-                    <h4>No Results</h4>
-                    <p>No tournaments found matching your criteria.</p>
+                    <h4>Keine Ergebnisse</h4>
+                    <p>Keine Turniere gefunden, die Ihren Kriterien entsprechen.</p>
                 </div>
             `;
             return;
@@ -208,12 +208,12 @@ class TournamentManager {
                 <table class="table table-striped">
                     <thead>
                         <tr>
-                            <th>Tournament ID</th>
+                            <th>Turnier-ID</th>
                             <th>Name</th>
-                            <th>Start Date</th>
-                            <th>End Date</th>
-                            <th>Organizer</th>
-                            <th>Actions</th>
+                            <th>Startdatum</th>
+                            <th>Enddatum</th>
+                            <th>Veranstalter</th>
+                            <th>Aktionen</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -229,7 +229,7 @@ class TournamentManager {
                     <td>${Utils.sanitizeHTML(tournament.organization || 'N/A')}</td>
                     <td>
                         <button onclick="tournamentManager.viewTournamentDetail('${tournament.id || tournament.code}')" class="btn btn-small btn-secondary">
-                            View Details
+                            Details anzeigen
                         </button>
                     </td>
                 </tr>
@@ -279,7 +279,7 @@ class TournamentManager {
             this.displayTournamentResults(containerId, this.currentResults, this.currentMeta);
             
         } catch (error) {
-            Utils.showError(containerId, `Search failed: ${error.message}`);
+            Utils.showError(containerId, `Suche fehlgeschlagen: ${error.message}`);
         }
     }
 
@@ -310,7 +310,7 @@ class TournamentManager {
             this.displayTournamentResults(containerId, this.currentResults, this.currentMeta);
             
         } catch (error) {
-            Utils.showError(containerId, `Failed to get tournaments by date range: ${error.message}`);
+            Utils.showError(containerId, `Fehler beim Abrufen der Turniere nach Datumsbereich: ${error.message}`);
         }
     }
 
@@ -321,7 +321,7 @@ class TournamentManager {
         const html = `
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">Tournament Details: ${Utils.sanitizeHTML(tournament.name || 'Unknown')}</h3>
+                    <h3 class="card-title">Turnierdetails: ${Utils.sanitizeHTML(tournament.name || 'Unbekannt')}</h3>
                 </div>
                 <div class="form-row">
                     <div>
@@ -352,8 +352,8 @@ class TournamentManager {
                         <p><strong>Email:</strong> ${tournament.contact_email ? `<a href="mailto:${tournament.contact_email}">${Utils.sanitizeHTML(tournament.contact_email)}</a>` : 'N/A'}</p>
                     </div>
                     <div>
-                        <h4>Tournament Details</h4>
-                        <p><strong>Participants:</strong> 
+                        <h4>Turnierdetails</h4>
+                        <p><strong>Teilnehmer:</strong> 
                             ${tournament.participant_count ? `<span class="badge badge-primary">${tournament.participant_count}</span>` : 'N/A'}
                         </p>
                         <p><strong>Rounds:</strong> ${Utils.sanitizeHTML(tournament.rounds || 'N/A')}</p>
@@ -385,7 +385,7 @@ class TournamentManager {
             const modal = document.getElementById('tournament-detail-modal');
             const modalBody = modal.querySelector('.modal-body');
             
-            modalBody.innerHTML = '<div class="loading show"><div class="spinner"></div><p>Loading tournament details...</p></div>';
+            modalBody.innerHTML = '<div class="loading show"><div class="spinner"></div><p>Lade Turnierdetails...</p></div>';
             
             new ModalManager().openModal('tournament-detail-modal');
             

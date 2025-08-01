@@ -104,7 +104,7 @@ class PlayerManager {
             this.displayPlayerResults('player-search-results', this.currentResults, this.currentMeta);
             
         } catch (error) {
-            Utils.showError('player-search-results', `Search failed: ${error.message}`);
+            Utils.showError('player-search-results', `Suche fehlgeschlagen: ${error.message}`);
         }
     }
 
@@ -119,7 +119,7 @@ class PlayerManager {
             
             // Validate player ID
             if (!Utils.validatePlayerID(playerId)) {
-                Utils.showError('player-lookup-results', 'Invalid player ID format. Expected format: CLUBID-PERSONID (e.g., C0101-1014, UNKNOWN-10799083)');
+                Utils.showError('player-lookup-results', 'Ungültiges Spieler-ID Format. Erwartetes Format: CLUBID-PERSONID (z.B., C0101-1014, UNKNOWN-10799083)');
                 return;
             }
             
@@ -129,11 +129,11 @@ class PlayerManager {
                 // API returns {success: true, data: {...}}
                 this.displayPlayerDetail('player-lookup-results', result.data || result);
             } else {
-                new CodeDisplayManager().displayResponse('player-lookup-results', result, 'Player Data (CSV)');
+                new CodeDisplayManager().displayResponse('player-lookup-results', result, 'Spielerdaten (CSV)');
             }
             
         } catch (error) {
-            Utils.showError('player-lookup-results', `Player lookup failed: ${error.message}`);
+            Utils.showError('player-lookup-results', `Spieler-Abfrage fehlgeschlagen: ${error.message}`);
         }
     }
 
@@ -148,7 +148,7 @@ class PlayerManager {
             
             // Validate player ID
             if (!Utils.validatePlayerID(playerId)) {
-                Utils.showError('rating-history-results', 'Invalid player ID format. Expected format: CLUBID-PERSONID (e.g., C0101-1014, UNKNOWN-10799083)');
+                Utils.showError('rating-history-results', 'Ungültiges Spieler-ID Format. Erwartetes Format: CLUBID-PERSONID (z.B., C0101-1014, UNKNOWN-10799083)');
                 return;
             }
             
@@ -158,11 +158,11 @@ class PlayerManager {
                 // API returns {success: true, data: [...]}
                 this.displayRatingHistory('rating-history-results', result.data || result);
             } else {
-                new CodeDisplayManager().displayResponse('rating-history-results', result, 'Rating History (CSV)');
+                new CodeDisplayManager().displayResponse('rating-history-results', result, 'Bewertungsverlauf (CSV)');
             }
             
         } catch (error) {
-            Utils.showError('rating-history-results', `Rating history lookup failed: ${error.message}`);
+            Utils.showError('rating-history-results', `Bewertungsverlauf-Abfrage fehlgeschlagen: ${error.message}`);
         }
     }
 
@@ -176,7 +176,7 @@ class PlayerManager {
             
             // Validate club ID
             if (!Utils.validateClubID(clubId)) {
-                Utils.showError('club-players-results', 'Invalid club ID format. Expected format: C0101');
+                Utils.showError('club-players-results', 'Ungültiges Vereins-ID Format. Erwartetes Format: C0101');
                 return;
             }
             
@@ -191,7 +191,7 @@ class PlayerManager {
             this.displayPlayerResults('club-players-results', this.currentResults, this.currentMeta);
             
         } catch (error) {
-            Utils.showError('club-players-results', `Club players lookup failed: ${error.message}`);
+            Utils.showError('club-players-results', `Vereinsspieler-Abfrage fehlgeschlagen: ${error.message}`);
         }
     }
 
@@ -202,8 +202,8 @@ class PlayerManager {
         if (!players || players.length === 0) {
             container.innerHTML = `
                 <div class="alert alert-info">
-                    <h4>No Results</h4>
-                    <p>No players found matching your search criteria.</p>
+                    <h4>Keine Ergebnisse</h4>
+                    <p>Keine Spieler gefunden, die Ihren Suchkriterien entsprechen.</p>
                 </div>
             `;
             return;
@@ -217,12 +217,12 @@ class PlayerManager {
                 <table class="table table-striped">
                     <thead>
                         <tr>
-                            <th>Player ID</th>
+                            <th>Spieler-ID</th>
                             <th>Name</th>
-                            <th>Club</th>
-                            <th>DWZ Rating</th>
-                            <th>Birth Year</th>
-                            <th>Actions</th>
+                            <th>Verein</th>
+                            <th>DWZ Bewertung</th>
+                            <th>Geburtsjahr</th>
+                            <th>Aktionen</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -249,7 +249,7 @@ class PlayerManager {
                     <td>${birthYear}</td>
                     <td>
                         <button onclick="playerManager.viewPlayerDetail('${player.id}')" class="btn btn-small btn-secondary">
-                            View Details
+                            Details anzeigen
                         </button>
                     </td>
                 </tr>
@@ -297,7 +297,7 @@ class PlayerManager {
             this.displayPlayerResults(containerId, this.currentResults, this.currentMeta);
             
         } catch (error) {
-            Utils.showError(containerId, `Search failed: ${error.message}`);
+            Utils.showError(containerId, `Suche fehlgeschlagen: ${error.message}`);
         }
     }
 
@@ -312,7 +312,7 @@ class PlayerManager {
             
             // Validate club ID
             if (!Utils.validateClubID(clubId)) {
-                Utils.showError(containerId, 'Invalid club ID format. Expected format: C0101');
+                Utils.showError(containerId, 'Ungültiges Vereins-ID Format. Erwartetes Format: C0101');
                 return;
             }
             
@@ -327,7 +327,7 @@ class PlayerManager {
             this.displayPlayerResults(containerId, this.currentResults, this.currentMeta);
             
         } catch (error) {
-            Utils.showError(containerId, `Club players lookup failed: ${error.message}`);
+            Utils.showError(containerId, `Vereinsspieler-Abfrage fehlgeschlagen: ${error.message}`);
         }
     }
 
@@ -347,7 +347,7 @@ class PlayerManager {
         const html = `
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">Player Details: ${Utils.sanitizeHTML(((player.firstname || '') + ' ' + (player.name || '')).trim() || 'Unknown')}</h3>
+                    <h3 class="card-title">Spielerdetails: ${Utils.sanitizeHTML(((player.firstname || '') + ' ' + (player.name || '')).trim() || 'Unbekannt')}</h3>
                 </div>
                 <div class="form-row">
                     <div>
@@ -405,14 +405,14 @@ class PlayerManager {
                 <table class="table table-striped">
                     <thead>
                         <tr>
-                            <th>Evaluation ID</th>
-                            <th>Old DWZ</th>
-                            <th>New DWZ</th>
-                            <th>Rating Change</th>
-                            <th>Games</th>
-                            <th>Points</th>
-                            <th>Achievement</th>
-                            <th>Tournament ID</th>
+                            <th>Auswertungs-ID</th>
+                            <th>Alte DWZ</th>
+                            <th>Neue DWZ</th>
+                            <th>Bewertungsänderung</th>
+                            <th>Spiele</th>
+                            <th>Punkte</th>
+                            <th>Leistung</th>
+                            <th>Turnier-ID</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -456,7 +456,7 @@ class PlayerManager {
             const modal = document.getElementById('player-detail-modal');
             const modalBody = modal.querySelector('.modal-body');
             
-            modalBody.innerHTML = '<div class="loading show"><div class="spinner"></div><p>Loading player details...</p></div>';
+            modalBody.innerHTML = '<div class="loading show"><div class="spinner"></div><p>Lade Spielerdetails...</p></div>';
             
             new ModalManager().openModal('player-detail-modal');
             

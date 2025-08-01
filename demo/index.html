@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,7 +12,7 @@
     <header class="header">
         <div class="container">
             <h1>Portal64 API Demo</h1>
-            <p>DWZ Chess Rating System API Testing Interface</p>
+            <p>DWZ Schach-Bewertungssystem API Test-Oberfläche</p>
         </div>
     </header>
 
@@ -21,35 +21,35 @@
             <!-- Health Check Section -->
             <div class="card">
                 <div class="card-header">
-                    <h2 class="card-title">API Health Status</h2>
+                    <h2 class="card-title">API Gesundheitsstatus</h2>
                 </div>
                 <div id="health-result">
                     <!-- Health check result will be displayed here -->
                 </div>
-                <button onclick="performHealthCheck()" class="btn btn-secondary">Refresh Health Check</button>
+                <button onclick="performHealthCheck()" class="btn btn-secondary">Gesundheitsprüfung aktualisieren</button>
             </div>
 
             <!-- Navigation Section -->
             <div class="card">
                 <div class="card-header">
-                    <h2 class="card-title">Available API Endpoints</h2>
+                    <h2 class="card-title">Verfügbare API Endpunkte</h2>
                 </div>
-                <p>Explore and test all available API endpoints for the DWZ chess rating system.</p>
+                <p>Erkunden und testen Sie alle verfügbaren API Endpunkte für das DWZ Schach-Bewertungssystem.</p>
                 
                 <div class="nav-grid">
                     <a href="players.html" class="nav-card">
-                        <h3>👤 Players</h3>
-                        <p>Search for chess players, view detailed profiles, and access rating histories. Test endpoints for individual player lookups and comprehensive search functionality.</p>
+                        <h3>👤 Spieler</h3>
+                        <p>Suchen Sie nach Schachspielern, betrachten Sie detaillierte Profile und greifen Sie auf Bewertungsverläufe zu. Testen Sie Endpunkte für individuelle Spieler-Abfragen und umfassende Suchfunktionen.</p>
                     </a>
 
                     <a href="clubs.html" class="nav-card">
-                        <h3>🏛️ Clubs</h3>
-                        <p>Browse chess clubs and organizations. Search clubs by name or region, view club details, and list all members of specific chess clubs.</p>
+                        <h3>🏛️ Vereine</h3>
+                        <p>Durchsuchen Sie Schachvereine und Organisationen. Suchen Sie Vereine nach Namen oder Region, betrachten Sie Vereinsdetails und listen Sie alle Mitglieder bestimmter Schachvereine auf.</p>
                     </a>
 
                     <a href="tournaments.html" class="nav-card">
-                        <h3>🏆 Tournaments</h3>
-                        <p>Access tournament data including upcoming events, recent results, and detailed tournament information. Search tournaments by various criteria.</p>
+                        <h3>🏆 Turniere</h3>
+                        <p>Greifen Sie auf Turnierdaten zu, einschließlich kommender Veranstaltungen, aktueller Ergebnisse und detaillierter Turnierinformationen. Suchen Sie Turniere nach verschiedenen Kriterien.</p>
                     </a>
 
                     <a href="api-docs.html" class="nav-card">
@@ -62,19 +62,19 @@
             <!-- Quick API Test Section -->
             <div class="card">
                 <div class="card-header">
-                    <h2 class="card-title">Quick API Test</h2>
+                    <h2 class="card-title">Schneller API Test</h2>
                 </div>
-                <p>Test common API endpoints quickly from this dashboard:</p>
+                <p>Testen Sie häufige API Endpunkte schnell von diesem Dashboard aus:</p>
                 
                 <div class="form-row">
                     <div class="form-group">
-                        <button onclick="testPlayersEndpoint()" class="btn btn-primary">Test Players Search</button>
+                        <button onclick="testPlayersEndpoint()" class="btn btn-primary">Spielersuche testen</button>
                     </div>
                     <div class="form-group">
-                        <button onclick="testClubsEndpoint()" class="btn btn-primary">Test Clubs Search</button>
+                        <button onclick="testClubsEndpoint()" class="btn btn-primary">Vereinssuche testen</button>
                     </div>
                     <div class="form-group">
-                        <button onclick="testTournamentsEndpoint()" class="btn btn-primary">Test Tournaments</button>
+                        <button onclick="testTournamentsEndpoint()" class="btn btn-primary">Turniere testen</button>
                     </div>
                 </div>
 
@@ -86,28 +86,28 @@
             <!-- API Information -->
             <div class="card">
                 <div class="card-header">
-                    <h2 class="card-title">API Information</h2>
+                    <h2 class="card-title">API Informationen</h2>
                 </div>
                 <div class="form-row">
                     <div>
-                        <h4>Base URL</h4>
+                        <h4>Basis-URL</h4>
                         <p><code>http://localhost:8080</code></p>
                         
-                        <h4>Available Formats</h4>
-                        <p>All endpoints support both JSON and CSV output formats. Use the <code>format</code> query parameter or set the <code>Accept</code> header.</p>
+                        <h4>Verfügbare Formate</h4>
+                        <p>Alle Endpunkte unterstützen sowohl JSON- als auch CSV-Ausgabeformate. Verwenden Sie den <code>format</code> Query-Parameter oder setzen Sie den <code>Accept</code> Header.</p>
                         
-                        <h4>Authentication</h4>
-                        <p>No authentication required. This is a public API for chess rating data.</p>
+                        <h4>Authentifizierung</h4>
+                        <p>Keine Authentifizierung erforderlich. Dies ist eine öffentliche API für Schach-Bewertungsdaten.</p>
                     </div>
                     <div>
-                        <h4>Rate Limits</h4>
-                        <p>No rate limits currently implemented.</p>
+                        <h4>Ratenbegrenzungen</h4>
+                        <p>Derzeit sind keine Ratenbegrenzungen implementiert.</p>
                         
-                        <h4>Pagination</h4>
-                        <p>Search endpoints support pagination with <code>limit</code> and <code>offset</code> parameters. Maximum limit is 100 items per page.</p>
+                        <h4>Paginierung</h4>
+                        <p>Such-Endpunkte unterstützen Paginierung mit <code>limit</code> und <code>offset</code> Parametern. Das maximale Limit beträgt 100 Einträge pro Seite.</p>
                         
-                        <h4>Error Handling</h4>
-                        <p>Errors return appropriate HTTP status codes with JSON error messages containing details about the failure.</p>
+                        <h4>Fehlerbehandlung</h4>
+                        <p>Fehler geben entsprechende HTTP-Statuscodes mit JSON-Fehlermeldungen zurück, die Details über den Fehler enthalten.</p>
                     </div>
                 </div>
             </div>
@@ -116,7 +116,7 @@
 
     <footer class="footer">
         <div class="container">
-            <p>&copy; 2024 Portal64 API Demo. DWZ Chess Rating System Interface.</p>
+            <p>&copy; 2024 Portal64 API Demo. DWZ Schach-Bewertungssystem Schnittstelle.</p>
         </div>
     </footer>
 
@@ -130,9 +130,9 @@
             try {
                 Utils.showLoading('quick-test-result');
                 const result = await api.searchPlayers({ limit: 5 });
-                new CodeDisplayManager().displayResponse('quick-test-result', result, 'Players Search Result');
+                new CodeDisplayManager().displayResponse('quick-test-result', result, 'Spielersuche Ergebnis');
             } catch (error) {
-                Utils.showError('quick-test-result', `Players test failed: ${error.message}`);
+                Utils.showError('quick-test-result', `Spielertest fehlgeschlagen: ${error.message}`);
             }
         }
 
@@ -140,9 +140,9 @@
             try {
                 Utils.showLoading('quick-test-result');
                 const result = await api.searchClubs({ limit: 5 });
-                new CodeDisplayManager().displayResponse('quick-test-result', result, 'Clubs Search Result');
+                new CodeDisplayManager().displayResponse('quick-test-result', result, 'Vereinssuche Ergebnis');
             } catch (error) {
-                Utils.showError('quick-test-result', `Clubs test failed: ${error.message}`);
+                Utils.showError('quick-test-result', `Vereinstest fehlgeschlagen: ${error.message}`);
             }
         }
 
@@ -150,9 +150,9 @@
             try {
                 Utils.showLoading('quick-test-result');
                 const result = await api.searchTournaments({ limit: 5 });
-                new CodeDisplayManager().displayResponse('quick-test-result', result, 'Tournaments Search Result');
+                new CodeDisplayManager().displayResponse('quick-test-result', result, 'Turniersuche Ergebnis');
             } catch (error) {
-                Utils.showError('quick-test-result', `Tournaments test failed: ${error.message}`);
+                Utils.showError('quick-test-result', `Turniertest fehlgeschlagen: ${error.message}`);
             }
         }
     </script>

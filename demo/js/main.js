@@ -177,8 +177,8 @@ class AdvancedSearchManager {
         if (advancedSection) {
             advancedSection.classList.toggle('show');
             button.textContent = advancedSection.classList.contains('show') 
-                ? 'Hide Advanced Options' 
-                : 'Show Advanced Options';
+                ? 'Erweiterte Optionen ausblenden' 
+                : 'Erweiterte Optionen anzeigen';
         }
     }
 }
@@ -198,7 +198,7 @@ async function performHealthCheck() {
             </div>
         `;
     } catch (error) {
-        Utils.showError('health-result', `Health check failed: ${error.message}`);
+        Utils.showError('health-result', `Gesundheitsprüfung fehlgeschlagen: ${error.message}`);
     }
 }
 

@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal64 API Demo - Players</title>
+    <title>Portal64 API Demo - Spieler</title>
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/forms.css">
     <link rel="stylesheet" href="css/components.css">
@@ -11,9 +11,9 @@
 <body class="player-page">
     <header class="header">
         <div class="container">
-            <h1>Players API</h1>
-            <p>Search and explore chess player data from the DWZ rating system</p>
-            <p><a href="index.html" style="color: var(--light-gray); text-decoration: underline;">← Back to Dashboard</a></p>
+            <h1>Spieler API</h1>
+            <p>Suchen und erkunden Sie Schachspielerdaten aus dem DWZ-Bewertungssystem</p>
+            <p><a href="index.html" style="color: var(--light-gray); text-decoration: underline;">← Zurück zum Dashboard</a></p>
         </div>
     </header>
 
@@ -21,29 +21,29 @@
         <div class="container">
             <div class="tabs">
                 <nav class="tab-nav">
-                    <button class="tab-nav-item" data-tab="search-players">Search Players</button>
-                    <button class="tab-nav-item" data-tab="player-lookup">Player Lookup</button>
-                    <button class="tab-nav-item" data-tab="rating-history">Rating History</button>
-                    <button class="tab-nav-item" data-tab="club-players">Club Players</button>
+                    <button class="tab-nav-item" data-tab="search-players">Spieler suchen</button>
+                    <button class="tab-nav-item" data-tab="player-lookup">Spieler-Abfrage</button>
+                    <button class="tab-nav-item" data-tab="rating-history">Bewertungsverlauf</button>
+                    <button class="tab-nav-item" data-tab="club-players">Vereinsspieler</button>
                 </nav>
 
                 <!-- Search Players Tab -->
                 <div id="search-players" class="tab-content">
                     <div class="card">
                         <div class="card-header">
-                            <h2 class="card-title">Search Players</h2>
+                            <h2 class="card-title">Spieler suchen</h2>
                         </div>
-                        <p>Search for players by name with advanced filtering and sorting options.</p>
+                        <p>Suchen Sie nach Spielern anhand des Namens mit erweiterten Filter- und Sortieroptionen.</p>
                         
                         <form id="player-search-form" class="search-form">
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label class="form-label" for="search-query">Search Query</label>
+                                    <label class="form-label" for="search-query">Suchanfrage</label>
                                     <input type="text" id="search-query" name="query" class="form-input" 
-                                           placeholder="Enter player name..." required>
+                                           placeholder="Spielername eingeben..." required>
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label" for="search-limit">Results per page</label>
+                                    <label class="form-label" for="search-limit">Ergebnisse pro Seite</label>
                                     <select id="search-limit" name="limit" class="form-select">
                                         <option value="10">10</option>
                                         <option value="20" selected>20</option>
@@ -53,39 +53,39 @@
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">&nbsp;</label>
-                                    <button type="submit" class="btn btn-primary">Search Players</button>
+                                    <button type="submit" class="btn btn-primary">Spieler suchen</button>
                                 </div>
                             </div>
 
-                            <button type="button" class="advanced-toggle">Show Advanced Options</button>
+                            <button type="button" class="advanced-toggle">Erweiterte Optionen anzeigen</button>
                             
                             <div class="advanced-search">
                                 <div class="form-row">
                                     <div class="form-group">
-                                        <label class="form-label" for="search-offset">Offset (pagination)</label>
+                                        <label class="form-label" for="search-offset">Offset (Paginierung)</label>
                                         <input type="number" id="search-offset" name="offset" class="form-input" 
                                                value="0" min="0">
                                     </div>
                                     <div class="form-group">
-                                        <label class="form-label" for="search-sort-by">Sort by</label>
+                                        <label class="form-label" for="search-sort-by">Sortieren nach</label>
                                         <select id="search-sort-by" name="sort_by" class="form-select">
                                             <option value="name" selected>Name</option>
-                                            <option value="current_dwz">DWZ Rating</option>
-                                            <option value="birth_year">Birth Year</option>
-                                            <option value="club_name">Club Name</option>
+                                            <option value="current_dwz">DWZ Bewertung</option>
+                                            <option value="birth_year">Geburtsjahr</option>
+                                            <option value="club_name">Vereinsname</option>
                                         </select>
                                     </div>
                                     <div class="form-group">
-                                        <label class="form-label" for="search-sort-order">Sort order</label>
+                                        <label class="form-label" for="search-sort-order">Sortierreihenfolge</label>
                                         <select id="search-sort-order" name="sort_order" class="form-select">
-                                            <option value="asc" selected>Ascending</option>
-                                            <option value="desc">Descending</option>
+                                            <option value="asc" selected>Aufsteigend</option>
+                                            <option value="desc">Absteigend</option>
                                         </select>
                                     </div>
                                 </div>
                                 <div class="form-row">
                                     <div class="form-group">
-                                        <label class="form-label" for="search-format">Response format</label>
+                                        <label class="form-label" for="search-format">Antwortformat</label>
                                         <select id="search-format" name="format" class="form-select">
                                             <option value="json" selected>JSON</option>
                                             <option value="csv">CSV</option>
@@ -105,20 +105,20 @@
                 <div id="player-lookup" class="tab-content">
                     <div class="card">
                         <div class="card-header">
-                            <h2 class="card-title">Individual Player Lookup</h2>
+                            <h2 class="card-title">Individuelle Spieler-Abfrage</h2>
                         </div>
-                        <p>Look up detailed information for a specific player using their Player ID.</p>
+                        <p>Schlagen Sie detaillierte Informationen für einen bestimmten Spieler mit seiner Spieler-ID nach.</p>
                         
                         <form id="player-lookup-form" class="search-form">
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label class="form-label" for="lookup-player-id">Player ID *</label>
+                                    <label class="form-label" for="lookup-player-id">Spieler-ID *</label>
                                     <input type="text" id="lookup-player-id" name="player_id" class="form-input" 
-                                           placeholder="e.g., UNKNOWN-10799083 or C0101-1014" required>
-                                    <div id="lookup-player-id-error" class="form-error">Please enter a valid player ID (format: CLUBID-PERSONID)</div>
+                                           placeholder="z.B., UNKNOWN-10799083 oder C0101-1014" required>
+                                    <div id="lookup-player-id-error" class="form-error">Bitte geben Sie eine gültige Spieler-ID ein (Format: CLUBID-PERSONID)</div>
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label" for="lookup-format">Response format</label>
+                                    <label class="form-label" for="lookup-format">Antwortformat</label>
                                     <select id="lookup-format" name="format" class="form-select">
                                         <option value="json" selected>JSON</option>
                                         <option value="csv">CSV</option>
@@ -126,14 +126,14 @@
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">&nbsp;</label>
-                                    <button type="submit" class="btn btn-primary">Get Player Details</button>
+                                    <button type="submit" class="btn btn-primary">Spielerdetails abrufen</button>
                                 </div>
                             </div>
                         </form>
 
                         <div class="alert alert-info">
-                            <h4>Player ID Format</h4>
-                            <p>Player IDs follow the format <code>CLUBID-PERSONID</code> where CLUBID is the club identifier and PERSONID is a number. Examples: <code>UNKNOWN-10799083</code>, <code>C0101-1014</code>, <code>D300H-1234</code></p>
+                            <h4>Spieler-ID Format</h4>
+                            <p>Spieler-IDs folgen dem Format <code>CLUBID-PERSONID</code>, wobei CLUBID die Vereinskennung und PERSONID eine Nummer ist. Beispiele: <code>UNKNOWN-10799083</code>, <code>C0101-1014</code>, <code>D300H-1234</code></p>
                         </div>
 
                         <div id="player-lookup-results" class="results">
@@ -146,20 +146,20 @@
                 <div id="rating-history" class="tab-content">
                     <div class="card">
                         <div class="card-header">
-                            <h2 class="card-title">Player Rating History</h2>
+                            <h2 class="card-title">Spieler-Bewertungsverlauf</h2>
                         </div>
-                        <p>View the complete DWZ rating history for a specific player.</p>
+                        <p>Betrachten Sie den vollständigen DWZ-Bewertungsverlauf für einen bestimmten Spieler.</p>
                         
                         <form id="rating-history-form" class="search-form">
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label class="form-label" for="history-player-id">Player ID *</label>
+                                    <label class="form-label" for="history-player-id">Spieler-ID *</label>
                                     <input type="text" id="history-player-id" name="player_id" class="form-input" 
-                                           placeholder="e.g., UNKNOWN-10799083 or C0101-1014" required>
-                                    <div id="history-player-id-error" class="form-error">Please enter a valid player ID (format: CLUBID-PERSONID)</div>
+                                           placeholder="z.B., UNKNOWN-10799083 oder C0101-1014" required>
+                                    <div id="history-player-id-error" class="form-error">Bitte geben Sie eine gültige Spieler-ID ein (Format: CLUBID-PERSONID)</div>
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label" for="history-format">Response format</label>
+                                    <label class="form-label" for="history-format">Antwortformat</label>
                                     <select id="history-format" name="format" class="form-select">
                                         <option value="json" selected>JSON</option>
                                         <option value="csv">CSV</option>
@@ -167,7 +167,7 @@
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">&nbsp;</label>
-                                    <button type="submit" class="btn btn-primary">Get Rating History</button>
+                                    <button type="submit" class="btn btn-primary">Bewertungsverlauf abrufen</button>
                                 </div>
                             </div>
                         </form>
@@ -182,20 +182,20 @@
                 <div id="club-players" class="tab-content">
                     <div class="card">
                         <div class="card-header">
-                            <h2 class="card-title">Club Players</h2>
+                            <h2 class="card-title">Vereinsspieler</h2>
                         </div>
-                        <p>Get all players belonging to a specific chess club.</p>
+                        <p>Erhalten Sie alle Spieler, die zu einem bestimmten Schachverein gehören.</p>
                         
                         <form id="club-players-form" class="search-form">
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label class="form-label" for="club-id">Club ID *</label>
+                                    <label class="form-label" for="club-id">Vereins-ID *</label>
                                     <input type="text" id="club-id" name="club_id" class="form-input" 
-                                           placeholder="e.g., C0101" required>
-                                    <div id="club-id-error" class="form-error">Please enter a valid club ID (format: C####)</div>
+                                           placeholder="z.B., C0101" required>
+                                    <div id="club-id-error" class="form-error">Bitte geben Sie eine gültige Vereins-ID ein (Format: C####)</div>
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label" for="club-players-limit">Results per page</label>
+                                    <label class="form-label" for="club-players-limit">Ergebnisse pro Seite</label>
                                     <select id="club-players-limit" name="limit" class="form-select">
                                         <option value="10">10</option>
                                         <option value="20" selected>20</option>
@@ -205,18 +205,18 @@
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">&nbsp;</label>
-                                    <button type="submit" class="btn btn-primary">Get Club Players</button>
+                                    <button type="submit" class="btn btn-primary">Vereinsspieler abrufen</button>
                                 </div>
                             </div>
 
-                            <button type="button" class="advanced-toggle">Show Advanced Options</button>
+                            <button type="button" class="advanced-toggle">Erweiterte Optionen anzeigen</button>
                             
                             <div class="advanced-search">
                                 <div class="form-row">
                                     <div class="form-group">
-                                        <label class="form-label" for="club-players-query">Player name search</label>
+                                        <label class="form-label" for="club-players-query">Spielername-Suche</label>
                                         <input type="text" id="club-players-query" name="query" class="form-input" 
-                                               placeholder="Filter by player name...">
+                                               placeholder="Nach Spielername filtern...">
                                     </div>
                                     <div class="form-group">
                                         <label class="form-label" for="club-players-offset">Offset</label>
@@ -226,22 +226,22 @@
                                 </div>
                                 <div class="form-row">
                                     <div class="form-group">
-                                        <label class="form-label" for="club-players-sort-by">Sort by</label>
+                                        <label class="form-label" for="club-players-sort-by">Sortieren nach</label>
                                         <select id="club-players-sort-by" name="sort_by" class="form-select">
-                                            <option value="current_dwz" selected>DWZ Rating</option>
+                                            <option value="current_dwz" selected>DWZ Bewertung</option>
                                             <option value="name">Name</option>
-                                            <option value="birth_year">Birth Year</option>
+                                            <option value="birth_year">Geburtsjahr</option>
                                         </select>
                                     </div>
                                     <div class="form-group">
-                                        <label class="form-label" for="club-players-sort-order">Sort order</label>
+                                        <label class="form-label" for="club-players-sort-order">Sortierreihenfolge</label>
                                         <select id="club-players-sort-order" name="sort_order" class="form-select">
-                                            <option value="desc" selected>Descending</option>
-                                            <option value="asc">Ascending</option>
+                                            <option value="desc" selected>Absteigend</option>
+                                            <option value="asc">Aufsteigend</option>
                                         </select>
                                     </div>
                                     <div class="form-group">
-                                        <label class="form-label" for="club-players-format">Response format</label>
+                                        <label class="form-label" for="club-players-format">Antwortformat</label>
                                         <select id="club-players-format" name="format" class="form-select">
                                             <option value="json" selected>JSON</option>
                                             <option value="csv">CSV</option>
@@ -252,8 +252,8 @@
                         </form>
 
                         <div class="alert alert-info">
-                            <h4>Club ID Format</h4>
-                            <p>Club IDs follow the format <code>C####</code> where # represents digits. For example: <code>C0101</code></p>
+                            <h4>Vereins-ID Format</h4>
+                            <p>Vereins-IDs folgen dem Format <code>C####</code>, wobei # für Ziffern steht. Zum Beispiel: <code>C0101</code></p>
                         </div>
 
                         <div id="club-players-results" class="results">
@@ -269,21 +269,21 @@
     <div id="player-detail-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 class="modal-title">Player Details</h3>
+                <h3 class="modal-title">Spielerdetails</h3>
                 <button class="modal-close">&times;</button>
             </div>
             <div class="modal-body">
                 <div id="player-detail-content"></div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary modal-close">Close</button>
+                <button class="btn btn-secondary modal-close">Schließen</button>
             </div>
         </div>
     </div>
 
     <footer class="footer">
         <div class="container">
-            <p>&copy; 2024 Portal64 API Demo. Player management interface.</p>
+            <p>&copy; 2024 Portal64 API Demo. Spielerverwaltungs-Schnittstelle.</p>
         </div>
     </footer>
 

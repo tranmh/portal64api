@@ -51,7 +51,7 @@ class ClubManager {
             this.displayClubResults('club-search-results', this.currentResults, this.currentMeta);
             
         } catch (error) {
-            Utils.showError('club-search-results', `Search failed: ${error.message}`);
+            Utils.showError('club-search-results', `Suche fehlgeschlagen: ${error.message}`);
         }
     }
 
@@ -69,11 +69,11 @@ class ClubManager {
                 // Fix: API returns {success: true, data: [...]} for getAllClubs
                 this.displayClubResults('all-clubs-results', result.data || result);
             } else {
-                new CodeDisplayManager().displayResponse('all-clubs-results', result, 'All Clubs (CSV)');
+                new CodeDisplayManager().displayResponse('all-clubs-results', result, 'Alle Vereine (CSV)');
             }
             
         } catch (error) {
-            Utils.showError('all-clubs-results', `Failed to get all clubs: ${error.message}`);
+            Utils.showError('all-clubs-results', `Fehler beim Abrufen aller Vereine: ${error.message}`);
         }
     }
 
@@ -88,7 +88,7 @@ class ClubManager {
             
             // Validate club ID
             if (!Utils.validateClubID(clubId)) {
-                Utils.showError('club-lookup-results', 'Invalid club ID format. Expected format: alphanumeric characters (e.g., C0101, B000E, UNKNOWN)');
+                Utils.showError('club-lookup-results', 'Ungültiges Vereins-ID Format. Erwartetes Format: alphanumerische Zeichen (z.B., C0101, B000E, UNKNOWN)');
                 return;
             }
             
@@ -98,11 +98,11 @@ class ClubManager {
                 // API returns {success: true, data: {...}}
                 this.displayClubDetail('club-lookup-results', result.data || result);
             } else {
-                new CodeDisplayManager().displayResponse('club-lookup-results', result, 'Club Data (CSV)');
+                new CodeDisplayManager().displayResponse('club-lookup-results', result, 'Vereinsdaten (CSV)');
             }
             
         } catch (error) {
-            Utils.showError('club-lookup-results', `Club lookup failed: ${error.message}`);
+            Utils.showError('club-lookup-results', `Vereins-Abfrage fehlgeschlagen: ${error.message}`);
         }
     }
 
@@ -113,8 +113,8 @@ class ClubManager {
         if (!clubs || clubs.length === 0) {
             container.innerHTML = `
                 <div class="alert alert-info">
-                    <h4>No Results</h4>
-                    <p>No clubs found matching your search criteria.</p>
+                    <h4>Keine Ergebnisse</h4>
+                    <p>Keine Vereine gefunden, die Ihren Suchkriterien entsprechen.</p>
                 </div>
             `;
             return;
@@ -135,12 +135,12 @@ class ClubManager {
                 <table class="table table-striped">
                     <thead>
                         <tr>
-                            <th>Club ID</th>
+                            <th>Vereins-ID</th>
                             <th>Name</th>
                             <th>Region</th>
-                            <th>District</th>
-                            <th>Members</th>
-                            <th>Actions</th>
+                            <th>Bezirk</th>
+                            <th>Mitglieder</th>
+                            <th>Aktionen</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -158,7 +158,7 @@ class ClubManager {
                     </td>
                     <td>
                         <button onclick="clubManager.viewClubDetail('${club.id}')" class="btn btn-small btn-secondary">
-                            View Details
+                            Details anzeigen
                         </button>
                     </td>
                 </tr>
@@ -206,7 +206,7 @@ class ClubManager {
             this.displayClubResults(containerId, this.currentResults, this.currentMeta);
             
         } catch (error) {
-            Utils.showError(containerId, `Search failed: ${error.message}`);
+            Utils.showError(containerId, `Suche fehlgeschlagen: ${error.message}`);
         }
     }
 
@@ -217,21 +217,21 @@ class ClubManager {
         const html = `
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">Club Details: ${Utils.sanitizeHTML(club.name || 'Unknown')}</h3>
+                    <h3 class="card-title">Vereinsdetails: ${Utils.sanitizeHTML(club.name || 'Unbekannt')}</h3>
                 </div>
                 <div class="form-row">
                     <div>
                         <h4>Basic Information</h4>
-                        <p><strong>Club ID:</strong> <code>${Utils.sanitizeHTML(club.id || 'N/A')}</code></p>
+                        <p><strong>Vereins-ID:</strong> <code>${Utils.sanitizeHTML(club.id || 'N/A')}</code></p>
                         <p><strong>Name:</strong> ${Utils.sanitizeHTML(club.name || 'N/A')}</p>
-                        <p><strong>Short Name:</strong> ${Utils.sanitizeHTML(club.short_name || 'N/A')}</p>
+                        <p><strong>Kurzname:</strong> ${Utils.sanitizeHTML(club.short_name || 'N/A')}</p>
                         <p><strong>Status:</strong> ${Utils.sanitizeHTML(club.status || 'N/A')}</p>
                     </div>
                     <div>
-                        <h4>Location Information</h4>
+                        <h4>Standortinformationen</h4>
                         <p><strong>Region:</strong> ${Utils.sanitizeHTML(club.region || 'N/A')}</p>
-                        <p><strong>District:</strong> ${Utils.sanitizeHTML(club.district || 'N/A')}</p>
-                        <p><strong>Founding Date:</strong> ${Utils.formatDate(club.founding_date)}</p>
+                        <p><strong>Bezirk:</strong> ${Utils.sanitizeHTML(club.district || 'N/A')}</p>
+                        <p><strong>Gründungsdatum:</strong> ${Utils.formatDate(club.founding_date)}</p>
                     </div>
                 </div>
                 <div class="form-row">
@@ -264,7 +264,7 @@ class ClubManager {
             const modal = document.getElementById('club-detail-modal');
             const modalBody = modal.querySelector('.modal-body');
             
-            modalBody.innerHTML = '<div class="loading show"><div class="spinner"></div><p>Loading club details...</p></div>';
+            modalBody.innerHTML = '<div class="loading show"><div class="spinner"></div><p>Lade Vereinsdetails...</p></div>';
             
             new ModalManager().openModal('club-detail-modal');
             

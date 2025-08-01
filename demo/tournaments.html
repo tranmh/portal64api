@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal64 API Demo - Tournaments</title>
+    <title>Portal64 API Demo - Turniere</title>
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/forms.css">
     <link rel="stylesheet" href="css/components.css">
@@ -11,9 +11,9 @@
 <body class="tournament-page">
     <header class="header">
         <div class="container">
-            <h1>Tournaments API</h1>
-            <p>Access tournament data and results from the DWZ chess system</p>
-            <p><a href="index.html" style="color: var(--light-gray); text-decoration: underline;">← Back to Dashboard</a></p>
+            <h1>Turniere API</h1>
+            <p>Greifen Sie auf Turnierdaten und Ergebnisse aus dem DWZ-Schachsystem zu</p>
+            <p><a href="index.html" style="color: var(--light-gray); text-decoration: underline;">← Zurück zum Dashboard</a></p>
         </div>
     </header>
 
@@ -21,30 +21,30 @@
         <div class="container">
             <div class="tabs">
                 <nav class="tab-nav">
-                    <button class="tab-nav-item" data-tab="search-tournaments">Search Tournaments</button>
-                    <button class="tab-nav-item" data-tab="upcoming-tournaments">Upcoming</button>
-                    <button class="tab-nav-item" data-tab="recent-tournaments">Recent</button>
-                    <button class="tab-nav-item" data-tab="date-range-tournaments">Date Range</button>
-                    <button class="tab-nav-item" data-tab="tournament-lookup">Tournament Lookup</button>
+                    <button class="tab-nav-item" data-tab="search-tournaments">Turniere suchen</button>
+                    <button class="tab-nav-item" data-tab="upcoming-tournaments">Kommend</button>
+                    <button class="tab-nav-item" data-tab="recent-tournaments">Kürzlich</button>
+                    <button class="tab-nav-item" data-tab="date-range-tournaments">Datumsbereich</button>
+                    <button class="tab-nav-item" data-tab="tournament-lookup">Turnier-Abfrage</button>
                 </nav>
 
                 <!-- Search Tournaments Tab -->
                 <div id="search-tournaments" class="tab-content">
                     <div class="card">
                         <div class="card-header">
-                            <h2 class="card-title">Search Tournaments</h2>
+                            <h2 class="card-title">Turniere suchen</h2>
                         </div>
-                        <p>Search for tournaments by name, code, or other criteria with advanced filtering options.</p>
+                        <p>Suchen Sie nach Turnieren anhand von Name, Code oder anderen Kriterien mit erweiterten Filteroptionen.</p>
                         
                         <form id="tournament-search-form" class="search-form">
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label class="form-label" for="search-query">Search Query</label>
+                                    <label class="form-label" for="search-query">Suchanfrage</label>
                                     <input type="text" id="search-query" name="query" class="form-input" 
-                                           placeholder="Enter tournament name or code...">
+                                           placeholder="Turniername oder Code eingeben...">
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label" for="search-limit">Results per page</label>
+                                    <label class="form-label" for="search-limit">Ergebnisse pro Seite</label>
                                     <select id="search-limit" name="limit" class="form-select">
                                         <option value="10">10</option>
                                         <option value="20" selected>20</option>
@@ -54,51 +54,51 @@
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">&nbsp;</label>
-                                    <button type="submit" class="btn btn-primary">Search Tournaments</button>
+                                    <button type="submit" class="btn btn-primary">Turniere suchen</button>
                                 </div>
                             </div>
 
-                            <button type="button" class="advanced-toggle">Show Advanced Options</button>
+                            <button type="button" class="advanced-toggle">Erweiterte Optionen anzeigen</button>
                             
                             <div class="advanced-search">
                                 <div class="form-row">
                                     <div class="form-group">
-                                        <label class="form-label" for="search-offset">Offset (pagination)</label>
+                                        <label class="form-label" for="search-offset">Offset (Paginierung)</label>
                                         <input type="number" id="search-offset" name="offset" class="form-input" 
                                                value="0" min="0">
                                     </div>
                                     <div class="form-group">
-                                        <label class="form-label" for="search-sort-by">Sort by</label>
+                                        <label class="form-label" for="search-sort-by">Sortieren nach</label>
                                         <select id="search-sort-by" name="sort_by" class="form-select">
-                                            <option value="finishedOn" selected>Finish Date</option>
-                                            <option value="startedOn">Start Date</option>
+                                            <option value="finishedOn" selected>Enddatum</option>
+                                            <option value="startedOn">Startdatum</option>
                                             <option value="name">Name</option>
-                                            <option value="participant_count">Participants</option>
+                                            <option value="participant_count">Teilnehmer</option>
                                         </select>
                                     </div>
                                     <div class="form-group">
-                                        <label class="form-label" for="search-sort-order">Sort order</label>
+                                        <label class="form-label" for="search-sort-order">Sortierreihenfolge</label>
                                         <select id="search-sort-order" name="sort_order" class="form-select">
-                                            <option value="desc" selected>Descending</option>
-                                            <option value="asc">Ascending</option>
+                                            <option value="desc" selected>Absteigend</option>
+                                            <option value="asc">Aufsteigend</option>
                                         </select>
                                     </div>
                                 </div>
                                 <div class="form-row">
                                     <div class="form-group">
-                                        <label class="form-label" for="search-filter-by">Filter by</label>
+                                        <label class="form-label" for="search-filter-by">Filtern nach</label>
                                         <select id="search-filter-by" name="filter_by" class="form-select">
-                                            <option value="">No filter</option>
-                                            <option value="year">Year</option>
+                                            <option value="">Kein Filter</option>
+                                            <option value="year">Jahr</option>
                                         </select>
                                     </div>
                                     <div class="form-group">
-                                        <label class="form-label" for="search-filter-value">Filter value</label>
+                                        <label class="form-label" for="search-filter-value">Filterwert</label>
                                         <input type="text" id="search-filter-value" name="filter_value" class="form-input" 
-                                               placeholder="e.g., 2024">
+                                               placeholder="z.B., 2024">
                                     </div>
                                     <div class="form-group">
-                                        <label class="form-label" for="search-format">Response format</label>
+                                        <label class="form-label" for="search-format">Antwortformat</label>
                                         <select id="search-format" name="format" class="form-select">
                                             <option value="json" selected>JSON</option>
                                             <option value="csv">CSV</option>
@@ -118,14 +118,14 @@
                 <div id="upcoming-tournaments" class="tab-content">
                     <div class="card">
                         <div class="card-header">
-                            <h2 class="card-title">Upcoming Tournaments</h2>
+                            <h2 class="card-title">Kommende Turniere</h2>
                         </div>
-                        <p>Get tournaments that are open for registration or starting soon.</p>
+                        <p>Erhalten Sie Turniere, die für die Anmeldung offen sind oder bald beginnen.</p>
                         
                         <form id="upcoming-tournaments-form" class="search-form">
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label class="form-label" for="upcoming-limit">Maximum tournaments</label>
+                                    <label class="form-label" for="upcoming-limit">Maximale Anzahl Turniere</label>
                                     <select id="upcoming-limit" name="limit" class="form-select">
                                         <option value="10">10</option>
                                         <option value="20" selected>20</option>
@@ -133,7 +133,7 @@
                                     </select>
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label" for="upcoming-format">Response format</label>
+                                    <label class="form-label" for="upcoming-format">Antwortformat</label>
                                     <select id="upcoming-format" name="format" class="form-select">
                                         <option value="json" selected>JSON</option>
                                         <option value="csv">CSV</option>
@@ -141,7 +141,7 @@
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">&nbsp;</label>
-                                    <button type="submit" class="btn btn-primary">Get Upcoming Tournaments</button>
+                                    <button type="submit" class="btn btn-primary">Kommende Turniere abrufen</button>
                                 </div>
                             </div>
                         </form>
@@ -156,24 +156,24 @@
                 <div id="recent-tournaments" class="tab-content">
                     <div class="card">
                         <div class="card-header">
-                            <h2 class="card-title">Recent Tournaments</h2>
+                            <h2 class="card-title">Kürzliche Turniere</h2>
                         </div>
-                        <p>Get tournaments that have finished recently.</p>
+                        <p>Erhalten Sie Turniere, die kürzlich beendet wurden.</p>
                         
                         <form id="recent-tournaments-form" class="search-form">
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label class="form-label" for="recent-days">Days to look back</label>
+                                    <label class="form-label" for="recent-days">Tage zurückblicken</label>
                                     <select id="recent-days" name="days" class="form-select">
-                                        <option value="7">7 days</option>
-                                        <option value="14">14 days</option>
-                                        <option value="30" selected>30 days</option>
-                                        <option value="60">60 days</option>
-                                        <option value="90">90 days</option>
+                                        <option value="7">7 Tage</option>
+                                        <option value="14">14 Tage</option>
+                                        <option value="30" selected>30 Tage</option>
+                                        <option value="60">60 Tage</option>
+                                        <option value="90">90 Tage</option>
                                     </select>
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label" for="recent-limit">Maximum tournaments</label>
+                                    <label class="form-label" for="recent-limit">Maximale Anzahl Turniere</label>
                                     <select id="recent-limit" name="limit" class="form-select">
                                         <option value="10">10</option>
                                         <option value="20" selected>20</option>
@@ -182,12 +182,12 @@
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">&nbsp;</label>
-                                    <button type="submit" class="btn btn-primary">Get Recent Tournaments</button>
+                                    <button type="submit" class="btn btn-primary">Kürzliche Turniere abrufen</button>
                                 </div>
                             </div>
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label class="form-label" for="recent-format">Response format</label>
+                                    <label class="form-label" for="recent-format">Antwortformat</label>
                                     <select id="recent-format" name="format" class="form-select">
                                         <option value="json" selected>JSON</option>
                                         <option value="csv">CSV</option>
@@ -206,37 +206,37 @@
                 <div id="date-range-tournaments" class="tab-content">
                     <div class="card">
                         <div class="card-header">
-                            <h2 class="card-title">Tournaments by Date Range</h2>
+                            <h2 class="card-title">Turniere nach Datumsbereich</h2>
                         </div>
-                        <p>Get tournaments within a specific date range with advanced search options.</p>
+                        <p>Erhalten Sie Turniere innerhalb eines bestimmten Datumsbereichs mit erweiterten Suchoptionen.</p>
                         
                         <form id="date-range-tournaments-form" class="search-form">
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label class="form-label" for="date-range-start">Start Date *</label>
+                                    <label class="form-label" for="date-range-start">Startdatum *</label>
                                     <input type="date" id="date-range-start" name="start_date" class="form-input" required>
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label" for="date-range-end">End Date *</label>
+                                    <label class="form-label" for="date-range-end">Enddatum *</label>
                                     <input type="date" id="date-range-end" name="end_date" class="form-input" required>
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">&nbsp;</label>
-                                    <button type="submit" class="btn btn-primary">Get Tournaments</button>
+                                    <button type="submit" class="btn btn-primary">Turniere abrufen</button>
                                 </div>
                             </div>
 
-                            <button type="button" class="advanced-toggle">Show Advanced Options</button>
+                            <button type="button" class="advanced-toggle">Erweiterte Optionen anzeigen</button>
                             
                             <div class="advanced-search">
                                 <div class="form-row">
                                     <div class="form-group">
-                                        <label class="form-label" for="date-range-query">Search query</label>
+                                        <label class="form-label" for="date-range-query">Suchanfrage</label>
                                         <input type="text" id="date-range-query" name="query" class="form-input" 
-                                               placeholder="Filter by tournament name...">
+                                               placeholder="Nach Turniername filtern...">
                                     </div>
                                     <div class="form-group">
-                                        <label class="form-label" for="date-range-limit">Results per page</label>
+                                        <label class="form-label" for="date-range-limit">Ergebnisse pro Seite</label>
                                         <select id="date-range-limit" name="limit" class="form-select">
                                             <option value="10">10</option>
                                             <option value="20" selected>20</option>
@@ -252,22 +252,22 @@
                                 </div>
                                 <div class="form-row">
                                     <div class="form-group">
-                                        <label class="form-label" for="date-range-sort-by">Sort by</label>
+                                        <label class="form-label" for="date-range-sort-by">Sortieren nach</label>
                                         <select id="date-range-sort-by" name="sort_by" class="form-select">
-                                            <option value="finishedOn" selected>Finish Date</option>
-                                            <option value="startedOn">Start Date</option>
+                                            <option value="finishedOn" selected>Enddatum</option>
+                                            <option value="startedOn">Startdatum</option>
                                             <option value="name">Name</option>
                                         </select>
                                     </div>
                                     <div class="form-group">
-                                        <label class="form-label" for="date-range-sort-order">Sort order</label>
+                                        <label class="form-label" for="date-range-sort-order">Sortierreihenfolge</label>
                                         <select id="date-range-sort-order" name="sort_order" class="form-select">
-                                            <option value="desc" selected>Descending</option>
-                                            <option value="asc">Ascending</option>
+                                            <option value="desc" selected>Absteigend</option>
+                                            <option value="asc">Aufsteigend</option>
                                         </select>
                                     </div>
                                     <div class="form-group">
-                                        <label class="form-label" for="date-range-format">Response format</label>
+                                        <label class="form-label" for="date-range-format">Antwortformat</label>
                                         <select id="date-range-format" name="format" class="form-select">
                                             <option value="json" selected>JSON</option>
                                             <option value="csv">CSV</option>
@@ -287,20 +287,20 @@
                 <div id="tournament-lookup" class="tab-content">
                     <div class="card">
                         <div class="card-header">
-                            <h2 class="card-title">Individual Tournament Lookup</h2>
+                            <h2 class="card-title">Individuelle Turnier-Abfrage</h2>
                         </div>
-                        <p>Look up detailed information for a specific tournament using its Tournament ID.</p>
+                        <p>Schlagen Sie detaillierte Informationen für ein bestimmtes Turnier mit seiner Turnier-ID nach.</p>
                         
                         <form id="tournament-lookup-form" class="search-form">
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label class="form-label" for="lookup-tournament-id">Tournament ID *</label>
+                                    <label class="form-label" for="lookup-tournament-id">Turnier-ID *</label>
                                     <input type="text" id="lookup-tournament-id" name="tournament_id" class="form-input" 
-                                           placeholder="e.g., C529-K00-HT1 or C339-400-442" required>
-                                    <div id="lookup-tournament-id-error" class="form-error">Please enter a valid tournament ID</div>
+                                           placeholder="z.B., C529-K00-HT1 oder C339-400-442" required>
+                                    <div id="lookup-tournament-id-error" class="form-error">Bitte geben Sie eine gültige Turnier-ID ein</div>
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label" for="lookup-format">Response format</label>
+                                    <label class="form-label" for="lookup-format">Antwortformat</label>
                                     <select id="lookup-format" name="format" class="form-select">
                                         <option value="json" selected>JSON</option>
                                         <option value="csv">CSV</option>
@@ -308,15 +308,15 @@
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">&nbsp;</label>
-                                    <button type="submit" class="btn btn-primary">Get Tournament Details</button>
+                                    <button type="submit" class="btn btn-primary">Turnierdetails abrufen</button>
                                 </div>
                             </div>
                         </form>
 
                         <div class="alert alert-info">
-                            <h4>Tournament ID Format</h4>
-                            <p>Tournament IDs can be in various formats: <code>C###-###-###</code> or <code>C###-###-###</code> where segments can be letters or numbers. Examples: <code>C529-K00-HT1</code>, <code>C339-400-442</code></p>
-                            <p>Each tournament receives a unique identifier when registered in the DWZ system.</p>
+                            <h4>Turnier-ID Format</h4>
+                            <p>Turnier-IDs können in verschiedenen Formaten vorliegen: <code>C###-###-###</code> oder <code>C###-###-###</code>, wobei Segmente Buchstaben oder Zahlen sein können. Beispiele: <code>C529-K00-HT1</code>, <code>C339-400-442</code></p>
+                            <p>Jedes Turnier erhält eine eindeutige Kennung, wenn es im DWZ-System registriert wird.</p>
                         </div>
 
                         <div id="tournament-lookup-results" class="results">
@@ -332,21 +332,21 @@
     <div id="tournament-detail-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 class="modal-title">Tournament Details</h3>
+                <h3 class="modal-title">Turnierdetails</h3>
                 <button class="modal-close">&times;</button>
             </div>
             <div class="modal-body">
                 <div id="tournament-detail-content"></div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary modal-close">Close</button>
+                <button class="btn btn-secondary modal-close">Schließen</button>
             </div>
         </div>
     </div>
 
     <footer class="footer">
         <div class="container">
-            <p>&copy; 2024 Portal64 API Demo. Tournament management interface.</p>
+            <p>&copy; 2024 Portal64 API Demo. Turnierverwaltungs-Schnittstelle.</p>
         </div>
     </footer>
 

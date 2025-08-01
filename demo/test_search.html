@@ -1,7 +1,7 @@
 <!DOCTYPE html>
-<html>
+<html lang="de">
 <head>
-    <title>Test Player Search</title>
+    <title>Spielersuche testen</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; }
         .loading { color: blue; }
@@ -12,23 +12,23 @@
     </style>
 </head>
 <body>
-    <h1>Test Player Search</h1>
+    <h1>Spielersuche testen</h1>
     
-    <button onclick="testSearch('Tran')">Search for "Tran"</button>
-    <button onclick="testSearch('Test')">Search for "Test"</button>
-    <button onclick="testSearch('X')">Search for "X"</button>
+    <button onclick="testSearch('Tran')">Nach "Tran" suchen</button>
+    <button onclick="testSearch('Test')">Nach "Test" suchen</button>
+    <button onclick="testSearch('X')">Nach "X" suchen</button>
     
     <div id="results"></div>
 
     <script>
         async function testSearch(query) {
             const resultsDiv = document.getElementById('results');
-            resultsDiv.innerHTML = '<div class="loading">Searching for "' + query + '"... This may take 15-30 seconds.</div>';
+            resultsDiv.innerHTML = '<div class="loading">Suche nach "' + query + '"... Dies kann 15-30 Sekunden dauern.</div>';
             
             try {
                 // Custom timeout implementation
                 const timeoutPromise = new Promise((_, reject) => {
-                    setTimeout(() => reject(new Error('Request timeout after 30 seconds')), 30000);
+                    setTimeout(() => reject(new Error('Anfrage-Timeout nach 30 Sekunden')), 30000);
                 });
 
                 const fetchPromise = fetch('http://localhost:8080/api/v1/players?query=' + encodeURIComponent(query) + '&limit=3')
@@ -38,12 +38,12 @@
                 
                 const players = result.data?.data || result.data || [];
                 
-                let html = '<div class="success">Search completed! Found ' + (players.length || 0) + ' players:</div>';
+                let html = '<div class="success">Suche abgeschlossen! ' + (players.length || 0) + ' Spieler gefunden:</div>';
                 if (players.length > 0) {
                     html += '<ul>';
                     players.forEach(player => {
                         const fullName = ((player.firstname || '') + ' ' + (player.name || '')).trim() || 'N/A';
-                        html += '<li><strong>' + fullName + '</strong> - ID: ' + (player.id || 'N/A') + ' - Club: ' + (player.club || 'N/A') + '</li>';
+                        html += '<li><strong>' + fullName + '</strong> - ID: ' + (player.id || 'N/A') + ' - Verein: ' + (player.club || 'N/A') + '</li>';
                     });
                     html += '</ul>';
                 }
@@ -51,7 +51,7 @@
                 resultsDiv.innerHTML = html;
                 
             } catch (error) {
-                resultsDiv.innerHTML = '<div class="error">Error: ' + error.message + '</div>';
+                resultsDiv.innerHTML = '<div class="error">Fehler: ' + error.message + '</div>';
             }
         }
     </script>
