@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"strconv"
 
 	"portal64api/internal/services"
 	"portal64api/pkg/errors"
@@ -66,6 +67,7 @@ func (h *PlayerHandler) GetPlayer(c *gin.Context) {
 // @Param offset query int false "Offset" default(0)
 // @Param sort_by query string false "Sort by field" default(name)
 // @Param sort_order query string false "Sort order (asc/desc)" default(asc)
+// @Param active query bool false "Show only active players with valid club memberships" default(true)
 // @Param format query string false "Response format (json or csv)" Enums(json,csv)
 // @Success 200 {object} models.Response{data=[]models.PlayerResponse,meta=models.Meta}
 // @Failure 400 {object} models.Response
@@ -81,7 +83,16 @@ func (h *PlayerHandler) SearchPlayers(c *gin.Context) {
 		return
 	}
 
-	players, meta, err := h.playerService.SearchPlayers(req)
+	// Parse active parameter, default to true
+	activeStr := c.DefaultQuery("active", "true")
+	showActive, err := strconv.ParseBool(activeStr)
+	if err != nil {
+		utils.SendJSONResponse(c, http.StatusBadRequest, 
+			errors.NewBadRequestError("Invalid active parameter"))
+		return
+	}
+
+	players, meta, err := h.playerService.SearchPlayers(req, showActive)
 	if err != nil {
 		if apiErr, ok := err.(errors.APIError); ok {
 			utils.SendJSONResponse(c, apiErr.Code, apiErr)
@@ -154,6 +165,7 @@ func (h *PlayerHandler) GetPlayerRatingHistory(c *gin.Context) {
 // @Param offset query int false "Offset" default(0)
 // @Param sort_by query string false "Sort by field" default(name)
 // @Param sort_order query string false "Sort order (asc/desc)" default(asc)
+// @Param active query bool false "Show only active players with valid club memberships" default(true)
 // @Param format query string false "Response format (json or csv)" Enums(json,csv)
 // @Success 200 {object} models.Response{data=[]models.PlayerResponse,meta=models.Meta}
 // @Failure 400 {object} models.Response
@@ -178,7 +190,16 @@ func (h *PlayerHandler) GetPlayersByClub(c *gin.Context) {
 		return
 	}
 
-	players, meta, err := h.playerService.GetPlayersByClub(clubID, req)
+	// Parse active parameter, default to true
+	activeStr := c.DefaultQuery("active", "true")
+	showActive, err := strconv.ParseBool(activeStr)
+	if err != nil {
+		utils.SendJSONResponse(c, http.StatusBadRequest, 
+			errors.NewBadRequestError("Invalid active parameter"))
+		return
+	}
+
+	players, meta, err := h.playerService.GetPlayersByClub(clubID, req, showActive)
 	if err != nil {
 		if apiErr, ok := err.(errors.APIError); ok {
 			utils.SendJSONResponse(c, apiErr.Code, apiErr)

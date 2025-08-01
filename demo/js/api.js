@@ -49,6 +49,10 @@ class Portal64API {
 
     // Player endpoints
     async searchPlayers(params = {}) {
+        // Ensure active defaults to true for demo interface
+        if (!params.hasOwnProperty('active')) {
+            params.active = true;
+        }
         const queryString = new URLSearchParams(params).toString();
         return this.request(`/api/v1/players?${queryString}`);
     }
@@ -76,6 +80,10 @@ class Portal64API {
     }
 
     async getClubPlayers(id, params = {}) {
+        // Ensure active defaults to true for demo interface
+        if (!params.hasOwnProperty('active')) {
+            params.active = true;
+        }
         const queryString = new URLSearchParams(params).toString();
         return this.request(`/api/v1/clubs/${id}/players?${queryString}`);
     }

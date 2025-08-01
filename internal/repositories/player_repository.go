@@ -48,11 +48,18 @@ func (r *PlayerRepository) GetPlayerByID(vkz string, spielernummer uint) (*model
 }
 
 // SearchPlayers searches for players by name
-func (r *PlayerRepository) SearchPlayers(req models.SearchRequest) ([]models.Person, int64, error) {
+func (r *PlayerRepository) SearchPlayers(req models.SearchRequest, showActive bool) ([]models.Person, int64, error) {
 	var players []models.Person
 	var total int64
 
-	query := r.dbs.MVDSB.Model(&models.Person{}).Where("status = 0")
+	query := r.dbs.MVDSB.Model(&models.Person{}).Where("person.status = 0")
+
+	// If showActive is true, only return players with current active memberships
+	if showActive {
+		// Join with memberships to ensure only players with current memberships are returned
+		query = query.Joins("INNER JOIN mitgliedschaft ON person.id = mitgliedschaft.person").
+			Where("mitgliedschaft.bis IS NULL AND mitgliedschaft.status = 0")
+	}
 
 	// Add search filter with efficient prefix matching (like the old PHP code)
 	if req.Query != "" {
@@ -60,7 +67,7 @@ func (r *PlayerRepository) SearchPlayers(req models.SearchRequest) ([]models.Per
 		// This matches the original PHP implementation: name >= 'query' AND name < 'queryzz'
 		upperBound := req.Query + "zz"
 		query = query.Where(
-			"(name >= ? AND name < ?) OR (vorname >= ? AND vorname < ?)", 
+			"(person.name >= ? AND person.name < ?) OR (person.vorname >= ? AND person.vorname < ?)", 
 			req.Query, upperBound, req.Query, upperBound)
 	}
 
@@ -68,23 +75,23 @@ func (r *PlayerRepository) SearchPlayers(req models.SearchRequest) ([]models.Per
 	query.Count(&total)
 
 	// Apply sorting
-	orderBy := "name ASC"
+	orderBy := "person.name ASC"
 	if req.SortBy != "" {
 		direction := "ASC"
 		if req.SortOrder == "desc" {
 			direction = "DESC"
 		}
-		orderBy = fmt.Sprintf("%s %s", req.SortBy, direction)
+		orderBy = fmt.Sprintf("person.%s %s", req.SortBy, direction)
 	}
 
-	// Apply pagination and execute
-	err := query.Order(orderBy).Limit(req.Limit).Offset(req.Offset).Find(&players).Error
+	// Apply pagination and execute, make sure to select distinct persons
+	err := query.Select("DISTINCT person.*").Order(orderBy).Limit(req.Limit).Offset(req.Offset).Find(&players).Error
 	
 	return players, total, err
 }
 
 // GetPlayersByClub gets all players in a club
-func (r *PlayerRepository) GetPlayersByClub(vkz string, req models.SearchRequest) ([]models.Person, int64, error) {
+func (r *PlayerRepository) GetPlayersByClub(vkz string, req models.SearchRequest, showActive bool) ([]models.Person, int64, error) {
 	// First get the organization ID by VKZ
 	var org models.Organisation
 	if err := r.dbs.MVDSB.Where("vkz = ?", vkz).First(&org).Error; err != nil {

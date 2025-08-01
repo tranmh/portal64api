@@ -67,17 +67,25 @@ func (s *PlayerService) GetPlayerByID(playerID string) (*models.PlayerResponse, 
 }
 
 // SearchPlayers searches players by name
-func (s *PlayerService) SearchPlayers(req models.SearchRequest) ([]models.PlayerResponse, *models.Meta, error) {
-	players, total, err := s.playerRepo.SearchPlayers(req)
+func (s *PlayerService) SearchPlayers(req models.SearchRequest, showActive bool) ([]models.PlayerResponse, *models.Meta, error) {
+	players, _, err := s.playerRepo.SearchPlayers(req, showActive)
 	if err != nil {
 		return nil, nil, errors.NewInternalServerError("Failed to search players")
 	}
 
-	// Convert to response format
-	responses := make([]models.PlayerResponse, len(players))
-	for i, player := range players {
-		responses[i] = models.PlayerResponse{
-			ID:        fmt.Sprintf("UNKNOWN-%d", player.ID), // Will be updated with club info
+	// Convert to response format, but only include players with valid club memberships when showActive is true
+	responses := make([]models.PlayerResponse, 0, len(players))
+	for _, player := range players {
+		// Try to get club information
+		club, clubErr := s.getPlayerCurrentClub(player.ID)
+		membership, membershipErr := s.getPlayerCurrentMembership(player.ID)
+		
+		// If showActive is true, skip players without valid memberships
+		if showActive && (clubErr != nil || membershipErr != nil || club == nil || membership == nil) {
+			continue
+		}
+		
+		response := models.PlayerResponse{
 			Name:      player.Name,
 			Firstname: player.Vorname,
 			Birth:     player.Geburtsdatum,
@@ -87,29 +95,31 @@ func (s *PlayerService) SearchPlayers(req models.SearchRequest) ([]models.Player
 			Status:    getPlayerStatus(player.Status),
 		}
 
-		// Try to get club information
-		if club, err := s.getPlayerCurrentClub(player.ID); err == nil && club != nil {
-			responses[i].Club = club.Name
-			responses[i].ClubID = club.VKZ
-			
-			// Get membership to retrieve spielernummer
-			if membership, err := s.getPlayerCurrentMembership(player.ID); err == nil && membership != nil {
-				responses[i].ID = utils.GeneratePlayerID(club.VKZ, membership.Spielernummer)
+		if club != nil && membership != nil {
+			response.Club = club.Name
+			response.ClubID = club.VKZ
+			response.ID = utils.GeneratePlayerID(club.VKZ, membership.Spielernummer)
+		} else {
+			// Only show UNKNOWN- IDs when showActive is false
+			if !showActive {
+				response.ID = fmt.Sprintf("UNKNOWN-%d", player.ID)
 			} else {
-				// Fallback to UNKNOWN if spielernummer is not available
-				responses[i].ID = fmt.Sprintf("UNKNOWN-%d", player.ID)
+				// Skip this player as we already handled this case above
+				continue
 			}
 		}
 
 		// Try to get DWZ information
 		if evaluation, err := s.getPlayerLatestEvaluation(player.ID); err == nil && evaluation != nil {
-			responses[i].CurrentDWZ = evaluation.DWZNew
-			responses[i].DWZIndex = evaluation.DWZNewIndex
+			response.CurrentDWZ = evaluation.DWZNew
+			response.DWZIndex = evaluation.DWZNewIndex
 		}
+
+		responses = append(responses, response)
 	}
 
 	meta := &models.Meta{
-		Total:  int(total),
+		Total:  len(responses), // Update total to reflect actual returned count
 		Limit:  req.Limit,
 		Offset: req.Offset,
 		Count:  len(responses),
@@ -119,8 +129,8 @@ func (s *PlayerService) SearchPlayers(req models.SearchRequest) ([]models.Player
 }
 
 // GetPlayersByClub gets all players in a specific club
-func (s *PlayerService) GetPlayersByClub(clubID string, req models.SearchRequest) ([]models.PlayerResponse, *models.Meta, error) {
-	players, total, err := s.playerRepo.GetPlayersByClub(clubID, req)
+func (s *PlayerService) GetPlayersByClub(clubID string, req models.SearchRequest, showActive bool) ([]models.PlayerResponse, *models.Meta, error) {
+	players, _, err := s.playerRepo.GetPlayersByClub(clubID, req, showActive)
 	if err != nil {
 		return nil, nil, errors.NewNotFoundError("Club or players")
 	}
@@ -131,20 +141,18 @@ func (s *PlayerService) GetPlayersByClub(clubID string, req models.SearchRequest
 		return nil, nil, errors.NewNotFoundError("Club")
 	}
 
-	// Convert to response format
-	responses := make([]models.PlayerResponse, len(players))
-	for i, player := range players {
+	// Convert to response format, but only include players with valid memberships when showActive is true
+	responses := make([]models.PlayerResponse, 0, len(players))
+	for _, player := range players {
 		// Get membership to retrieve spielernummer
-		var playerID string
-		if membership, err := s.getPlayerCurrentMembership(player.ID); err == nil && membership != nil {
-			playerID = utils.GeneratePlayerID(clubID, membership.Spielernummer)
-		} else {
-			// Fallback to UNKNOWN if spielernummer is not available
-			playerID = fmt.Sprintf("UNKNOWN-%d", player.ID)
+		membership, membershipErr := s.getPlayerCurrentMembership(player.ID)
+		
+		// If showActive is true, skip players without valid memberships
+		if showActive && (membershipErr != nil || membership == nil) {
+			continue
 		}
 		
-		responses[i] = models.PlayerResponse{
-			ID:        playerID,
+		response := models.PlayerResponse{
 			Name:      player.Name,
 			Firstname: player.Vorname,
 			Club:      club.Name,
@@ -156,15 +164,29 @@ func (s *PlayerService) GetPlayersByClub(clubID string, req models.SearchRequest
 			Status:    getPlayerStatus(player.Status),
 		}
 
+		if membership != nil {
+			response.ID = utils.GeneratePlayerID(clubID, membership.Spielernummer)
+		} else {
+			// Only show UNKNOWN- IDs when showActive is false
+			if !showActive {
+				response.ID = fmt.Sprintf("UNKNOWN-%d", player.ID)
+			} else {
+				// Skip this player as we already handled this case above
+				continue
+			}
+		}
+
 		// Get DWZ information
 		if evaluation, err := s.getPlayerLatestEvaluation(player.ID); err == nil && evaluation != nil {
-			responses[i].CurrentDWZ = evaluation.DWZNew
-			responses[i].DWZIndex = evaluation.DWZNewIndex
+			response.CurrentDWZ = evaluation.DWZNew
+			response.DWZIndex = evaluation.DWZNewIndex
 		}
+
+		responses = append(responses, response)
 	}
 
 	meta := &models.Meta{
-		Total:  int(total),
+		Total:  len(responses), // Update total to reflect actual returned count
 		Limit:  req.Limit,
 		Offset: req.Offset,
 		Count:  len(responses),

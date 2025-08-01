@@ -5,8 +5,8 @@ import "portal64api/internal/models"
 // PlayerRepositoryInterface defines the interface for player repository operations
 type PlayerRepositoryInterface interface {
 	GetPlayerByID(vkz string, spielernummer uint) (*models.Person, *models.Organisation, *models.Evaluation, error)
-	SearchPlayers(req models.SearchRequest) ([]models.Person, int64, error)
-	GetPlayersByClub(vkz string, req models.SearchRequest) ([]models.Person, int64, error)
+	SearchPlayers(req models.SearchRequest, showActive bool) ([]models.Person, int64, error)
+	GetPlayersByClub(vkz string, req models.SearchRequest, showActive bool) ([]models.Person, int64, error)
 	GetPlayerRatingHistory(personID uint) ([]models.Evaluation, error)
 	GetPlayerCurrentClub(personID uint) (*models.Organisation, error)
 	GetPlayerCurrentMembership(personID uint) (*models.Mitgliedschaft, error)
