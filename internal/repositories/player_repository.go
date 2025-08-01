@@ -52,13 +52,14 @@ func (r *PlayerRepository) SearchPlayers(req models.SearchRequest, showActive bo
 	var players []models.Person
 	var total int64
 
+	// Start with basic person query
 	query := r.dbs.MVDSB.Model(&models.Person{}).Where("person.status = 0")
 
-	// If showActive is true, only return players with current active memberships
+	// If showActive is true, optimize by using a subquery instead of large IN clause
 	if showActive {
-		// Join with memberships to ensure only players with current memberships are returned
-		query = query.Joins("INNER JOIN mitgliedschaft ON person.id = mitgliedschaft.person").
-			Where("mitgliedschaft.bis IS NULL AND mitgliedschaft.status = 0")
+		// Use EXISTS subquery to avoid MySQL prepared statement placeholder limit
+		// This is more efficient than a large IN clause and avoids the 65K placeholder limit
+		query = query.Where("EXISTS (SELECT 1 FROM mitgliedschaft WHERE mitgliedschaft.person = person.id AND mitgliedschaft.bis IS NULL AND mitgliedschaft.status = 0)")
 	}
 
 	// Add search filter with efficient prefix matching (like the old PHP code)
@@ -84,8 +85,8 @@ func (r *PlayerRepository) SearchPlayers(req models.SearchRequest, showActive bo
 		orderBy = fmt.Sprintf("person.%s %s", req.SortBy, direction)
 	}
 
-	// Apply pagination and execute, make sure to select distinct persons
-	err := query.Select("DISTINCT person.*").Order(orderBy).Limit(req.Limit).Offset(req.Offset).Find(&players).Error
+	// Apply pagination and execute
+	err := query.Order(orderBy).Limit(req.Limit).Offset(req.Offset).Find(&players).Error
 	
 	return players, total, err
 }
@@ -98,32 +99,15 @@ func (r *PlayerRepository) GetPlayersByClub(vkz string, req models.SearchRequest
 		return nil, 0, err
 	}
 
-	// Get current memberships for this organization
-	var memberships []models.Mitgliedschaft
-	memberQuery := r.dbs.MVDSB.Where("organisation = ? AND bis IS NULL AND status = 0", org.ID)
-	if err := memberQuery.Find(&memberships).Error; err != nil {
-		return nil, 0, err
-	}
-
-	// Extract person IDs
-	personIDs := make([]uint, len(memberships))
-	for i, m := range memberships {
-		personIDs[i] = m.Person
-	}
-
-	if len(personIDs) == 0 {
-		return []models.Person{}, 0, nil
-	}
-
 	var players []models.Person
 	var total int64
 
 	// Handle special sorting cases that require JOINs or special field handling
 	if req.SortBy == "current_dwz" {
 		// For DWZ sorting, we need to join with evaluations from Portal64_BDW database
-		// Since we can't easily join across databases in GORM, we'll fetch players first,
-		// then sort them in memory after getting their DWZ ratings
-		query := r.dbs.MVDSB.Model(&models.Person{}).Where("id IN ? AND status = 0", personIDs)
+		// Use EXISTS subquery instead of IN clause to avoid MySQL parameter limit
+		query := r.dbs.MVDSB.Model(&models.Person{}).
+			Where("status = 0 AND EXISTS (SELECT 1 FROM mitgliedschaft WHERE mitgliedschaft.person = person.id AND mitgliedschaft.organisation = ? AND mitgliedschaft.bis IS NULL AND mitgliedschaft.status = 0)", org.ID)
 		
 		// Add search filter
 		if req.Query != "" {
@@ -143,6 +127,41 @@ func (r *PlayerRepository) GetPlayersByClub(vkz string, req models.SearchRequest
 			return nil, 0, err
 		}
 		
+		// FIXED: Batch fetch evaluations to avoid N+1 queries
+		// Extract all player IDs for batch query
+		allPersonIDs := make([]uint, len(allPlayers))
+		for i, player := range allPlayers {
+			allPersonIDs[i] = player.ID
+		}
+		
+		// Fetch latest evaluations in batches to avoid MySQL parameter limit
+		const batchSize = 1000
+		allEvaluations := make([]models.Evaluation, 0)
+		
+		for i := 0; i < len(allPersonIDs); i += batchSize {
+			end := i + batchSize
+			if end > len(allPersonIDs) {
+				end = len(allPersonIDs)
+			}
+			
+			var batchEvaluations []models.Evaluation
+			err = r.dbs.Portal64BDW.Where("idPerson IN ?", allPersonIDs[i:end]).
+				Order("idPerson, id DESC").Find(&batchEvaluations).Error
+			if err != nil {
+				return nil, 0, err
+			}
+			
+			allEvaluations = append(allEvaluations, batchEvaluations...)
+		}
+		
+		// Create a map of latest evaluations by person ID for fast lookup
+		latestEvaluations := make(map[uint]models.Evaluation)
+		for _, eval := range allEvaluations {
+			if _, exists := latestEvaluations[eval.IDPerson]; !exists {
+				latestEvaluations[eval.IDPerson] = eval
+			}
+		}
+		
 		// Get latest evaluations for all players and sort
 		type PlayerWithDWZ struct {
 			Player models.Person
@@ -151,13 +170,14 @@ func (r *PlayerRepository) GetPlayersByClub(vkz string, req models.SearchRequest
 		
 		playersWithDWZ := make([]PlayerWithDWZ, len(allPlayers))
 		for i, player := range allPlayers {
-			var evaluation models.Evaluation
-			r.dbs.Portal64BDW.Where("idPerson = ?", player.ID).
-				Order("id DESC").First(&evaluation)
+			dwz := 0
+			if eval, exists := latestEvaluations[player.ID]; exists {
+				dwz = eval.DWZNew
+			}
 			
 			playersWithDWZ[i] = PlayerWithDWZ{
 				Player: player,
-				DWZ:    evaluation.DWZNew,
+				DWZ:    dwz,
 			}
 		}
 		
@@ -195,8 +215,9 @@ func (r *PlayerRepository) GetPlayersByClub(vkz string, req models.SearchRequest
 		return players, total, nil
 		
 	} else if req.SortBy == "birth_year" {
-		// For birth year sorting, we need to extract year from geburtsdatum
-		query := r.dbs.MVDSB.Model(&models.Person{}).Where("id IN ? AND status = 0", personIDs)
+		// For birth year sorting, use EXISTS subquery instead of IN clause
+		query := r.dbs.MVDSB.Model(&models.Person{}).
+			Where("status = 0 AND EXISTS (SELECT 1 FROM mitgliedschaft WHERE mitgliedschaft.person = person.id AND mitgliedschaft.organisation = ? AND mitgliedschaft.bis IS NULL AND mitgliedschaft.status = 0)", org.ID)
 		
 		// Add search filter
 		if req.Query != "" {
@@ -220,8 +241,9 @@ func (r *PlayerRepository) GetPlayersByClub(vkz string, req models.SearchRequest
 		return players, total, err
 		
 	} else {
-		// Standard sorting for other fields
-		query := r.dbs.MVDSB.Model(&models.Person{}).Where("id IN ? AND status = 0", personIDs)
+		// Standard sorting for other fields - use EXISTS subquery instead of IN clause
+		query := r.dbs.MVDSB.Model(&models.Person{}).
+			Where("status = 0 AND EXISTS (SELECT 1 FROM mitgliedschaft WHERE mitgliedschaft.person = person.id AND mitgliedschaft.organisation = ? AND mitgliedschaft.bis IS NULL AND mitgliedschaft.status = 0)", org.ID)
 
 		// Add search filter
 		if req.Query != "" {

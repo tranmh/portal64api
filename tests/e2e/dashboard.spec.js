@@ -14,7 +14,7 @@ test.describe('Portal64 Dashboard E2E Tests', () => {
     await expect(page.locator('h1')).toContainText('Portal64 API Demo');
     
     // Test health check functionality (correct button text)
-    await page.click('button:has-text("Refresh Health Check")');
+    await page.click('button:has-text("Gesundheitsprüfung aktualisieren")');
     
     // Wait for health result container to be populated
     await expect(page.locator('#health-result')).not.toBeEmpty({ timeout: 5000 });
@@ -30,7 +30,7 @@ test.describe('Portal64 Dashboard E2E Tests', () => {
     await page.goto('/demo/index.html');
     
     // Test "Test Players Search" button (correct button text)
-    await page.click('button:has-text("Test Players Search")');
+    await page.click('button:has-text("Spielersuche testen")');
     
     // Verify API result appears in the quick test container
     await expect(page.locator('#quick-test-result')).not.toBeEmpty({ timeout: 10000 });
@@ -51,13 +51,13 @@ test.describe('Portal64 Dashboard E2E Tests', () => {
     // Test navigation to players page
     await page.click('a[href="players.html"]');
     await expect(page).toHaveURL(/players\.html$/);
-    await expect(page.locator('h1')).toContainText('Players API'); // Actual title from HTML
+    await expect(page.locator('h1')).toContainText('Spieler API'); // Actual title from HTML
     
     // Go back and test clubs page
     await page.goBack();
     await page.click('a[href="clubs.html"]');
     await expect(page).toHaveURL(/clubs\.html$/);
-    await expect(page.locator('h1')).toContainText('Clubs API'); // Actual title from HTML
+    await expect(page.locator('h1')).toContainText('Vereine API'); // Actual title from HTML
   });
 
   test('Error handling displays correctly', async ({ page }) => {
@@ -72,11 +72,11 @@ test.describe('Portal64 Dashboard E2E Tests', () => {
       });
     });
     
-    await page.click('button:has-text("Refresh Health Check")');
+    await page.click('button:has-text("Gesundheitsprüfung aktualisieren")');
     
     // Verify error is displayed to user (use correct CSS class and check for actual error content)
     await expect(page.locator('.alert.alert-error')).toBeVisible({ timeout: 5000 });
-    await expect(page.locator('.alert.alert-error')).toContainText('Error');
+    await expect(page.locator('.alert.alert-error')).toContainText('Fehler');
     await expect(page.locator('.alert.alert-error')).toContainText('Service unavailable');
   });
 });

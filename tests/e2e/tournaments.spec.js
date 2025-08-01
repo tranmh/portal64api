@@ -9,7 +9,7 @@ test.describe('Tournament Search E2E Tests', () => {
     await page.goto('/demo/tournaments.html');
     
     // Verify page loads
-    await expect(page.locator('h1')).toContainText('Tournaments API');
+    await expect(page.locator('h1')).toContainText('Turniere API');
     
     // Fill in search form (default tab should be "Search Tournaments")
     await page.fill('input[name="query"]', 'Bundesliga');

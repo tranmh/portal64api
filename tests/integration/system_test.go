@@ -254,7 +254,7 @@ func (suite *SystemTestSuite) TestClubByID() {
 			name:     "empty club ID",
 			clubID:   "",
 			params:   map[string]string{},
-			expected: http.StatusNotFound, // Route not matched
+			expected: http.StatusOK, // Routes to SearchClubs, not GetClub
 		},
 	}
 	

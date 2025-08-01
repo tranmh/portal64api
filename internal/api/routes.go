@@ -2,7 +2,6 @@ package api
 
 import (
 	"net/http"
-	"strings"
 	
 	"portal64api/internal/api/handlers"
 	"portal64api/internal/api/middleware"
@@ -113,27 +112,8 @@ func SetupRoutes(dbs *database.Databases) *gin.Engine {
 		clubs := v1.Group("/clubs")
 		{
 			clubs.GET("", clubHandler.SearchClubs)
-			clubs.GET("/", func(c *gin.Context) {
-				// Explicit handler for trailing slash - return 404
-				c.JSON(http.StatusNotFound, gin.H{
-					"success": false,
-					"error":   "Club ID is required",
-				})
-			})
 			clubs.GET("/all", clubHandler.GetAllClubs)
-			clubs.GET("/:id", func(c *gin.Context) {
-				clubID := c.Param("id")
-				// Check for empty ID case (should not happen with proper routing)
-				if clubID == "" || strings.TrimSpace(clubID) == "" {
-					c.JSON(http.StatusNotFound, gin.H{
-						"success": false,
-						"error":   "Club ID is required",
-					})
-					return
-				}
-				// Call the actual handler
-				clubHandler.GetClub(c)
-			})
+			clubs.GET("/:id", clubHandler.GetClub)
 			clubs.GET("/:id/players", playerHandler.GetPlayersByClub)
 		}
 

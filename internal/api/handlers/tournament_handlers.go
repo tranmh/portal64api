@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"time"
 
+	"portal64api/internal/models"
 	"portal64api/internal/services"
 	"portal64api/pkg/errors"
 	"portal64api/pkg/utils"
@@ -97,15 +98,11 @@ func (h *TournamentHandler) SearchTournaments(c *gin.Context) {
 	}
 
 	response := struct {
-		Data []interface{} `json:"data"`
-		Meta interface{}   `json:"meta"`
+		Data []models.TournamentResponse `json:"data"`
+		Meta interface{}                 `json:"meta"`
 	}{
-		Data: make([]interface{}, len(tournaments)),
+		Data: tournaments,
 		Meta: meta,
-	}
-
-	for i, tournament := range tournaments {
-		response.Data[i] = tournament
 	}
 
 	utils.HandleResponse(c, response, "tournaments.csv")
@@ -246,15 +243,11 @@ func (h *TournamentHandler) GetTournamentsByDateRange(c *gin.Context) {
 	}
 
 	response := struct {
-		Data []interface{} `json:"data"`
-		Meta interface{}   `json:"meta"`
+		Data []models.TournamentResponse `json:"data"`
+		Meta interface{}                 `json:"meta"`
 	}{
-		Data: make([]interface{}, len(tournaments)),
+		Data: tournaments,
 		Meta: meta,
-	}
-
-	for i, tournament := range tournaments {
-		response.Data[i] = tournament
 	}
 
 	utils.HandleResponse(c, response, "tournaments_by_date.csv")

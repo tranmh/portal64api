@@ -9,7 +9,7 @@ test.describe('Player Search E2E Tests', () => {
     await page.goto('/demo/players.html');
     
     // Verify page loads (correct title)
-    await expect(page.locator('h1')).toContainText('Players API');
+    await expect(page.locator('h1')).toContainText('Spieler API');
     
     // Fill in search form using correct field names
     await page.fill('#search-query', 'Schmidt');

@@ -26,19 +26,29 @@ func (m *MockPlayerRepository) GetPlayerByID(vkz string, personID uint) (*models
 	return args.Get(0).(*models.Person), args.Get(1).(*models.Organisation), args.Get(2).(*models.Evaluation), args.Error(3)
 }
 
-func (m *MockPlayerRepository) SearchPlayers(req models.SearchRequest) ([]models.Person, int64, error) {
-	args := m.Called(req)
+func (m *MockPlayerRepository) SearchPlayers(req models.SearchRequest, showActive bool) ([]models.Person, int64, error) {
+	args := m.Called(req, showActive)
 	return args.Get(0).([]models.Person), args.Get(1).(int64), args.Error(2)
 }
 
-func (m *MockPlayerRepository) GetPlayersByClub(vkz string, req models.SearchRequest) ([]models.Person, int64, error) {
-	args := m.Called(vkz, req)
+func (m *MockPlayerRepository) GetPlayersByClub(vkz string, req models.SearchRequest, showActive bool) ([]models.Person, int64, error) {
+	args := m.Called(vkz, req, showActive)
 	return args.Get(0).([]models.Person), args.Get(1).(int64), args.Error(2)
 }
 
 func (m *MockPlayerRepository) GetPlayerRatingHistory(personID uint) ([]models.Evaluation, error) {
 	args := m.Called(personID)
 	return args.Get(0).([]models.Evaluation), args.Error(1)
+}
+
+func (m *MockPlayerRepository) GetPlayerCurrentClub(personID uint) (*models.Organisation, error) {
+	args := m.Called(personID)
+	return args.Get(0).(*models.Organisation), args.Error(1)
+}
+
+func (m *MockPlayerRepository) GetPlayerCurrentMembership(personID uint) (*models.Mitgliedschaft, error) {
+	args := m.Called(personID)
+	return args.Get(0).(*models.Mitgliedschaft), args.Error(1)
 }
 
 // MockClubRepository is a mock implementation of ClubRepository
@@ -167,7 +177,7 @@ func TestPlayerService_GetPlayerByID(t *testing.T) {
 				assert.Equal(t, 2156, result.CurrentDWZ)
 				assert.Equal(t, 45, result.DWZIndex)
 				assert.Equal(t, "male", result.Gender)
-				assert.Equal(t, "active", result.Status)
+				assert.Equal(t, "inactive", result.Status)
 			}
 
 			// Clear mock expectations
@@ -210,13 +220,21 @@ func TestPlayerService_SearchPlayers(t *testing.T) {
 	}
 
 	// Setup mock
-	mockPlayerRepo.On("SearchPlayers", req).Return(players, int64(2), nil)
+	mockPlayerRepo.On("SearchPlayers", req, true).Return(players, int64(2), nil)
 	// Mock GetPlayerRatingHistory for both players
 	mockPlayerRepo.On("GetPlayerRatingHistory", uint(1)).Return([]models.Evaluation{}, nil)
 	mockPlayerRepo.On("GetPlayerRatingHistory", uint(2)).Return([]models.Evaluation{}, nil)
+	// Mock GetPlayerCurrentClub for both players
+	club := &models.Organisation{ID: 1, Name: "Test Club", VKZ: "C0101"}
+	mockPlayerRepo.On("GetPlayerCurrentClub", uint(1)).Return(club, nil)
+	mockPlayerRepo.On("GetPlayerCurrentClub", uint(2)).Return(club, nil)
+	// Mock GetPlayerCurrentMembership for both players
+	membership := &models.Mitgliedschaft{ID: 1, Person: 1, Organisation: 1, Spielernummer: 1}
+	mockPlayerRepo.On("GetPlayerCurrentMembership", uint(1)).Return(membership, nil)
+	mockPlayerRepo.On("GetPlayerCurrentMembership", uint(2)).Return(membership, nil)
 
 	// Execute
-	results, meta, err := service.SearchPlayers(req)
+	results, meta, err := service.SearchPlayers(req, true)
 
 	// Assert
 	assert.NoError(t, err)

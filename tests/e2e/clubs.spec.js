@@ -9,7 +9,7 @@ test.describe('Club Search E2E Tests', () => {
     await page.goto('/demo/clubs.html');
     
     // Verify page loads
-    await expect(page.locator('h1')).toContainText('Clubs API');
+    await expect(page.locator('h1')).toContainText('Vereine API');
     
     // Fill in search form (default tab should be "Search Clubs")
     await page.fill('input[name="query"]', 'Ulm');

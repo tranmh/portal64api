@@ -183,8 +183,51 @@ func SendJSONResponse(c *gin.Context, statusCode int, data interface{}) {
 	c.JSON(statusCode, response)
 }
 
+// validateCSVData validates data before setting CSV headers
+func validateCSVData(data interface{}) error {
+	if data == nil {
+		return fmt.Errorf("data cannot be nil")
+	}
+
+	v := reflect.ValueOf(data)
+	if v.Kind() == reflect.Ptr {
+		if v.IsNil() {
+			return fmt.Errorf("data pointer is nil")
+		}
+		v = v.Elem()
+	}
+
+	// Handle wrapped response structures that contain Data field
+	if v.Kind() == reflect.Struct {
+		// Check if it has a Data field (for paginated responses)
+		dataField := v.FieldByName("Data")
+		if dataField.IsValid() {
+			if dataField.Kind() == reflect.Slice {
+				// Empty slice is valid for CSV
+				return nil
+			}
+		} else {
+			// Single struct without Data field is also valid
+			return nil
+		}
+	} else if v.Kind() == reflect.Slice {
+		// Direct slice is valid (even if empty)
+		return nil
+	}
+
+	// If we reach here, the data type is not suitable for CSV
+	return fmt.Errorf("data type %v is not suitable for CSV generation", v.Kind())
+}
+
 // SendCSVResponse sends a CSV response
 func SendCSVResponse(c *gin.Context, filename string, data interface{}) {
+	// Validate data first before setting headers
+	if err := validateCSVData(data); err != nil {
+		SendJSONResponse(c, http.StatusInternalServerError, 
+			errors.NewInternalServerError("Failed to generate CSV: " + err.Error()))
+		return
+	}
+
 	c.Header("Content-Type", "text/csv")
 	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
 
@@ -193,11 +236,8 @@ func SendCSVResponse(c *gin.Context, filename string, data interface{}) {
 
 	// Convert data to CSV
 	if err := writeCSV(writer, data); err != nil {
-		// Reset headers and send JSON error instead
-		c.Header("Content-Type", "application/json")
-		c.Header("Content-Disposition", "")
-		SendJSONResponse(c, http.StatusInternalServerError, 
-			errors.NewInternalServerError("Failed to generate CSV: " + err.Error()))
+		// Can't change headers now, just log the error
+		c.Writer.WriteString("Error generating CSV: " + err.Error())
 		return
 	}
 }
@@ -236,7 +276,21 @@ func writeCSV(writer *csv.Writer, data interface{}) error {
 	}
 
 	if v.Len() == 0 {
-		// Empty data - write just headers if possible
+		// For empty data, write a header-only CSV if we can determine the structure
+		// Try to create a sample struct to get headers
+		sliceType := v.Type()
+		if sliceType.Kind() == reflect.Slice {
+			elemType := sliceType.Elem()
+			if elemType.Kind() == reflect.Struct {
+				// Create a zero value to get headers
+				zeroValue := reflect.Zero(elemType)
+				headers := getCSVHeaders(zeroValue)
+				if len(headers) > 0 {
+					return writer.Write(headers)
+				}
+			}
+		}
+		// If we can't determine headers, just return with no content
 		return nil
 	}
 

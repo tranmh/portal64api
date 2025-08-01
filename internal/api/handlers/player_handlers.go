@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"portal64api/internal/models"
 	"portal64api/internal/services"
 	"portal64api/pkg/errors"
 	"portal64api/pkg/utils"
@@ -104,15 +105,11 @@ func (h *PlayerHandler) SearchPlayers(c *gin.Context) {
 	}
 
 	response := struct {
-		Data []interface{} `json:"data"`
-		Meta interface{}   `json:"meta"`
+		Data []models.PlayerResponse `json:"data"`
+		Meta interface{}             `json:"meta"`
 	}{
-		Data: make([]interface{}, len(players)),
+		Data: players,
 		Meta: meta,
-	}
-
-	for i, player := range players {
-		response.Data[i] = player
 	}
 
 	utils.HandleResponse(c, response, "players.csv")
@@ -211,15 +208,11 @@ func (h *PlayerHandler) GetPlayersByClub(c *gin.Context) {
 	}
 
 	response := struct {
-		Data []interface{} `json:"data"`
-		Meta interface{}   `json:"meta"`
+		Data []models.PlayerResponse `json:"data"`
+		Meta interface{}             `json:"meta"`
 	}{
-		Data: make([]interface{}, len(players)),
+		Data: players,
 		Meta: meta,
-	}
-
-	for i, player := range players {
-		response.Data[i] = player
 	}
 
 	utils.HandleResponse(c, response, "club_players.csv")

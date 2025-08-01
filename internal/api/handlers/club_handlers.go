@@ -2,8 +2,8 @@ package handlers
 
 import (
 	"net/http"
-	"strings"
 
+	"portal64api/internal/models"
 	"portal64api/internal/services"
 	"portal64api/pkg/errors"
 	"portal64api/pkg/utils"
@@ -35,6 +35,14 @@ func NewClubHandler(clubService *services.ClubService) *ClubHandler {
 // @Router /api/v1/clubs/{id} [get]
 func (h *ClubHandler) GetClub(c *gin.Context) {
 	clubID := c.Param("id")
+	
+	// If clubID is empty, this should be a 404 (not found)
+	// This handles the case where someone requests /api/v1/clubs/ instead of /api/v1/clubs
+	if clubID == "" {
+		utils.SendJSONResponse(c, http.StatusNotFound, 
+			errors.NewNotFoundError("Club not found"))
+		return
+	}
 	
 	// Validate club ID format
 	if err := utils.ValidateClubID(clubID); err != nil {
@@ -95,29 +103,15 @@ func (h *ClubHandler) SearchClubs(c *gin.Context) {
 		return
 	}
 
-	// Check if CSV format is requested
-	format := c.Query("format")
-	accept := c.GetHeader("Accept")
-	
-	if format == "csv" || strings.Contains(accept, "text/csv") {
-		// For CSV, send just the clubs data directly
-		utils.SendCSVResponse(c, "clubs.csv", clubs)
-	} else {
-		// For JSON, wrap in response structure with metadata
-		response := struct {
-			Data []interface{} `json:"data"`
-			Meta interface{}   `json:"meta"`
-		}{
-			Data: make([]interface{}, len(clubs)),
-			Meta: meta,
-		}
-
-		for i, club := range clubs {
-			response.Data[i] = club
-		}
-
-		utils.SendJSONResponse(c, http.StatusOK, response)
+	response := struct {
+		Data []models.ClubResponse `json:"data"`
+		Meta interface{}           `json:"meta"`
+	}{
+		Data: clubs,
+		Meta: meta,
 	}
+
+	utils.HandleResponse(c, response, "clubs.csv")
 }
 
 // GetAllClubs godoc
