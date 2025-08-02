@@ -145,3 +145,18 @@ The Redis caching system is **production-ready** and provides significant perfor
   - ❌ Integration tests removed from `tests/integration/system_test.go`
   - ❌ Documentation references removed from README.md, swagger.yaml, and demo docs
 - **Verification**: All references to `/tournaments/upcoming` and `GetUpcomingTournaments` removed from codebase
+
+**FIXED: Swagger Generation Bug** // DONE
+- **Issue**: Swagger generation failed with `time.Duration` type error in `cache.CacheStats` and "no Go files in root directory" warning
+- **Root Cause**: 
+  - `CacheStats` struct contained `time.Duration` field which Swagger couldn't serialize to JSON schema
+  - Admin handler referenced `cache.CacheStats` directly in Swagger comments, but actual JSON response had different structure
+- **Solution**: 
+  - Created dedicated API response models in `internal/models/admin_responses.go`:
+    - `CacheStatsResponse` with `AvgResponseTimeMs int64` instead of `time.Duration`
+    - `CacheHealthResponse` for health check endpoints
+    - Proper nested structures matching actual JSON responses
+  - Updated admin handler Swagger comments to reference new models instead of `cache.CacheStats`
+  - Created `generate-swagger.bat` script for consistent documentation generation
+- **Command**: Use `swag init -g cmd/server/main.go -o docs/generated --parseInternal`
+- **Verification**: Swagger generation completes without errors, all cache admin endpoints properly documented

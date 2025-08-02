@@ -28,7 +28,7 @@ func NewAdminHandler(cacheService cache.CacheService) *AdminHandler {
 // @Tags admin
 // @Accept json
 // @Produce json
-// @Success 200 {object} cache.CacheStats
+// @Success 200 {object} models.CacheStatsResponse
 // @Failure 503 {object} map[string]string
 // @Router /api/v1/admin/cache/stats [get]
 func (h *AdminHandler) GetCacheStats(c *gin.Context) {
@@ -65,8 +65,8 @@ func (h *AdminHandler) GetCacheStats(c *gin.Context) {
 // @Tags admin
 // @Accept json
 // @Produce json
-// @Success 200 {object} map[string]interface{}
-// @Failure 503 {object} map[string]string
+// @Success 200 {object} models.CacheHealthResponse
+// @Failure 503 {object} models.CacheHealthResponse
 // @Router /api/v1/admin/cache/health [get]
 func (h *AdminHandler) GetCacheHealth(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
