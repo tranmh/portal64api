@@ -1,7 +1,9 @@
 // Main JavaScript functionality
 class Portal64API {
     constructor() {
-        this.baseURL = 'http://localhost:8080';
+        // Use the same host and port as the current page, or fallback to localhost for development
+        const currentHost = window.location.host;
+        this.baseURL = currentHost ? `${window.location.protocol}//${currentHost}` : 'http://localhost:8080';
         this.defaultHeaders = {
             'Content-Type': 'application/json',
             'Accept': 'application/json'
