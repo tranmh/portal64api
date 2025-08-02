@@ -1,9 +1,13 @@
 package services
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strings"
+	"time"
+	
+	"portal64api/internal/cache"
 	"portal64api/internal/models"
 	"portal64api/internal/repositories"
 	"portal64api/pkg/errors"
@@ -11,15 +15,19 @@ import (
 
 // ClubService handles club business logic
 type ClubService struct {
-	clubRepo   *repositories.ClubRepository
-	playerRepo *repositories.PlayerRepository
+	clubRepo     *repositories.ClubRepository
+	playerRepo   *repositories.PlayerRepository
+	cacheService cache.CacheService
+	keyGen       *cache.KeyGenerator
 }
 
 // NewClubService creates a new club service
-func NewClubService(clubRepo *repositories.ClubRepository) *ClubService {
+func NewClubService(clubRepo *repositories.ClubRepository, cacheService cache.CacheService) *ClubService {
 	return &ClubService{
-		clubRepo:   clubRepo,
-		playerRepo: nil, // Will be set by dependency injection if needed
+		clubRepo:     clubRepo,
+		playerRepo:   nil, // Will be set by dependency injection if needed
+		cacheService: cacheService,
+		keyGen:       cache.NewKeyGenerator(),
 	}
 }
 
@@ -30,6 +38,26 @@ func (s *ClubService) SetPlayerRepository(playerRepo *repositories.PlayerReposit
 
 // GetClubByID gets a club by its VKZ (ID)
 func (s *ClubService) GetClubByID(clubID string) (*models.ClubResponse, error) {
+	ctx := context.Background()
+	cacheKey := s.keyGen.ClubKey(clubID)
+	
+	// Try cache first with background refresh
+	var cachedClub models.ClubResponse
+	err := s.cacheService.GetWithRefresh(ctx, cacheKey, &cachedClub,
+		func() (interface{}, error) {
+			return s.loadClubFromDB(clubID)
+		}, 1*time.Hour) // Cache club details for 1 hour
+	
+	if err == nil {
+		return &cachedClub, nil
+	}
+	
+	// Cache miss or error - load directly from database
+	return s.loadClubFromDB(clubID)
+}
+
+// loadClubFromDB loads club data from database (used by cache refresh)
+func (s *ClubService) loadClubFromDB(clubID string) (*models.ClubResponse, error) {
 	club, err := s.clubRepo.GetClubByVKZ(clubID)
 	if err != nil {
 		return nil, errors.NewNotFoundError("Club")
@@ -56,11 +84,42 @@ func (s *ClubService) GetClubByID(clubID string) (*models.ClubResponse, error) {
 	return response, nil
 }
 
+// clubSearchResult wraps search results for caching
+type clubSearchResult struct {
+	Responses []models.ClubResponse `json:"responses"`
+	Meta      *models.Meta         `json:"meta"`
+}
+
 // SearchClubs searches clubs by name or other criteria
 func (s *ClubService) SearchClubs(req models.SearchRequest) ([]models.ClubResponse, *models.Meta, error) {
+	ctx := context.Background()
+	searchHash := s.keyGen.GenerateSearchHash(req, false) // clubs don't have active flag
+	cacheKey := s.keyGen.SearchKey("club", searchHash)
+
+	// Try cache first with background refresh
+	var cachedResult clubSearchResult
+	err := s.cacheService.GetWithRefresh(ctx, cacheKey, &cachedResult,
+		func() (interface{}, error) {
+			return s.executeClubSearch(req)
+		}, 15*time.Minute) // Cache search results for 15 minutes
+
+	if err == nil {
+		return cachedResult.Responses, cachedResult.Meta, nil
+	}
+
+	// Fallback to direct execution if cache fails
+	result, err := s.executeClubSearch(req)
+	if err != nil {
+		return nil, nil, err
+	}
+	return result.Responses, result.Meta, nil
+}
+
+// executeClubSearch performs the actual club search
+func (s *ClubService) executeClubSearch(req models.SearchRequest) (*clubSearchResult, error) {
 	clubs, total, err := s.clubRepo.SearchClubs(req)
 	if err != nil {
-		return nil, nil, errors.NewInternalServerError("Failed to search clubs")
+		return nil, errors.NewInternalServerError("Failed to search clubs")
 	}
 
 	responses := make([]models.ClubResponse, len(clubs))
@@ -91,11 +150,34 @@ func (s *ClubService) SearchClubs(req models.SearchRequest) ([]models.ClubRespon
 		Count:  len(responses),
 	}
 
-	return responses, meta, nil
+	return &clubSearchResult{
+		Responses: responses,
+		Meta:      meta,
+	}, nil
 }
 
 // GetAllClubs gets all clubs
 func (s *ClubService) GetAllClubs() ([]models.ClubResponse, error) {
+	ctx := context.Background()
+	cacheKey := s.keyGen.ClubListKey("all_clubs")
+
+	// Try cache first with background refresh
+	var cachedClubs []models.ClubResponse
+	err := s.cacheService.GetWithRefresh(ctx, cacheKey, &cachedClubs,
+		func() (interface{}, error) {
+			return s.loadAllClubsFromDB()
+		}, 1*time.Hour) // Cache all clubs for 1 hour
+
+	if err == nil {
+		return cachedClubs, nil
+	}
+
+	// Fallback to direct DB access if cache fails
+	return s.loadAllClubsFromDB()
+}
+
+// loadAllClubsFromDB loads all clubs from database
+func (s *ClubService) loadAllClubsFromDB() ([]models.ClubResponse, error) {
 	clubs, err := s.clubRepo.GetAllClubs()
 	if err != nil {
 		return nil, errors.NewInternalServerError("Failed to get clubs")
@@ -119,6 +201,26 @@ func (s *ClubService) GetAllClubs() ([]models.ClubResponse, error) {
 
 // GetClubProfile gets comprehensive club profile with players and statistics
 func (s *ClubService) GetClubProfile(clubID string) (*models.ClubProfileResponse, error) {
+	ctx := context.Background()
+	cacheKey := s.keyGen.ClubProfileKey(clubID)
+
+	// Try cache first with background refresh
+	var cachedProfile models.ClubProfileResponse
+	err := s.cacheService.GetWithRefresh(ctx, cacheKey, &cachedProfile,
+		func() (interface{}, error) {
+			return s.loadClubProfileFromDB(clubID)
+		}, 30*time.Minute) // Cache club profile for 30 minutes
+
+	if err == nil {
+		return &cachedProfile, nil
+	}
+
+	// Fallback to direct DB access if cache fails
+	return s.loadClubProfileFromDB(clubID)
+}
+
+// loadClubProfileFromDB loads club profile from database
+func (s *ClubService) loadClubProfileFromDB(clubID string) (*models.ClubProfileResponse, error) {
 	// Get basic club information
 	club, err := s.GetClubByID(clubID)
 	if err != nil {

@@ -26,8 +26,26 @@ services:
       - PORTAL64_SVW_USERNAME=portal64api
       - PORTAL64_SVW_PASSWORD=password123
       - PORTAL64_SVW_DATABASE=portal64_svw
+      # Redis Cache Configuration
+      - CACHE_ENABLED=true
+      - CACHE_ADDRESS=redis:6379
+      - CACHE_PASSWORD=
+      - CACHE_DATABASE=0
+      - CACHE_MAX_RETRIES=3
+      - CACHE_POOL_SIZE=10
+      - CACHE_MIN_IDLE_CONNS=5
+      - CACHE_DIAL_TIMEOUT=5s
+      - CACHE_READ_TIMEOUT=3s
+      - CACHE_WRITE_TIMEOUT=3s
+      - CACHE_POOL_TIMEOUT=4s
+      - CACHE_IDLE_TIMEOUT=5m
+      - CACHE_MAX_CONN_AGE=0
+      - CACHE_REFRESH_THRESHOLD=0.8
+      - CACHE_REFRESH_WORKERS=5
     depends_on:
       mysql:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     restart: unless-stopped
     networks:
@@ -55,7 +73,7 @@ services:
     networks:
       - portal64_network
 
-  # Optional: Redis for caching (future enhancement)
+  # Redis for caching
   redis:
     image: redis:7-alpine
     ports:
@@ -71,8 +89,6 @@ services:
     restart: unless-stopped
     networks:
       - portal64_network
-    profiles:
-      - with-redis
 
   # Optional: Nginx reverse proxy
   nginx:

@@ -1,9 +1,11 @@
 package services
 
 import (
+	"context"
 	"fmt"
 	"time"
 
+	"portal64api/internal/cache"
 	"portal64api/internal/models"
 	"portal64api/internal/repositories"
 	"portal64api/pkg/errors"
@@ -12,15 +14,41 @@ import (
 // TournamentService handles tournament business logic
 type TournamentService struct {
 	tournamentRepo *repositories.TournamentRepository
+	cacheService   cache.CacheService
+	keyGen         *cache.KeyGenerator
 }
 
 // NewTournamentService creates a new tournament service
-func NewTournamentService(tournamentRepo *repositories.TournamentRepository) *TournamentService {
-	return &TournamentService{tournamentRepo: tournamentRepo}
+func NewTournamentService(tournamentRepo *repositories.TournamentRepository, cacheService cache.CacheService) *TournamentService {
+	return &TournamentService{
+		tournamentRepo: tournamentRepo,
+		cacheService:   cacheService,
+		keyGen:         cache.NewKeyGenerator(),
+	}
 }
 
 // GetTournamentByID gets a tournament by its code/ID
 func (s *TournamentService) GetTournamentByID(tournamentID string) (*models.EnhancedTournamentResponse, error) {
+	ctx := context.Background()
+	cacheKey := s.keyGen.TournamentKey(tournamentID)
+
+	// Try cache first with background refresh
+	var cachedTournament models.EnhancedTournamentResponse
+	err := s.cacheService.GetWithRefresh(ctx, cacheKey, &cachedTournament,
+		func() (interface{}, error) {
+			return s.loadTournamentFromDB(tournamentID)
+		}, 1*time.Hour) // Cache tournament details for 1 hour
+
+	if err == nil {
+		return &cachedTournament, nil
+	}
+
+	// Fallback to direct DB access if cache fails
+	return s.loadTournamentFromDB(tournamentID)
+}
+
+// loadTournamentFromDB loads tournament data from database
+func (s *TournamentService) loadTournamentFromDB(tournamentID string) (*models.EnhancedTournamentResponse, error) {
 	// Get comprehensive tournament data
 	tournament, err := s.tournamentRepo.GetEnhancedTournamentData(tournamentID)
 	if err != nil {
@@ -32,6 +60,26 @@ func (s *TournamentService) GetTournamentByID(tournamentID string) (*models.Enha
 
 // GetBasicTournamentByID gets basic tournament info (for backward compatibility)
 func (s *TournamentService) GetBasicTournamentByID(tournamentID string) (*models.TournamentResponse, error) {
+	ctx := context.Background()
+	cacheKey := s.keyGen.TournamentKey(fmt.Sprintf("basic_%s", tournamentID))
+
+	// Try cache first with background refresh
+	var cachedTournament models.TournamentResponse
+	err := s.cacheService.GetWithRefresh(ctx, cacheKey, &cachedTournament,
+		func() (interface{}, error) {
+			return s.loadBasicTournamentFromDB(tournamentID)
+		}, 1*time.Hour) // Cache basic tournament details for 1 hour
+
+	if err == nil {
+		return &cachedTournament, nil
+	}
+
+	// Fallback to direct DB access if cache fails
+	return s.loadBasicTournamentFromDB(tournamentID)
+}
+
+// loadBasicTournamentFromDB loads basic tournament data from database
+func (s *TournamentService) loadBasicTournamentFromDB(tournamentID string) (*models.TournamentResponse, error) {
 	tournament, err := s.tournamentRepo.GetTournamentByCode(tournamentID)
 	if err != nil {
 		return nil, errors.NewNotFoundError("Tournament")
@@ -59,11 +107,42 @@ func (s *TournamentService) GetBasicTournamentByID(tournamentID string) (*models
 	return response, nil
 }
 
+// tournamentSearchResult wraps search results for caching
+type tournamentSearchResult struct {
+	Responses []models.TournamentResponse
+	Meta      *models.Meta
+}
+
 // SearchTournaments searches tournaments
 func (s *TournamentService) SearchTournaments(req models.SearchRequest) ([]models.TournamentResponse, *models.Meta, error) {
+	ctx := context.Background()
+	searchHash := s.keyGen.GenerateSearchHash(req, false) // tournaments don't have active flag
+	cacheKey := s.keyGen.SearchKey("tournament", searchHash)
+
+	// Try cache first with background refresh
+	var cachedResult tournamentSearchResult
+	err := s.cacheService.GetWithRefresh(ctx, cacheKey, &cachedResult,
+		func() (interface{}, error) {
+			return s.executeTournamentSearch(req)
+		}, 15*time.Minute) // Cache search results for 15 minutes
+
+	if err == nil {
+		return cachedResult.Responses, cachedResult.Meta, nil
+	}
+
+	// Fallback to direct execution if cache fails
+	result, err := s.executeTournamentSearch(req)
+	if err != nil {
+		return nil, nil, err
+	}
+	return result.Responses, result.Meta, nil
+}
+
+// executeTournamentSearch performs the actual tournament search
+func (s *TournamentService) executeTournamentSearch(req models.SearchRequest) (*tournamentSearchResult, error) {
 	tournaments, total, err := s.tournamentRepo.SearchTournaments(req)
 	if err != nil {
-		return nil, nil, errors.NewInternalServerError("Failed to search tournaments")
+		return nil, errors.NewInternalServerError("Failed to search tournaments")
 	}
 
 	responses := make([]models.TournamentResponse, len(tournaments))
@@ -95,7 +174,10 @@ func (s *TournamentService) SearchTournaments(req models.SearchRequest) ([]model
 		Count:  len(responses),
 	}
 
-	return responses, meta, nil
+	return &tournamentSearchResult{
+		Responses: responses,
+		Meta:      meta,
+	}, nil
 }
 
 // GetUpcomingTournaments gets upcoming tournaments
@@ -104,6 +186,26 @@ func (s *TournamentService) GetUpcomingTournaments(limit int) ([]models.Tourname
 		limit = 20
 	}
 
+	ctx := context.Background()
+	cacheKey := s.keyGen.TournamentListKey(fmt.Sprintf("upcoming_limit_%d", limit))
+
+	// Try cache first with background refresh
+	var cachedTournaments []models.TournamentResponse
+	err := s.cacheService.GetWithRefresh(ctx, cacheKey, &cachedTournaments,
+		func() (interface{}, error) {
+			return s.loadUpcomingTournamentsFromDB(limit)
+		}, 30*time.Minute) // Cache upcoming tournaments for 30 minutes
+
+	if err == nil {
+		return cachedTournaments, nil
+	}
+
+	// Fallback to direct DB access if cache fails
+	return s.loadUpcomingTournamentsFromDB(limit)
+}
+
+// loadUpcomingTournamentsFromDB loads upcoming tournaments from database
+func (s *TournamentService) loadUpcomingTournamentsFromDB(limit int) ([]models.TournamentResponse, error) {
 	tournaments, err := s.tournamentRepo.GetUpcomingTournaments(limit)
 	if err != nil {
 		return nil, errors.NewInternalServerError("Failed to get upcoming tournaments")

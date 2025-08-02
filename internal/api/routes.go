@@ -5,6 +5,7 @@ import (
 	
 	"portal64api/internal/api/handlers"
 	"portal64api/internal/api/middleware"
+	"portal64api/internal/cache"
 	"portal64api/internal/database"
 	"portal64api/internal/repositories"
 	"portal64api/internal/services"
@@ -15,7 +16,7 @@ import (
 )
 
 // SetupRoutes configures all API routes
-func SetupRoutes(dbs *database.Databases) *gin.Engine {
+func SetupRoutes(dbs *database.Databases, cacheService cache.CacheService) *gin.Engine {
 	// Ensure swagger docs are loaded
 	_ = docs.SwaggerInfo
 	
@@ -26,17 +27,18 @@ func SetupRoutes(dbs *database.Databases) *gin.Engine {
 	addressRepo := repositories.NewAddressRepository(dbs)
 
 	// Create services
-	playerService := services.NewPlayerService(playerRepo, clubRepo)
-	clubService := services.NewClubService(clubRepo)
+	playerService := services.NewPlayerService(playerRepo, clubRepo, cacheService)
+	clubService := services.NewClubService(clubRepo, cacheService)
 	clubService.SetPlayerRepository(playerRepo) // Set player repo for club profile functionality
-	tournamentService := services.NewTournamentService(tournamentRepo)
-	addressService := services.NewAddressService(addressRepo)
+	tournamentService := services.NewTournamentService(tournamentRepo, cacheService)
+	addressService := services.NewAddressService(addressRepo, cacheService)
 
 	// Create handlers
 	playerHandler := handlers.NewPlayerHandler(playerService)
 	clubHandler := handlers.NewClubHandler(clubService)
 	tournamentHandler := handlers.NewTournamentHandler(tournamentService)
 	addressHandler := handlers.NewAddressHandler(addressService)
+	adminHandler := handlers.NewAdminHandler(cacheService)
 
 	// Create router
 	router := gin.New()
@@ -139,6 +141,16 @@ func SetupRoutes(dbs *database.Databases) *gin.Engine {
 			addresses.GET("/:region", addressHandler.GetRegionAddresses)
 			addresses.GET("/:region/types", addressHandler.GetAddressTypes)
 			addresses.GET("/:region/:type", addressHandler.GetRegionAddressesByType)
+		}
+
+		// Admin routes
+		admin := v1.Group("/admin")
+		{
+			cache := admin.Group("/cache")
+			{
+				cache.GET("/stats", adminHandler.GetCacheStats)
+				cache.GET("/health", adminHandler.GetCacheHealth)
+			}
 		}
 	}
 

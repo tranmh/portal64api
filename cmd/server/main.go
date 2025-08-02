@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"portal64api/internal/api"
+	"portal64api/internal/cache"
 	"portal64api/internal/config"
 	"portal64api/internal/database"
 
@@ -62,8 +63,32 @@ func main() {
 	}
 	defer dbs.Close()
 
+	// Initialize cache service
+	cacheService, err := cache.NewCacheService(cfg.Cache)
+	if err != nil {
+		log.Fatalf("Failed to initialize cache service: %v", err)
+	}
+	defer func() {
+		if closeErr := cacheService.Close(); closeErr != nil {
+			log.Printf("Error closing cache service: %v", closeErr)
+		}
+	}()
+
+	// Test cache connectivity if enabled
+	if cfg.Cache.Enabled {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if pingErr := cacheService.Ping(ctx); pingErr != nil {
+			log.Printf("Warning: Cache connectivity test failed: %v", pingErr)
+		} else {
+			log.Println("Cache service connected successfully")
+		}
+	} else {
+		log.Println("Cache service disabled")
+	}
+
 	// Setup routes
-	router := api.SetupRoutes(dbs)
+	router := api.SetupRoutes(dbs, cacheService)
 
 	// Create HTTP server
 	addr := fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port)

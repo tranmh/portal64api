@@ -7,6 +7,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/joho/godotenv"
 )
@@ -15,6 +16,7 @@ import (
 type Config struct {
 	Server   ServerConfig   `yaml:"server"`
 	Database DatabaseConfig `yaml:"database"`
+	Cache    CacheConfig    `yaml:"cache"`
 }
 
 // ServerConfig holds server-specific configuration
@@ -43,6 +45,27 @@ type DatabaseConnection struct {
 	Password string `yaml:"password"`
 	Database string `yaml:"database"`
 	Charset  string `yaml:"charset"`
+}
+
+// CacheConfig holds Redis cache configuration
+type CacheConfig struct {
+	Enabled          bool          `yaml:"enabled"`
+	Address          string        `yaml:"address"`           
+	Password         string        `yaml:"password"`          
+	Database         int           `yaml:"database"`          
+	MaxRetries       int           `yaml:"max_retries"`       
+	PoolSize         int           `yaml:"pool_size"`         
+	MinIdleConns     int           `yaml:"min_idle_conns"`    
+	DialTimeout      time.Duration `yaml:"dial_timeout"`      
+	ReadTimeout      time.Duration `yaml:"read_timeout"`      
+	WriteTimeout     time.Duration `yaml:"write_timeout"`     
+	PoolTimeout      time.Duration `yaml:"pool_timeout"`      
+	IdleTimeout      time.Duration `yaml:"idle_timeout"`      
+	MaxConnAge       time.Duration `yaml:"max_conn_age"`      
+	
+	// Background refresh settings
+	RefreshThreshold float64       `yaml:"refresh_threshold"` 
+	RefreshWorkers   int           `yaml:"refresh_workers"`   
 }
 
 // Load loads configuration from environment variables and .env file
@@ -146,7 +169,8 @@ func loadConfig() *Config {
 			KeyFile:      getStringEnv("KEY_FILE", ""),
 			ReadTimeout:  getIntEnv("READ_TIMEOUT", 10),
 			WriteTimeout: getIntEnv("WRITE_TIMEOUT", 10),
-		},		Database: DatabaseConfig{
+		},		
+		Database: DatabaseConfig{
 			MVDSB: DatabaseConnection{
 				Host:     getStringEnv("MVDSB_HOST", "localhost"),
 				Port:     getIntEnv("MVDSB_PORT", 3306),
@@ -171,6 +195,23 @@ func loadConfig() *Config {
 				Database: getStringEnv("PORTAL64_SVW_DATABASE", "portal64_svw"),
 				Charset:  getStringEnv("PORTAL64_SVW_CHARSET", "utf8mb4"),
 			},
+		},
+		Cache: CacheConfig{
+			Enabled:          getBoolEnv("CACHE_ENABLED", true),
+			Address:          getStringEnv("CACHE_ADDRESS", "localhost:6379"),
+			Password:         getStringEnv("CACHE_PASSWORD", ""),
+			Database:         getIntEnv("CACHE_DATABASE", 0),
+			MaxRetries:       getIntEnv("CACHE_MAX_RETRIES", 3),
+			PoolSize:         getIntEnv("CACHE_POOL_SIZE", 10),
+			MinIdleConns:     getIntEnv("CACHE_MIN_IDLE_CONNS", 5),
+			DialTimeout:      getDurationEnv("CACHE_DIAL_TIMEOUT", 5*time.Second),
+			ReadTimeout:      getDurationEnv("CACHE_READ_TIMEOUT", 3*time.Second),
+			WriteTimeout:     getDurationEnv("CACHE_WRITE_TIMEOUT", 3*time.Second),
+			PoolTimeout:      getDurationEnv("CACHE_POOL_TIMEOUT", 4*time.Second),
+			IdleTimeout:      getDurationEnv("CACHE_IDLE_TIMEOUT", 5*time.Minute),
+			MaxConnAge:       getDurationEnv("CACHE_MAX_CONN_AGE", 0),
+			RefreshThreshold: getFloat64Env("CACHE_REFRESH_THRESHOLD", 0.8),
+			RefreshWorkers:   getIntEnv("CACHE_REFRESH_WORKERS", 5),
 		},
 	}
 }
@@ -204,4 +245,22 @@ func getBoolEnv(key string, defaultValue bool) bool {
 func (dc DatabaseConnection) GetDSN() string {
 	return fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=%s&parseTime=True&loc=Local",
 		dc.Username, dc.Password, dc.Host, dc.Port, dc.Database, dc.Charset)
+}
+
+func getDurationEnv(key string, defaultValue time.Duration) time.Duration {
+	if value := os.Getenv(key); value != "" {
+		if duration, err := time.ParseDuration(value); err == nil {
+			return duration
+		}
+	}
+	return defaultValue
+}
+
+func getFloat64Env(key string, defaultValue float64) float64 {
+	if value := os.Getenv(key); value != "" {
+		if floatValue, err := strconv.ParseFloat(value, 64); err == nil {
+			return floatValue
+		}
+	}
+	return defaultValue
 }
