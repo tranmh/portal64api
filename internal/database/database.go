@@ -16,7 +16,6 @@ import (
 type Databases struct {
 	MVDSB       *gorm.DB
 	Portal64BDW *gorm.DB
-	Portal64SVW *gorm.DB
 }
 
 // Connect establishes connections to all databases
@@ -39,18 +38,11 @@ func Connect(cfg *config.Config) (*Databases, error) {
 		return nil, fmt.Errorf("failed to connect to Portal64_BDW database: %w", err)
 	}
 
-	// Connect to Portal64_SVW database
-	portal64SVW, err := connectToDatabase(cfg.Database.Portal64SVW, "Portal64_SVW", gormLogger)
-	if err != nil {
-		return nil, fmt.Errorf("failed to connect to Portal64_SVW database: %w", err)
-	}
-
 	log.Println("Successfully connected to all databases")
 
 	return &Databases{
 		MVDSB:       mvdsb,
 		Portal64BDW: portal64BDW,
-		Portal64SVW: portal64SVW,
 	}, nil
 }
 
@@ -101,14 +93,6 @@ func (dbs *Databases) Close() error {
 		if sqlDB, err := dbs.Portal64BDW.DB(); err == nil {
 			if err := sqlDB.Close(); err != nil {
 				errors = append(errors, fmt.Errorf("failed to close Portal64_BDW connection: %w", err))
-			}
-		}
-	}
-
-	if dbs.Portal64SVW != nil {
-		if sqlDB, err := dbs.Portal64SVW.DB(); err == nil {
-			if err := sqlDB.Close(); err != nil {
-				errors = append(errors, fmt.Errorf("failed to close Portal64_SVW connection: %w", err))
 			}
 		}
 	}

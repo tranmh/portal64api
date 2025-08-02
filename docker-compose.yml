@@ -21,11 +21,6 @@ services:
       - PORTAL64_BDW_USERNAME=portal64api
       - PORTAL64_BDW_PASSWORD=password123
       - PORTAL64_BDW_DATABASE=portal64_bdw
-      - PORTAL64_SVW_HOST=mysql
-      - PORTAL64_SVW_PORT=3306
-      - PORTAL64_SVW_USERNAME=portal64api
-      - PORTAL64_SVW_PASSWORD=password123
-      - PORTAL64_SVW_DATABASE=portal64_svw
       # Redis Cache Configuration
       - CACHE_ENABLED=true
       - CACHE_ADDRESS=redis:6379

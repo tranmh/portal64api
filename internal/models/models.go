@@ -139,7 +139,7 @@ func (Participant) TableName() string {
 	return "participant"
 }
 
-// Turnier represents a tournament from the portal64_svw database
+// Turnier represents a tournament (legacy model - no longer in use)
 type Turnier struct {
 	TID                int        `json:"tid" gorm:"primaryKey;column:TID"`
 	TName              string     `json:"tname" gorm:"column:TName"`

@@ -4,7 +4,6 @@
 -- Create databases
 CREATE DATABASE IF NOT EXISTS mvdsb CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE DATABASE IF NOT EXISTS portal64_bdw CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE DATABASE IF NOT EXISTS portal64_svw CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- Create user and grant permissions
 CREATE USER IF NOT EXISTS 'portal64api'@'%' IDENTIFIED BY 'password123';
@@ -12,12 +11,10 @@ CREATE USER IF NOT EXISTS 'portal64api'@'%' IDENTIFIED BY 'password123';
 -- Grant permissions to all databases
 GRANT SELECT, INSERT, UPDATE, DELETE ON mvdsb.* TO 'portal64api'@'%';
 GRANT SELECT, INSERT, UPDATE, DELETE ON portal64_bdw.* TO 'portal64api'@'%';
-GRANT SELECT, INSERT, UPDATE, DELETE ON portal64_svw.* TO 'portal64api'@'%';
 
 -- For testing purposes, also grant to localhost
 GRANT SELECT, INSERT, UPDATE, DELETE ON mvdsb.* TO 'portal64api'@'localhost';
 GRANT SELECT, INSERT, UPDATE, DELETE ON portal64_bdw.* TO 'portal64api'@'localhost';
-GRANT SELECT, INSERT, UPDATE, DELETE ON portal64_svw.* TO 'portal64api'@'localhost';
 
 -- Flush privileges
 FLUSH PRIVILEGES;
@@ -62,19 +59,6 @@ INSERT IGNORE INTO evaluation (id, idMaster, idPerson, dwzOld, dwzOldIndex, dwzN
 (3, 2, 1016, 1654, 22, 1671, 25, 6, 4.0),
 (4, 2, 1017, 1923, 55, 1918, 58, 6, 2.5),
 (5, 1, 1018, 1445, 15, 1465, 18, 7, 3.5);
-
--- Switch to Portal64_SVW database for tournaments
-USE portal64_svw;
-
--- Sample SVW tournaments
-INSERT IGNORE INTO Turnier (TID, TName, Saison, SaisonAnzeige, AnzStammspieler, AnzErsatzspieler, Teilnahmeschluss, Meldeschluss, isFreigegeben, Organisation) VALUES
-(1, 'Württembergische Verbandsliga 2025', 2025, '2024/25', 8, 2, '2025-02-15 23:59:59', '2025-01-31 23:59:59', 1, 1),
-(2, 'Bezirksliga Stuttgart 2025', 2025, '2024/25', 8, 2, '2025-02-20 23:59:59', '2025-02-05 23:59:59', 1, 2);
-
--- Add some sample teams and players for tournaments
-INSERT IGNORE INTO Mannschaft (MFTID, VKZ, TID, MName, MNr, Los, organisation) VALUES
-(1, 'C0101', 1, 'Post-SV Ulm I', 1, 1, 1),
-(2, 'C0201', 1, 'SF Stuttgart I', 1, 2, 2);
 
 -- Add sample team members
 INSERT IGNORE INTO Kader (KID, MFTID, person, Brettnr, abgemeldet) VALUES

@@ -24,11 +24,3 @@ database:
     password: "${PORTAL64_BDW_PASSWORD}"
     database: "portal64_bdw"
     charset: "utf8mb4"
-  
-  portal64_svw:
-    host: "db.svw.info"
-    port: 3306
-    username: "portal64api_prod"
-    password: "${PORTAL64_SVW_PASSWORD}"
-    database: "portal64_svw"
-    charset: "utf8mb4"

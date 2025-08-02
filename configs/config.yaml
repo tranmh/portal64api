@@ -24,11 +24,3 @@ database:
     password: ""
     database: "portal64_bdw"
     charset: "utf8mb4"
-  
-  portal64_svw:
-    host: "localhost"
-    port: 3306
-    username: "root"
-    password: ""
-    database: "portal64_svw"
-    charset: "utf8mb4"

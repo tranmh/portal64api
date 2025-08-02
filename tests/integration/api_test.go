@@ -47,14 +47,6 @@ func (suite *IntegrationTestSuite) SetupSuite() {
 				Database: "portal64_bdw",
 				Charset:  "utf8mb4",
 			},
-			Portal64SVW: config.DatabaseConnection{
-				Host:     "localhost",
-				Port:     3306,
-				Username: "root",
-				Password: "",
-				Database: "portal64_svw",
-				Charset:  "utf8mb4",
-			},
 		},
 	}
 

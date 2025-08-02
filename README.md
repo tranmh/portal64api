@@ -31,7 +31,7 @@ Tournament IDs follow the format: `{Code}-{SubCode}-{Type}` (e.g., `C529-K00-HT1
 
 - Go 1.21 or higher
 - MySQL 8.0 or higher
-- Access to the three databases: `mvdsb`, `portal64_bdw`, `portal64_svw`
+- Access to the two databases: `mvdsb`, `portal64_bdw`
 
 ### Installation
 
@@ -100,13 +100,6 @@ Tournament IDs follow the format: `{Code}-{SubCode}-{Type}` (e.g., `C529-K00-HT1
    PORTAL64_BDW_USERNAME=your_username
    PORTAL64_BDW_PASSWORD=your_password
    PORTAL64_BDW_DATABASE=portal64_bdw
-
-   # Portal64_SVW Database
-   PORTAL64_SVW_HOST=localhost
-   PORTAL64_SVW_PORT=3306
-   PORTAL64_SVW_USERNAME=your_username
-   PORTAL64_SVW_PASSWORD=your_password
-   PORTAL64_SVW_DATABASE=portal64_svw
    ```
 
 4. **Run the application**
@@ -443,8 +436,7 @@ Ensure the API user has appropriate permissions:
 ```sql
 -- Minimum required permissions
 GRANT SELECT ON mvdsb.* TO 'portal64api'@'%';
-GRANT SELECT ON portal64_bdw.* TO 'portal64api'@'%';  
-GRANT SELECT ON portal64_svw.* TO 'portal64api'@'%';
+GRANT SELECT ON portal64_bdw.* TO 'portal64api'@'%';
 ```
 
 ## API Documentation

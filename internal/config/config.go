@@ -35,7 +35,6 @@ type ServerConfig struct {
 type DatabaseConfig struct {
 	MVDSB      DatabaseConnection `yaml:"mvdsb"`
 	Portal64BDW DatabaseConnection `yaml:"portal64_bdw"`
-	Portal64SVW DatabaseConnection `yaml:"portal64_svw"`
 }
 // DatabaseConnection holds individual database connection details
 type DatabaseConnection struct {
@@ -186,14 +185,6 @@ func loadConfig() *Config {
 				Password: getStringEnv("PORTAL64_BDW_PASSWORD", ""),
 				Database: getStringEnv("PORTAL64_BDW_DATABASE", "portal64_bdw"),
 				Charset:  getStringEnv("PORTAL64_BDW_CHARSET", "utf8mb4"),
-			},
-			Portal64SVW: DatabaseConnection{
-				Host:     getStringEnv("PORTAL64_SVW_HOST", "localhost"),
-				Port:     getIntEnv("PORTAL64_SVW_PORT", 3306),
-				Username: getStringEnv("PORTAL64_SVW_USERNAME", "root"),
-				Password: getStringEnv("PORTAL64_SVW_PASSWORD", ""),
-				Database: getStringEnv("PORTAL64_SVW_DATABASE", "portal64_svw"),
-				Charset:  getStringEnv("PORTAL64_SVW_CHARSET", "utf8mb4"),
 			},
 		},
 		Cache: CacheConfig{

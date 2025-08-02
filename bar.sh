@@ -8,8 +8,4 @@ export PORTAL64_BDW_USERNAME=portal
 export PORTAL64_BDW_PASSWORD='Usm@1?/#Qv^avF'
 export PORTAL64_BDW_HOST=localhost
 export PORTAL64_BDW_DATABASE=portal64_bdw
-export PORTAL64_SVW_USERNAME=portal
-export PORTAL64_SVW_PASSWORD='Usm@1?/#Qv^avF'
-export PORTAL64_SVW_HOST=localhost
-export PORTAL64_SVW_DATABASE=portal64_svw
 ./bin/portal64api

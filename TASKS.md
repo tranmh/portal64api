@@ -113,6 +113,22 @@ Redis Caching Implementation:
 
 The Redis caching system is **production-ready** and provides significant performance improvements when enabled.
 
+**REMOVED: Portal64_SVW Database Dependency** // DONE
+- **Issue**: Portal64_SVW database was configured but never used in any repositories or services
+- **Root Cause**: Legacy database connection that was no longer needed
+- **Solution**: Complete removal of Portal64_SVW database dependency:
+  - ❌ Removed Portal64SVW from `Databases` struct in `internal/database/database.go`
+  - ❌ Removed Portal64SVW connection setup and teardown from database Connect() and Close() methods
+  - ❌ Removed Portal64SVW configuration from `internal/config/config.go`
+  - ❌ Removed Portal64_SVW environment variables from `.env`, `docker-compose.yml`, and `bar.sh`
+  - ❌ Removed Portal64_SVW configuration from `configs/config.yaml` and `configs/config.prod.yaml`
+  - ❌ Removed Portal64_SVW database creation and permissions from `scripts/init-db.sql`
+  - ❌ Removed Portal64SVW configuration from integration tests in `tests/integration/api_test.go`
+  - ❌ Updated README.md to reflect only two databases are now required (mvdsb, portal64_bdw)
+  - ❌ Updated model comments to reflect legacy status
+- **Verification**: Application builds and runs successfully with only MVDSB and Portal64_BDW databases
+- **Result**: Simplified database architecture, reduced configuration complexity, and eliminated unused dependencies
+
 **DEACTIVATED FEATURES** // DONE
 
 **GET /tournaments/upcoming Route Deactivated** // DONE
