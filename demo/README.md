@@ -130,7 +130,6 @@ demo/
 
 ### Tournaments
 - `GET /api/v1/tournaments` - Turniersuche
-- `GET /api/v1/tournaments/upcoming` - Kommende Turniere
 - `GET /api/v1/tournaments/recent` - Aktuelle Turniere  
 - `GET /api/v1/tournaments/date-range` - Turniere nach Datum
 - `GET /api/v1/tournaments/{id}` - Turnierdetails

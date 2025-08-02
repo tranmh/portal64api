@@ -314,7 +314,6 @@ func (h *AdminHandler) CacheStats(c *gin.Context) {
 | Route | Cache Key | TTL | Notes |
 |-------|-----------|-----|-------|
 | `GET /tournaments/:id` | `tournament:{id}` | 7d | Tournament details (historical) |
-| `GET /tournaments/upcoming` | `tournament:upcoming` | 15m | Dynamic list |
 | `GET /tournaments/recent` | `tournament:recent` | 15m | Dynamic list |
 | `GET /tournaments?search=...` | `search:tournament:hash:{hash}` | 15m | Search results |
 

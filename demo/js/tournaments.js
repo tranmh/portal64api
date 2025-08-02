@@ -17,15 +17,6 @@ class TournamentManager {
             });
         }
 
-        // Upcoming tournaments form handler
-        const upcomingForm = document.getElementById('upcoming-tournaments-form');
-        if (upcomingForm) {
-            upcomingForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                this.getUpcomingTournaments();
-            });
-        }
-
         // Recent tournaments form handler
         const recentForm = document.getElementById('recent-tournaments-form');
         if (recentForm) {
@@ -79,29 +70,6 @@ class TournamentManager {
             
         } catch (error) {
             Utils.showError('tournament-search-results', `Suche fehlgeschlagen: ${error.message}`);
-        }
-    }
-
-    async getUpcomingTournaments() {
-        try {
-            Utils.showLoading('upcoming-tournaments-results');
-            
-            const form = document.getElementById('upcoming-tournaments-form');
-            const formData = Utils.getFormData(form);
-            const limit = formData.limit || 20;
-            const format = formData.format || 'json';
-            
-            const result = await api.getUpcomingTournaments(limit, format);
-            
-            if (format === 'json') {
-                // Fix: API returns {success: true, data: [...]} for upcoming tournaments
-                this.displayTournamentResults('upcoming-tournaments-results', result.data || result);
-            } else {
-                new CodeDisplayManager().displayResponse('upcoming-tournaments-results', result, 'Kommende Turniere (CSV)');
-            }
-            
-        } catch (error) {
-            Utils.showError('upcoming-tournaments-results', `Fehler beim Abrufen kommender Turniere: ${error.message}`);
         }
     }
 

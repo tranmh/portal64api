@@ -21,7 +21,6 @@ The system tests cover all endpoints defined in the swagger specification:
 - `/api/v1/tournaments` - Search tournaments
 - `/api/v1/tournaments/date-range` - Get tournaments by date range
 - `/api/v1/tournaments/recent` - Get recent tournaments
-- `/api/v1/tournaments/upcoming` - Get upcoming tournaments
 - `/api/v1/tournaments/{id}` - Get specific tournament by ID
 
 ## Test Types

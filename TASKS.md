@@ -33,7 +33,7 @@ Missing Features:
   - `GetTournamentByID()`: 1 hour TTL
   - `GetBasicTournamentByID()`: 1 hour TTL  
   - `SearchTournaments()`: 15 minutes TTL
-  - `GetUpcomingTournaments()`: 30 minutes TTL
+  - ~~`GetUpcomingTournaments()`: 30 minutes TTL~~ // REMOVED - Route deactivated
 - **Cache Pattern**: Cache-aside with background refresh using `GetWithRefresh()`
 - **Verification**: Cache health endpoint shows proper hit ratio and key storage
 
@@ -112,3 +112,20 @@ Redis Caching Implementation:
 4. Tune TTL values based on actual usage patterns
 
 The Redis caching system is **production-ready** and provides significant performance improvements when enabled.
+
+**DEACTIVATED FEATURES** // DONE
+
+**GET /tournaments/upcoming Route Deactivated** // DONE
+- **Issue**: User requested deactivation of the upcoming tournaments endpoint
+- **Solution**: Complete removal of the `/tournaments/upcoming` route and all related functionality:
+  - ❌ Route registration removed from `internal/api/routes.go`
+  - ❌ Handler method `GetUpcomingTournaments()` removed from tournament handlers
+  - ❌ Service method `GetUpcomingTournaments()` and helper removed from tournament service  
+  - ❌ Repository method `GetUpcomingTournaments()` removed from tournament repository
+  - ❌ API client method `getUpcomingTournaments()` removed from demo JavaScript
+  - ❌ Frontend functionality removed from `demo/js/tournaments.js`
+  - ❌ HTML tab "Kommend" removed from `demo/tournaments.html`
+  - ❌ Frontend unit tests removed from `tests/frontend/unit/pages/tournaments.test.js`
+  - ❌ Integration tests removed from `tests/integration/system_test.go`
+  - ❌ Documentation references removed from README.md, swagger.yaml, and demo docs
+- **Verification**: All references to `/tournaments/upcoming` and `GetUpcomingTournaments` removed from codebase

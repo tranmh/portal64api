@@ -180,53 +180,6 @@ func (s *TournamentService) executeTournamentSearch(req models.SearchRequest) (*
 	}, nil
 }
 
-// GetUpcomingTournaments gets upcoming tournaments
-func (s *TournamentService) GetUpcomingTournaments(limit int) ([]models.TournamentResponse, error) {
-	if limit == 0 {
-		limit = 20
-	}
-
-	ctx := context.Background()
-	cacheKey := s.keyGen.TournamentListKey(fmt.Sprintf("upcoming_limit_%d", limit))
-
-	// Try cache first with background refresh
-	var cachedTournaments []models.TournamentResponse
-	err := s.cacheService.GetWithRefresh(ctx, cacheKey, &cachedTournaments,
-		func() (interface{}, error) {
-			return s.loadUpcomingTournamentsFromDB(limit)
-		}, 30*time.Minute) // Cache upcoming tournaments for 30 minutes
-
-	if err == nil {
-		return cachedTournaments, nil
-	}
-
-	// Fallback to direct DB access if cache fails
-	return s.loadUpcomingTournamentsFromDB(limit)
-}
-
-// loadUpcomingTournamentsFromDB loads upcoming tournaments from database
-func (s *TournamentService) loadUpcomingTournamentsFromDB(limit int) ([]models.TournamentResponse, error) {
-	tournaments, err := s.tournamentRepo.GetUpcomingTournaments(limit)
-	if err != nil {
-		return nil, errors.NewInternalServerError("Failed to get upcoming tournaments")
-	}
-
-	responses := make([]models.TournamentResponse, len(tournaments))
-	for i, tournament := range tournaments {
-		responses[i] = models.TournamentResponse{
-			ID:               fmt.Sprintf("SVW-%d", tournament.TID),
-			Name:             tournament.TName,
-			Type:             "League", // Assuming league tournaments
-			StartDate:        tournament.Teilnahmeschluss,
-			EndDate:          tournament.Meldeschluss,
-			Status:           getSVWTournamentStatus(&tournament),
-			ParticipantCount: tournament.AnzStammspieler + tournament.AnzErsatzspieler,
-		}
-	}
-
-	return responses, nil
-}
-
 // GetTournamentsByDateRange gets tournaments within a date range
 func (s *TournamentService) GetTournamentsByDateRange(startDate, endDate time.Time, req models.SearchRequest) ([]models.TournamentResponse, *models.Meta, error) {
 	tournaments, total, err := s.tournamentRepo.GetTournamentsByDateRange(startDate, endDate, req)

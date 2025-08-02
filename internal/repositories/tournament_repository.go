@@ -62,17 +62,6 @@ func (r *TournamentRepository) SearchTournaments(req models.SearchRequest) ([]mo
 	return tournaments, total, err
 }
 
-// GetUpcomingTournaments gets upcoming tournaments from SVW database
-func (r *TournamentRepository) GetUpcomingTournaments(limit int) ([]models.Turnier, error) {
-	var tournaments []models.Turnier
-	now := time.Now()
-	
-	err := r.dbs.Portal64SVW.Where("isFreigegeben = 1 AND (Teilnahmeschluss > ? OR Meldeschluss > ?)", 
-		now, now).Order("Teilnahmeschluss ASC").Limit(limit).Find(&tournaments).Error
-	
-	return tournaments, err
-}
-
 // GetTournamentsByDateRange gets tournaments within a date range
 func (r *TournamentRepository) GetTournamentsByDateRange(startDate, endDate time.Time, req models.SearchRequest) ([]models.Tournament, int64, error) {
 	var tournaments []models.Tournament

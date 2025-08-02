@@ -148,7 +148,6 @@ The API will be available at `http://localhost:8080`
 #### Tournaments
 - `GET /api/v1/tournaments` - Search tournaments
 - `GET /api/v1/tournaments/{id}` - Get tournament by ID
-- `GET /api/v1/tournaments/upcoming` - Get upcoming tournaments
 - `GET /api/v1/tournaments/recent` - Get recent tournaments
 - `GET /api/v1/tournaments/date-range` - Get tournaments by date range
 
@@ -202,11 +201,6 @@ curl "http://localhost:8080/api/v1/clubs/C0101/players"
 ### Search clubs in CSV format
 ```bash
 curl "http://localhost:8080/api/v1/clubs?query=Ulm&format=csv"
-```
-
-### Get upcoming tournaments
-```bash
-curl "http://localhost:8080/api/v1/tournaments/upcoming?limit=5"
 ```
 
 ## Development

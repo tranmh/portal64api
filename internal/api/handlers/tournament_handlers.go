@@ -108,38 +108,6 @@ func (h *TournamentHandler) SearchTournaments(c *gin.Context) {
 	utils.HandleResponse(c, response, "tournaments.csv")
 }
 
-// GetUpcomingTournaments godoc
-// @Summary Get upcoming tournaments
-// @Description Get upcoming tournaments that are open for registration
-// @Tags tournaments
-// @Accept json
-// @Produce json,text/csv
-// @Param limit query int false "Maximum number of tournaments to return" default(20)
-// @Param format query string false "Response format (json or csv)" Enums(json,csv)
-// @Success 200 {object} models.Response{data=[]models.TournamentResponse}
-// @Failure 500 {object} models.Response
-// @Router /api/v1/tournaments/upcoming [get]
-func (h *TournamentHandler) GetUpcomingTournaments(c *gin.Context) {
-	limitStr := c.DefaultQuery("limit", "20")
-	limit, err := strconv.Atoi(limitStr)
-	if err != nil || limit > 100 {
-		limit = 20
-	}
-
-	tournaments, err := h.tournamentService.GetUpcomingTournaments(limit)
-	if err != nil {
-		if apiErr, ok := err.(errors.APIError); ok {
-			utils.SendJSONResponse(c, apiErr.Code, apiErr)
-			return
-		}
-		utils.SendJSONResponse(c, http.StatusInternalServerError, 
-			errors.NewInternalServerError("Failed to get upcoming tournaments"))
-		return
-	}
-
-	utils.HandleResponse(c, tournaments, "upcoming_tournaments.csv")
-}
-
 // GetRecentTournaments godoc
 // @Summary Get recent tournaments
 // @Description Get recently finished tournaments

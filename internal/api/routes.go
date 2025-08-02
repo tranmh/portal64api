@@ -128,7 +128,6 @@ func SetupRoutes(dbs *database.Databases, cacheService cache.CacheService) *gin.
 		tournaments := v1.Group("/tournaments")
 		{
 			tournaments.GET("", tournamentHandler.SearchTournaments)
-			tournaments.GET("/upcoming", tournamentHandler.GetUpcomingTournaments)
 			tournaments.GET("/recent", tournamentHandler.GetRecentTournaments)
 			tournaments.GET("/date-range", tournamentHandler.GetTournamentsByDateRange)
 			tournaments.GET("/:id", tournamentHandler.GetTournament)

@@ -28,7 +28,6 @@ describe('Tournaments Page (tournaments.html)', () => {
     // Mock API and utility functions
     window.api = {
       searchTournaments: jest.fn(),
-      getUpcomingTournaments: jest.fn(),
       getRecentTournaments: jest.fn(),
       getTournamentsByDateRange: jest.fn(),
       getTournament: jest.fn()
@@ -203,30 +202,6 @@ describe('Tournaments Page (tournaments.html)', () => {
       await window.performTournamentSearch();
 
       expect(window.Utils.showError).toHaveBeenCalledWith('tournament-search-results', 'Search failed');
-    });
-  });
-
-  describe('Upcoming Tournaments Functionality', () => {
-    test('should fetch upcoming tournaments', async () => {
-      if (!document || !window.api) return;
-
-      window.api.getUpcomingTournaments.mockResolvedValue({
-        data: [
-          { id: 'T001', name: 'Future Tournament', date: '2024-12-15' }
-        ]
-      });
-
-      window.fetchUpcomingTournaments = async () => {
-        window.Utils.showLoading('upcoming-tournaments-results');
-        const result = await window.api.getUpcomingTournaments();
-        window.CodeDisplayManager();
-      };
-
-      await window.fetchUpcomingTournaments();
-
-      expect(window.Utils.showLoading).toHaveBeenCalledWith('upcoming-tournaments-results');
-      expect(window.api.getUpcomingTournaments).toHaveBeenCalled();
-      expect(window.CodeDisplayManager).toHaveBeenCalled();
     });
   });
 

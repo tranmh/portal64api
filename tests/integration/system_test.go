@@ -767,47 +767,6 @@ func (suite *SystemTestSuite) TestTournamentsRecent() {
 	}
 }
 
-// TestTournamentsUpcoming tests the upcoming tournaments endpoint
-func (suite *SystemTestSuite) TestTournamentsUpcoming() {
-	testCases := []struct {
-		name   string
-		params map[string]string
-		status int
-	}{
-		{
-			name:   "default upcoming tournaments",
-			params: map[string]string{},
-			status: http.StatusOK,
-		},
-		{
-			name:   "upcoming tournaments with limit",
-			params: map[string]string{"limit": "10"},
-			status: http.StatusOK,
-		},
-		{
-			name:   "upcoming tournaments CSV",
-			params: map[string]string{"format": "csv", "limit": "5"},
-			status: http.StatusOK,
-		},
-	}
-	
-	for _, tc := range testCases {
-		suite.Run(tc.name, func() {
-			resp, err := suite.makeRequest("GET", "/api/v1/tournaments/upcoming", tc.params)
-			assert.NoError(suite.T(), err)
-			defer resp.Body.Close()
-			
-			if strings.Contains(tc.params["format"], "csv") {
-				suite.assertCSVResponse(resp, tc.status)
-			} else {
-				response := suite.assertJSONResponse(resp, tc.status)
-				assert.True(suite.T(), response.Success)
-				assert.NotNil(suite.T(), response.Data)
-			}
-		})
-	}
-}
-
 // TestTournamentByID tests getting a specific tournament by ID
 func (suite *SystemTestSuite) TestTournamentByID() {
 	testCases := []struct {
