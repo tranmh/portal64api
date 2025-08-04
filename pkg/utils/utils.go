@@ -482,3 +482,14 @@ func HandleResponse(c *gin.Context, data interface{}, filename string) {
 func UintToString(value uint) string {
 	return strconv.FormatUint(uint64(value), 10)
 }
+
+// ExtractBirthYear extracts the birth year from a birth date for GDPR compliance
+// This ensures only birth years are exposed, not full birth dates
+func ExtractBirthYear(birthDate *time.Time) *int {
+	if birthDate == nil {
+		return nil
+	}
+	
+	year := birthDate.Year()
+	return &year
+}

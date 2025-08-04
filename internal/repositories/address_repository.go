@@ -259,6 +259,11 @@ func (r *AddressRepository) getContactDetailsForAddresses(addressIDs []uint) (ma
 			Value: result.ContactValue,
 		}
 
+		// GDPR compliance: Filter out birth date information
+		if isGDPRSensitiveContactType(result.ContactTypeName) {
+			continue // Skip sensitive personal data
+		}
+
 		// Add to map
 		contactMap[result.AddressID] = append(contactMap[result.AddressID], detail)
 	}
@@ -379,4 +384,27 @@ func getRegionName(code string) string {
 		return name
 	}
 	return code
+}
+
+// Helper function to filter GDPR sensitive contact types
+// Prevents accidental exposure of personal birth dates and other sensitive data
+func isGDPRSensitiveContactType(contactType string) bool {
+	// List of contact types that might contain sensitive personal data
+	sensitiveTypes := []string{
+		"Geburtsdatum",          // Birth Date
+		"Birth Date",
+		"Date of Birth", 
+		"Geburtstag",           // Birthday
+		"Birthday",
+		"Personal Address",      // Personal home addresses (vs organizational)
+		"Private Address",   
+		"Home Address",
+	}
+	
+	for _, sensitive := range sensitiveTypes {
+		if contactType == sensitive {
+			return true
+		}
+	}
+	return false
 }

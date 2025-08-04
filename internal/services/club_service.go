@@ -11,6 +11,7 @@ import (
 	"portal64api/internal/models"
 	"portal64api/internal/repositories"
 	"portal64api/pkg/errors"
+	"portal64api/pkg/utils"
 )
 
 // ClubService handles club business logic
@@ -297,7 +298,7 @@ func (s *ClubService) getClubPlayersForProfile(clubID string) ([]models.PlayerRe
 			Firstname:  player.Vorname,
 			Club:       club.Name,
 			ClubID:     club.VKZ,
-			Birth:      player.Geburtsdatum,
+			BirthYear:  utils.ExtractBirthYear(player.Geburtsdatum), // GDPR compliant: only birth year
 			Gender:     s.playerRepo.FormatGender(player.Geschlecht),
 			Nation:     player.Nation,
 			FideID:     player.IDFide,

@@ -175,7 +175,7 @@ type PlayerResponse struct {
 	Firstname  string    `json:"firstname"`
 	Club       string    `json:"club"`
 	ClubID     string    `json:"club_id"`    // Format: C0101
-	Birth      *time.Time `json:"birth"`
+	BirthYear  *int      `json:"birth_year"` // GDPR compliant: only birth year, not full date
 	Gender     string    `json:"gender"`
 	Nation     string    `json:"nation"`
 	FideID     uint      `json:"fide_id"`
@@ -319,7 +319,7 @@ type ParticipantInfo struct {
 	Name          string       `json:"name"`
 	Firstname     string       `json:"firstname"`
 	FullName      string       `json:"full_name"`
-	DateOfBirth   *time.Time   `json:"date_of_birth"`
+	BirthYear     *int         `json:"birth_year"`   // GDPR compliant: only birth year, not full date
 	Gender        string       `json:"gender"`
 	Nation        string       `json:"nation"`
 	FideID        uint         `json:"fide_id"`

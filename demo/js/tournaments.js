@@ -434,7 +434,7 @@ class TournamentManager {
                                 <th>Name</th>
                                 <th>Verein</th>
                                 <th>Start-DWZ</th>
-                                <th>Geburtsdatum</th>
+                                <th>Geburtsjahr</th>
                                 <th>Nation</th>
                                 <th>FIDE-ID</th>
                                 <th>Status</th>
@@ -456,7 +456,7 @@ class TournamentManager {
                     <td>${Utils.sanitizeHTML(participant.club?.name || 'N/A')}</td>
                     <td>${participant.rating?.use_rating ? 
                          `<span class="badge badge-primary">${participant.rating.use_rating}</span>` : 'N/A'}</td>
-                    <td>${Utils.formatDate(participant.date_of_birth)}</td>
+                    <td>${Utils.formatBirthYear(participant.birth_year)}</td>
                     <td>${Utils.sanitizeHTML(participant.nation || 'N/A')}</td>
                     <td>${participant.fide_id ? `<code>${participant.fide_id}</code>` : 'N/A'}</td>
                     <td><span class="badge ${statusClass}">${statusText}</span></td>

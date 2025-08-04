@@ -6,6 +6,7 @@ import (
 
 	"portal64api/internal/database"
 	"portal64api/internal/models"
+	"portal64api/pkg/utils"
 )
 
 // TournamentRepository handles tournament data operations
@@ -266,7 +267,7 @@ func (r *TournamentRepository) getParticipantsWithDetails(tournamentID uint, fin
 				participantInfo.Name = person.Name
 				participantInfo.Firstname = person.Vorname
 				participantInfo.FullName = person.Name + ", " + person.Vorname
-				participantInfo.DateOfBirth = person.Geburtsdatum
+				participantInfo.BirthYear = utils.ExtractBirthYear(person.Geburtsdatum) // GDPR compliant: only birth year
 				participantInfo.Gender = r.getGenderString(person.Geschlecht)
 				participantInfo.Nation = person.Nation
 				participantInfo.FideID = person.IDFide

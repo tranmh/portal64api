@@ -154,7 +154,8 @@ class ClubProfileManager {
             `;
 
             profile.players.forEach(player => {
-                const birthYear = player.birth ? new Date(player.birth).getFullYear() : 'N/A';
+                // Use birth year directly from API (GDPR compliant)
+                const birthYear = Utils.formatBirthYear(player.birth_year);
                 const dwzBadge = player.current_dwz > 0 ? 
                     `<span class="badge badge-primary">${player.current_dwz}</span>` : 
                     '<span class="badge badge-secondary">Unbewertet</span>';

@@ -16,6 +16,8 @@ Bugs:
 12. Empty club ID test expectation - Correctly routes to SearchClubs, not GetClub // DONE  
 13. E2E test localization - Updated tests to expect German error messages // DONE
 
+14. Due to DSGVO / GDPR compliance, it it not allowed to publish birthday of the players, but only birthyear. Can you check for all routes whether other DSGVO / GDPR compliance violence exists and remove it? // DONE
+
 Missing Features:
 
 1. In the demo site there is no pagination for all html pages. So whenever you find more than the number of players/clubs/tournament for the first page, you cannot go to the next page. // DONE

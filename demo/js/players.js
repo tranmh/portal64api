@@ -229,14 +229,8 @@ class PlayerManager {
         `;
 
         players.forEach(player => {
-            // Extract birth year from birth date
-            let birthYear = 'N/A';
-            if (player.birth) {
-                const birthDate = new Date(player.birth);
-                if (!isNaN(birthDate.getTime())) {
-                    birthYear = birthDate.getFullYear().toString();
-                }
-            }
+            // Use birth year directly from API (GDPR compliant)
+            const birthYear = Utils.formatBirthYear(player.birth_year);
 
             html += `
                 <tr>
@@ -335,14 +329,8 @@ class PlayerManager {
         const container = document.getElementById(containerId);
         if (!container) return;
 
-        // Extract birth year from birth date
-        let birthYear = 'N/A';
-        if (player.birth) {
-            const birthDate = new Date(player.birth);
-            if (!isNaN(birthDate.getTime())) {
-                birthYear = birthDate.getFullYear().toString();
-            }
-        }
+        // Use birth year directly from API (GDPR compliant) 
+        const birthYear = Utils.formatBirthYear(player.birth_year);
 
         const html = `
             <div class="card">
@@ -377,7 +365,7 @@ class PlayerManager {
                     <div>
                         <h4>Additional Information</h4>
                         <p><strong>FIDE ID:</strong> ${Utils.sanitizeHTML(player.fide_id || 'N/A')}</p>
-                        <p><strong>Birth Date:</strong> ${Utils.formatDate(player.birth)}</p>
+                        <p><strong>Geburtsjahr:</strong> ${Utils.formatBirthYear(player.birth_year)}</p>
                     </div>
                 </div>
             </div>

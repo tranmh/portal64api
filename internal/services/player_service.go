@@ -81,7 +81,7 @@ func (s *PlayerService) loadPlayerFromDB(playerID string) (*models.PlayerRespons
 		ID:        playerID,
 		Name:      person.Name,
 		Firstname: person.Vorname,
-		Birth:     person.Geburtsdatum,
+		BirthYear: utils.ExtractBirthYear(person.Geburtsdatum), // GDPR compliant: only birth year
 		Nation:    person.Nation,
 		FideID:    person.IDFide,
 		Status:    getPlayerStatus(person.Status),
@@ -156,7 +156,7 @@ func (s *PlayerService) executePlayerSearch(req models.SearchRequest, showActive
 		response := models.PlayerResponse{
 			Name:      player.Name,
 			Firstname: player.Vorname,
-			Birth:     player.Geburtsdatum,
+			BirthYear: utils.ExtractBirthYear(player.Geburtsdatum), // GDPR compliant: only birth year
 			Nation:    player.Nation,
 			FideID:    player.IDFide,
 			Gender:    getGenderString(player.Geschlecht),
@@ -258,7 +258,7 @@ func (s *PlayerService) executeClubPlayersSearch(clubID string, req models.Searc
 			Firstname: player.Vorname,
 			Club:      club.Name,
 			ClubID:    clubID,
-			Birth:     player.Geburtsdatum,
+			BirthYear: utils.ExtractBirthYear(player.Geburtsdatum), // GDPR compliant: only birth year
 			Nation:    player.Nation,
 			FideID:    player.IDFide,
 			Gender:    getGenderString(player.Geschlecht),

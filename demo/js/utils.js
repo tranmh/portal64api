@@ -75,6 +75,12 @@ class Utils {
         });
     }
 
+    // Format birth year for display (GDPR compliant)
+    static formatBirthYear(birthYear) {
+        if (!birthYear || birthYear === 0) return 'N/A';
+        return birthYear.toString();
+    }
+
     // Validate player ID format (C0101-1014, UNKNOWN-12345, D300H-1014, etc.)
     static validatePlayerID(id) {
         // Allow format: <CLUBID>-<PERSONID> where CLUBID can be alphanumeric and PERSONID is numeric
