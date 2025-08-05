@@ -19,6 +19,14 @@ Bugs:
 14. Due to DSGVO / GDPR compliance, it it not allowed to publish birthday of the players, but only birthyear. Can you check for all routes whether other DSGVO / GDPR compliance violence exists and remove it? // DONE
 15. Querying http://localhost:8080/api/v1/players/C0327-297/rating-history you get a list of tournaments with ID. The id is shown as integer, but the expectation is this format C531-634-S25. Can you fix and also fix the /demo as well? // DONE
 
+**FIXED: Tournament ID Validation Bug** // DONE
+- **Issue**: Tournament route http://localhost:8080/api/v1/tournaments/B718-A08-BEL returned "Invalid tournament ID format (expected: C529-K00-HT1)"
+- **Root Cause**: ValidateTournamentID() function only accepted tournament IDs starting with 'C', but tournament codes can start with different letters (A=2000-2009, B=2010-2019, C=2020-2029, etc.)
+- **Solution**: Updated validation logic in pkg/utils/utils.go to accept tournament IDs starting with any letter A-Z
+- **Examples**: Now accepts B718-A08-BEL (2017 week 18), C413-612-DSV (2024 week 13), C529-K00-HT1 (2025 week 29)
+- **Documentation Updated**: README.md, swagger.yaml, demo error messages updated with correct format examples
+- **Verification**: All tournament ID formats now working correctly
+
 Missing Features:
 
 1. In the demo site there is no pagination for all html pages. So whenever you find more than the number of players/clubs/tournament for the first page, you cannot go to the next page. // DONE

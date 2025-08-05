@@ -138,7 +138,7 @@ class TournamentManager {
             
             // Validate tournament ID
             if (!Utils.validateTournamentID(tournamentId)) {
-                Utils.showError('tournament-lookup-results', 'Ungültiges Turnier-ID Format. Erwartetes Format: C529-K00-HT1 oder C339-400-442');
+                Utils.showError('tournament-lookup-results', 'Ungültiges Turnier-ID Format. Erwartetes Format: B718-A08-BEL oder C529-K00-HT1');
                 return;
             }
             
@@ -167,7 +167,7 @@ class TournamentManager {
             
             // Validate tournament ID
             if (!Utils.validateTournamentID(tournamentId)) {
-                Utils.showError('tournament-players-results', 'Ungültiges Turnier-ID Format. Erwartetes Format: C529-K00-HT1 oder C339-400-442');
+                Utils.showError('tournament-players-results', 'Ungültiges Turnier-ID Format. Erwartetes Format: B718-A08-BEL oder C529-K00-HT1');
                 return;
             }
             

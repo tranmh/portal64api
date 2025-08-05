@@ -23,7 +23,9 @@ Player IDs follow the format: `{VKZ}-{PersonID}` (e.g., `C0101-1014`)
 Club IDs use the VKZ format: `{C}{NNNN}` (e.g., `C0101`)
 
 ### Tournament ID Format  
-Tournament IDs follow the format: `{Code}-{SubCode}-{Type}` (e.g., `C529-K00-HT1`)
+Tournament IDs follow the format: `{Code}-{SubCode}-{Type}` where:
+- Code: Letter (A-Z) + year digit + week number (e.g., `B718` = 2017 week 18, `C529` = 2025 week 29)
+- Examples: `B718-A08-BEL`, `C413-612-DSV`, `C529-K00-HT1`
 
 ## Quick Start
 

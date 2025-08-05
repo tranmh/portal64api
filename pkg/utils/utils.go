@@ -120,26 +120,31 @@ func ValidateTournamentID(tournamentID string) error {
 	
 	parts := strings.Split(tournamentID, "-")
 	if len(parts) != 3 {
-		return errors.NewBadRequestError("Invalid tournament ID format (expected: C529-K00-HT1)")
+		return errors.NewBadRequestError("Invalid tournament ID format (expected: B718-A08-BEL or C529-K00-HT1)")
 	}
 	
-	// First part: should start with 'C' followed by digits
-	if len(parts[0]) < 2 || parts[0][0] != 'C' {
-		return errors.NewBadRequestError("Invalid tournament ID format (expected: C529-K00-HT1)")
+	// First part: should start with a letter (A-Z) followed by digits
+	// Letter represents decade: A=2000-2009, B=2010-2019, C=2020-2029, etc.
+	if len(parts[0]) < 2 {
+		return errors.NewBadRequestError("Invalid tournament ID format (expected: B718-A08-BEL or C529-K00-HT1)")
 	}
 	
-	// Validate each part has some basic structure
-	for i, part := range parts {
-		if len(part) < 2 {
-			return errors.NewBadRequestError("Invalid tournament ID format (expected: C529-K00-HT1)")
+	// First character must be a letter A-Z
+	if parts[0][0] < 'A' || parts[0][0] > 'Z' {
+		return errors.NewBadRequestError("Invalid tournament ID format (expected: B718-A08-BEL or C529-K00-HT1)")
+	}
+	
+	// Rest of first part should be digits (year digit + week number)
+	for j := 1; j < len(parts[0]); j++ {
+		if parts[0][j] < '0' || parts[0][j] > '9' {
+			return errors.NewBadRequestError("Invalid tournament ID format (expected: B718-A08-BEL or C529-K00-HT1)")
 		}
-		// First part should have 'C' + digits, others can be alphanumeric
-		if i == 0 {
-			for j := 1; j < len(part); j++ {
-				if part[j] < '0' || part[j] > '9' {
-					return errors.NewBadRequestError("Invalid tournament ID format (expected: C529-K00-HT1)")
-				}
-			}
+	}
+	
+	// Validate other parts have some basic structure
+	for i := 1; i < len(parts); i++ {
+		if len(parts[i]) < 1 {
+			return errors.NewBadRequestError("Invalid tournament ID format (expected: B718-A08-BEL or C529-K00-HT1)")
 		}
 	}
 	
