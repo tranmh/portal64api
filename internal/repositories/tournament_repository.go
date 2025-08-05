@@ -513,3 +513,13 @@ func (r *TournamentRepository) determinePlayerState(personID uint, membershipID 
 	}
 	return 2 // ok
 }
+
+// GetTournamentCodeByID gets tournament code by its ID
+func (r *TournamentRepository) GetTournamentCodeByID(tournamentID uint) (string, error) {
+	var tournament models.Tournament
+	err := r.dbs.Portal64BDW.Where("id = ?", tournamentID).First(&tournament).Error
+	if err != nil {
+		return "", err
+	}
+	return tournament.TCode, nil
+}

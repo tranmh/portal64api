@@ -425,7 +425,7 @@ class PlayerManager {
                     <td>${Utils.sanitizeHTML(entry.games || 'N/A')}</td>
                     <td>${Utils.sanitizeHTML(entry.points || 'N/A')}</td>
                     <td>${Utils.sanitizeHTML(entry.achievement || 'N/A')}</td>
-                    <td>${Utils.sanitizeHTML(entry.id_master || 'N/A')}</td>
+                    <td><code>${Utils.sanitizeHTML(entry.tournament_id || 'N/A')}</code></td>
                 </tr>
             `;
         });

@@ -27,7 +27,7 @@ func SetupRoutes(dbs *database.Databases, cacheService cache.CacheService) *gin.
 	addressRepo := repositories.NewAddressRepository(dbs)
 
 	// Create services
-	playerService := services.NewPlayerService(playerRepo, clubRepo, cacheService)
+	playerService := services.NewPlayerService(playerRepo, clubRepo, tournamentRepo, cacheService)
 	clubService := services.NewClubService(clubRepo, cacheService)
 	clubService.SetPlayerRepository(playerRepo) // Set player repo for club profile functionality
 	tournamentService := services.NewTournamentService(tournamentRepo, cacheService)

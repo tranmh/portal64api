@@ -184,6 +184,23 @@ type PlayerResponse struct {
 	Status     string    `json:"status"`
 }
 
+// RatingHistoryResponse represents a rating history entry in API responses
+type RatingHistoryResponse struct {
+	ID           uint    `json:"id"`
+	TournamentID string  `json:"tournament_id"`   // Format: C531-634-S25 (tournament code)
+	ECoefficient int     `json:"e_coefficient"`
+	We           float64 `json:"we"`
+	Achievement  int     `json:"achievement"`
+	Level        int     `json:"level"`
+	Games        int     `json:"games"`
+	UnratedGames int     `json:"unrated_games"`
+	Points       float64 `json:"points"`
+	DWZOld       int     `json:"dwz_old"`
+	DWZOldIndex  int     `json:"dwz_old_index"`
+	DWZNew       int     `json:"dwz_new"`
+	DWZNewIndex  int     `json:"dwz_new_index"`
+}
+
 // ClubResponse represents a club in API responses
 type ClubResponse struct {
 	ID               string    `json:"id"`               // Format: C0101

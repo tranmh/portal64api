@@ -20,3 +20,8 @@ type ClubRepositoryInterface interface {
 	GetClubAverageDWZ(organizationID uint) (float64, error)
 	GetAllClubs() ([]models.Organisation, error)
 }
+
+// TournamentRepositoryInterface defines the interface for tournament repository operations
+type TournamentRepositoryInterface interface {
+	GetTournamentCodeByID(tournamentID uint) (string, error)
+}

@@ -123,7 +123,7 @@ func (h *PlayerHandler) SearchPlayers(c *gin.Context) {
 // @Produce json,text/csv
 // @Param id path string true "Player ID (format: C0101-1014)"
 // @Param format query string false "Response format (json or csv)" Enums(json,csv)
-// @Success 200 {object} models.Response{data=[]models.Evaluation}
+// @Success 200 {object} models.Response{data=[]models.RatingHistoryResponse}
 // @Failure 400 {object} models.Response
 // @Failure 404 {object} models.Response
 // @Router /api/v1/players/{id}/rating-history [get]

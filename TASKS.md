@@ -17,6 +17,7 @@ Bugs:
 13. E2E test localization - Updated tests to expect German error messages // DONE
 
 14. Due to DSGVO / GDPR compliance, it it not allowed to publish birthday of the players, but only birthyear. Can you check for all routes whether other DSGVO / GDPR compliance violence exists and remove it? // DONE
+15. Querying http://localhost:8080/api/v1/players/C0327-297/rating-history you get a list of tournaments with ID. The id is shown as integer, but the expectation is this format C531-634-S25. Can you fix and also fix the /demo as well? // DONE
 
 Missing Features:
 
@@ -27,6 +28,7 @@ Missing Features:
 5. Implement routes and also add to /demo which show somethings like this: https://schach.in/sc-muehlacker-1923/ for a certain club. // DONE
 6. For every regions you have officials / functionaries and their addresses like this https://www.svw.info/adressen/praesidium for region C. Implement the possibility to access those addresses. See tables adr, adresse and adressen. // DONE
 7. Review all routes and design Caching with Redis. Write the high level design to docs/RedisCaching.md // DONE
+8. For player details we want to have more information: DWZ (current) and DWZ 12 months ago. How many rates games were played. Ranking in Bezirk and Land (C for region Württemberg). NOT Implemented yet! Performance problems, if not solving properly.
 
 **FIXED: Tournament Service Caching Bug** // DONE
 - **Issue**: Tournament service was not using Redis cache despite having cache infrastructure

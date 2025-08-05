@@ -26,19 +26,21 @@ type clubPlayersResult struct {
 
 // PlayerService handles player business logic
 type PlayerService struct {
-	playerRepo   interfaces.PlayerRepositoryInterface
-	clubRepo     interfaces.ClubRepositoryInterface
-	cacheService cache.CacheService
-	keyGen       *cache.KeyGenerator
+	playerRepo     interfaces.PlayerRepositoryInterface
+	clubRepo       interfaces.ClubRepositoryInterface
+	tournamentRepo interfaces.TournamentRepositoryInterface
+	cacheService   cache.CacheService
+	keyGen         *cache.KeyGenerator
 }
 
 // NewPlayerService creates a new player service
-func NewPlayerService(playerRepo interfaces.PlayerRepositoryInterface, clubRepo interfaces.ClubRepositoryInterface, cacheService cache.CacheService) *PlayerService {
+func NewPlayerService(playerRepo interfaces.PlayerRepositoryInterface, clubRepo interfaces.ClubRepositoryInterface, tournamentRepo interfaces.TournamentRepositoryInterface, cacheService cache.CacheService) *PlayerService {
 	return &PlayerService{
-		playerRepo:   playerRepo,
-		clubRepo:     clubRepo,
-		cacheService: cacheService,
-		keyGen:       cache.NewKeyGenerator(),
+		playerRepo:     playerRepo,
+		clubRepo:       clubRepo,
+		tournamentRepo: tournamentRepo,
+		cacheService:   cacheService,
+		keyGen:         cache.NewKeyGenerator(),
 	}
 }
 
@@ -301,12 +303,12 @@ func (s *PlayerService) executeClubPlayersSearch(clubID string, req models.Searc
 }
 
 // GetPlayerRatingHistory gets rating history for a player
-func (s *PlayerService) GetPlayerRatingHistory(playerID string) ([]models.Evaluation, error) {
+func (s *PlayerService) GetPlayerRatingHistory(playerID string) ([]models.RatingHistoryResponse, error) {
 	ctx := context.Background()
 	cacheKey := s.keyGen.PlayerRatingHistoryKey(playerID)
 	
 	// Try cache first with background refresh
-	var cachedHistory []models.Evaluation
+	var cachedHistory []models.RatingHistoryResponse
 	err := s.cacheService.GetWithRefresh(ctx, cacheKey, &cachedHistory,
 		func() (interface{}, error) {
 			return s.loadPlayerRatingHistoryFromDB(playerID)
@@ -321,7 +323,7 @@ func (s *PlayerService) GetPlayerRatingHistory(playerID string) ([]models.Evalua
 }
 
 // loadPlayerRatingHistoryFromDB loads player rating history from database (used by cache refresh)
-func (s *PlayerService) loadPlayerRatingHistoryFromDB(playerID string) ([]models.Evaluation, error) {
+func (s *PlayerService) loadPlayerRatingHistoryFromDB(playerID string) ([]models.RatingHistoryResponse, error) {
 	// Parse player ID to get VKZ and spielernummer
 	vkz, spielernummer, err := utils.ParsePlayerID(playerID)
 	if err != nil {
@@ -339,10 +341,51 @@ func (s *PlayerService) loadPlayerRatingHistoryFromDB(playerID string) ([]models
 		return nil, errors.NewInternalServerError("Failed to get rating history")
 	}
 
-	return evaluations, nil
+	// Convert evaluations to response format with tournament codes
+	responses := make([]models.RatingHistoryResponse, len(evaluations))
+	for i, eval := range evaluations {
+		// Get tournament code from tournament ID
+		var tournamentCode string
+		if eval.IDMaster == 0 {
+			// No tournament ID available
+			tournamentCode = "N/A"
+		} else {
+			// Try to get the actual tournament code
+			code, err := s.tournamentRepo.GetTournamentCodeByID(eval.IDMaster)
+			if err != nil || code == "" {
+				// If we can't find the tournament code or it's empty, use the ID as string
+				tournamentCode = fmt.Sprintf("T%d", eval.IDMaster)
+			} else {
+				tournamentCode = code
+			}
+		}
+
+		responses[i] = models.RatingHistoryResponse{
+			ID:           eval.ID,
+			TournamentID: tournamentCode,
+			ECoefficient: eval.ECoefficient,
+			We:           eval.We,
+			Achievement:  eval.Achievement,
+			Level:        eval.Level,
+			Games:        eval.Games,
+			UnratedGames: eval.UnratedGames,
+			Points:       eval.Points,
+			DWZOld:       eval.DWZOld,
+			DWZOldIndex:  eval.DWZOldIndex,
+			DWZNew:       eval.DWZNew,
+			DWZNewIndex:  eval.DWZNewIndex,
+		}
+	}
+
+	return responses, nil
 }
 
 // Helper methods
+
+// getTournamentCodeByID gets tournament code by tournament ID
+func (s *PlayerService) getTournamentCodeByID(tournamentID uint) (string, error) {
+	return s.tournamentRepo.GetTournamentCodeByID(tournamentID)
+}
 
 // getPlayerCurrentClub gets the current club for a player
 func (s *PlayerService) getPlayerCurrentClub(personID uint) (*models.Organisation, error) {
