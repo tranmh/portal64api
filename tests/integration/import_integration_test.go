@@ -46,8 +46,9 @@ func TestImportWorkflow_Integration(t *testing.T) {
 			Timeout:      30 * time.Second,
 		},
 		ZIP: config.ZIPConfig{
-			Password:       "testzip123",
-			ExtractTimeout: 30 * time.Second,
+			PasswordMVDSB:     "testzip123",
+			PasswordPortal64:  "testzip123",
+			ExtractTimeout:    30 * time.Second,
 		},
 		Database: config.ImportDBConfig{
 			ImportTimeout: 60 * time.Second,
@@ -306,8 +307,9 @@ func TestImportAPI_Integration(t *testing.T) {
 			Timeout:      30 * time.Second,
 		},
 		ZIP: config.ZIPConfig{
-			Password:       "testpass",
-			ExtractTimeout: 30 * time.Second,
+			PasswordMVDSB:     "testpass",
+			PasswordPortal64:  "testpass",
+			ExtractTimeout:    30 * time.Second,
 		},
 		Database: config.ImportDBConfig{
 			ImportTimeout: 60 * time.Second,
@@ -499,8 +501,9 @@ func TestImportConcurrency_Integration(t *testing.T) {
 			Timeout:      10 * time.Second,
 		},
 		ZIP: config.ZIPConfig{
-			Password:       "testpass",
-			ExtractTimeout: 10 * time.Second,
+			PasswordMVDSB:     "testpass",
+			PasswordPortal64:  "testpass",
+			ExtractTimeout:    10 * time.Second,
 		},
 		Database: config.ImportDBConfig{
 			ImportTimeout: 30 * time.Second,

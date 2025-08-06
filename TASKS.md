@@ -64,6 +64,18 @@ Missing Features:
 8. For player details we want to have more information: DWZ (current) and DWZ 12 months ago. How many rates games were played. Ranking in Bezirk and Land (C for region Württemberg). NOT Implemented yet! Performance problems, if not solving properly.
 9. Create a feature, which copy 2 zip files per scp from portal.svw.info to local disk. The zip files are password protected, so decompress them. Afterward use same configuration for MySQL DB as the "main app" and import the content and replace it with original DB mvdsb and portal64_bdw. Do this once a day. Integrate this very loosly to the main app. Create an asyncrhone route for reporting the proceeding of the current import and when the last import was done. Provide also a route for asyncrhone start an import instantly. After the import is done, reset all TTL of redis caches, since we have completely new data. // DONE
 
+**FIXED: Dual ZIP Password Configuration** // DONE
+- **Issue**: Import system used single password (IMPORT_ZIP_PASSWORD) for both ZIP files, but mvdsb and portal64_bdw ZIP files require different passwords
+- **Root Cause**: ZIPConfig had single password field, ZIP extractor used same password for both file types
+- **Solution**: Updated system to support separate passwords for each ZIP file type:
+  - Added `PasswordMVDSB` and `PasswordPortal64` fields to `ZIPConfig` struct
+  - Updated environment variables to use `IMPORT_ZIP_PASSWORD_MVDSB` and `IMPORT_ZIP_PASSWORD_PORTAL64_BDW`
+  - Modified `ZIPExtractor.getPasswordForZipFile()` to determine correct password based on filename
+  - Updated `ValidateZIPFile()` and `TestPassword()` methods to use appropriate passwords
+  - Fixed all test configurations to use new dual password structure
+  - Updated documentation in `SCPImportFeature.md` to reflect new password configuration
+- **Verification**: All unit tests passing, system correctly identifies and uses appropriate password for each ZIP file type
+
 **FIXED: Tournament Service Caching Bug** // DONE
 - **Issue**: Tournament service was not using Redis cache despite having cache infrastructure
 - **Root Cause**: Tournament service methods bypassed cache and went directly to database

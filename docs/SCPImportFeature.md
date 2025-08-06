@@ -253,7 +253,8 @@ import:
   
   # ZIP Configuration
   zip:
-    password: "${IMPORT_ZIP_PASSWORD}"    # Single password for both files
+    password_mvdsb: "${IMPORT_ZIP_PASSWORD_MVDSB}"           # Password for MVDSB ZIP files
+    password_portal64: "${IMPORT_ZIP_PASSWORD_PORTAL64_BDW}" # Password for Portal64 ZIP files
     extract_timeout: "60s"
   
   # Local Storage
@@ -294,7 +295,8 @@ import:
 # Import Configuration
 IMPORT_ENABLED=true
 IMPORT_SCP_PASSWORD=secret_password
-IMPORT_ZIP_PASSWORD=zip_password
+IMPORT_ZIP_PASSWORD_MVDSB=mvdsb_zip_password
+IMPORT_ZIP_PASSWORD_PORTAL64_BDW=portal64_zip_password
 IMPORT_SCHEDULE="0 2 * * *"
 
 # Import Storage

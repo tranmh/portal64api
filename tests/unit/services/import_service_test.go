@@ -99,8 +99,9 @@ func TestImportService_NewImportService(t *testing.T) {
 					Timeout:      300 * time.Second,
 				},
 				ZIP: config.ZIPConfig{
-					Password:       "zippass",
-					ExtractTimeout: 60 * time.Second,
+					PasswordMVDSB:     "zippass",
+					PasswordPortal64:  "zippass",
+					ExtractTimeout:    60 * time.Second,
 				},
 				Database: config.ImportDBConfig{
 					ImportTimeout: 600 * time.Second,
@@ -183,8 +184,9 @@ func TestImportService_NewImportService(t *testing.T) {
 					Timeout:      300 * time.Second,
 				},
 				ZIP: config.ZIPConfig{
-					Password:       "zippass",
-					ExtractTimeout: 60 * time.Second,
+					PasswordMVDSB:     "zippass",
+					PasswordPortal64:  "zippass",
+					ExtractTimeout:    60 * time.Second,
 				},
 				Database: config.ImportDBConfig{
 					ImportTimeout: 600 * time.Second,
@@ -292,8 +294,9 @@ func TestImportService_Start_Stop(t *testing.T) {
 					Timeout:      300 * time.Second,
 				},
 				ZIP: config.ZIPConfig{
-					Password:       "zippass",
-					ExtractTimeout: 60 * time.Second,
+					PasswordMVDSB:     "zippass",
+					PasswordPortal64:  "zippass",
+					ExtractTimeout:    60 * time.Second,
 				},
 				Database: config.ImportDBConfig{
 					ImportTimeout: 600 * time.Second,
@@ -412,8 +415,9 @@ func TestImportService_TriggerManualImport(t *testing.T) {
 					Timeout:      300 * time.Second,
 				},
 				ZIP: config.ZIPConfig{
-					Password:       "zippass",
-					ExtractTimeout: 60 * time.Second,
+					PasswordMVDSB:     "zippass",
+					PasswordPortal64:  "zippass",
+					ExtractTimeout:    60 * time.Second,
 				},
 				Database: config.ImportDBConfig{
 					ImportTimeout: 600 * time.Second,
@@ -501,8 +505,9 @@ func TestImportService_GetStatus(t *testing.T) {
 			Timeout:      300 * time.Second,
 		},
 		ZIP: config.ZIPConfig{
-			Password:       "zippass",
-			ExtractTimeout: 60 * time.Second,
+			PasswordMVDSB:     "zippass",
+			PasswordPortal64:  "zippass",
+			ExtractTimeout:    60 * time.Second,
 		},
 		Database: config.ImportDBConfig{
 			ImportTimeout: 600 * time.Second,
@@ -578,8 +583,9 @@ func TestImportService_GetLogs(t *testing.T) {
 			Timeout:      300 * time.Second,
 		},
 		ZIP: config.ZIPConfig{
-			Password:       "zippass",
-			ExtractTimeout: 60 * time.Second,
+			PasswordMVDSB:     "zippass",
+			PasswordPortal64:  "zippass",
+			ExtractTimeout:    60 * time.Second,
 		},
 		Database: config.ImportDBConfig{
 			ImportTimeout: 600 * time.Second,
@@ -693,8 +699,9 @@ func TestImportService_ThreadSafety(t *testing.T) {
 			Timeout:      300 * time.Second,
 		},
 		ZIP: config.ZIPConfig{
-			Password:       "zippass",
-			ExtractTimeout: 60 * time.Second,
+			PasswordMVDSB:     "zippass",
+			PasswordPortal64:  "zippass",
+			ExtractTimeout:    60 * time.Second,
 		},
 		Database: config.ImportDBConfig{
 			ImportTimeout: 600 * time.Second,
@@ -784,8 +791,9 @@ func TestImportService_CacheIntegration(t *testing.T) {
 			Timeout:      300 * time.Second,
 		},
 		ZIP: config.ZIPConfig{
-			Password:       "zippass",
-			ExtractTimeout: 60 * time.Second,
+			PasswordMVDSB:     "zippass",
+			PasswordPortal64:  "zippass",
+			ExtractTimeout:    60 * time.Second,
 		},
 		Database: config.ImportDBConfig{
 			ImportTimeout: 600 * time.Second,
@@ -872,9 +880,10 @@ func TestImportService_ConfigurationValidation(t *testing.T) {
 			expectValid: false,
 		},
 		{
-			name: "empty ZIP password",
+			name: "empty ZIP passwords",
 			modifyConfig: func(c *config.ImportConfig) {
-				c.ZIP.Password = ""
+				c.ZIP.PasswordMVDSB = ""
+				c.ZIP.PasswordPortal64 = ""
 			},
 			expectValid: false,
 		},
@@ -910,8 +919,9 @@ func TestImportService_ConfigurationValidation(t *testing.T) {
 					Timeout:      300 * time.Second,
 				},
 				ZIP: config.ZIPConfig{
-					Password:       "zippass",
-					ExtractTimeout: 60 * time.Second,
+					PasswordMVDSB:     "zippass",
+					PasswordPortal64:  "zippass",
+					ExtractTimeout:    60 * time.Second,
 				},
 				Database: config.ImportDBConfig{
 					ImportTimeout: 600 * time.Second,
@@ -943,8 +953,8 @@ func TestImportService_ConfigurationValidation(t *testing.T) {
 			}
 
 			// ZIP validation
-			if importConfig.ZIP.Password == "" {
-				validationErrors = append(validationErrors, "ZIP password cannot be empty")
+			if importConfig.ZIP.PasswordMVDSB == "" || importConfig.ZIP.PasswordPortal64 == "" {
+				validationErrors = append(validationErrors, "ZIP passwords cannot be empty")
 			}
 
 			// Database validation

@@ -82,7 +82,8 @@ services:
       IMPORT_SCP_PORT: 22
       IMPORT_SCP_USERNAME: testuser
       IMPORT_SCP_PASSWORD: testpass123
-      IMPORT_ZIP_PASSWORD: testzip123
+      IMPORT_ZIP_PASSWORD_MVDSB: testzip123
+      IMPORT_ZIP_PASSWORD_PORTAL64_BDW: testzip456
       
       # Logging
       LOG_LEVEL: DEBUG

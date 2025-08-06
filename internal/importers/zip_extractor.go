@@ -27,6 +27,22 @@ func NewZIPExtractor(config *config.ZIPConfig, logger *log.Logger) *ZIPExtractor
 	}
 }
 
+// getPasswordForZipFile determines which password to use based on the zip filename
+func (ze *ZIPExtractor) getPasswordForZipFile(zipPath string) string {
+	filename := strings.ToLower(filepath.Base(zipPath))
+	
+	if strings.Contains(filename, "mvdsb") {
+		return ze.config.PasswordMVDSB
+	}
+	if strings.Contains(filename, "portal64") {
+		return ze.config.PasswordPortal64
+	}
+	
+	// Default to MVDSB password for backward compatibility
+	ze.logger.Printf("Warning: Could not determine password for file %s, using MVDSB password", filename)
+	return ze.config.PasswordMVDSB
+}
+
 // ExtractFile extracts a single ZIP file to the specified directory
 func (ze *ZIPExtractor) ExtractFile(zipPath, extractDir string) ([]string, error) {
 	ze.logger.Printf("Extracting ZIP file: %s -> %s", zipPath, extractDir)
@@ -49,7 +65,7 @@ func (ze *ZIPExtractor) ExtractFile(zipPath, extractDir string) ([]string, error
 
 	// Extract each file
 	for i, file := range reader.File {
-		extractedFile, err := ze.extractSingleFile(file, extractDir)
+		extractedFile, err := ze.extractSingleFile(file, extractDir, zipPath)
 		if err != nil {
 			return extractedFiles, fmt.Errorf("failed to extract %s: %w", file.Name, err)
 		}
@@ -89,7 +105,7 @@ func (ze *ZIPExtractor) ExtractFiles(zipPaths []string, extractDir string) (map[
 }
 
 // extractSingleFile extracts a single file from the ZIP archive
-func (ze *ZIPExtractor) extractSingleFile(file *zip.File, extractDir string) (string, error) {
+func (ze *ZIPExtractor) extractSingleFile(file *zip.File, extractDir string, zipPath string) (string, error) {
 	// Skip directories
 	if file.FileInfo().IsDir() {
 		return "", nil
@@ -103,7 +119,8 @@ func (ze *ZIPExtractor) extractSingleFile(file *zip.File, extractDir string) (st
 
 	// Set password if file is encrypted
 	if file.IsEncrypted() {
-		file.SetPassword(ze.config.Password)
+		password := ze.getPasswordForZipFile(zipPath)
+		file.SetPassword(password)
 	}
 
 	// Open file in ZIP
@@ -204,7 +221,8 @@ func (ze *ZIPExtractor) ValidateZIPFile(zipPath string) error {
 		}
 	}
 
-	if hasEncryptedFiles && ze.config.Password == "" {
+	password := ze.getPasswordForZipFile(zipPath)
+	if hasEncryptedFiles && password == "" {
 		return fmt.Errorf("ZIP file contains encrypted files but no password provided")
 	}
 
@@ -212,7 +230,7 @@ func (ze *ZIPExtractor) ValidateZIPFile(zipPath string) error {
 	if hasEncryptedFiles {
 		for _, file := range reader.File {
 			if file.IsEncrypted() && !file.FileInfo().IsDir() {
-				file.SetPassword(ze.config.Password)
+				file.SetPassword(password)
 				testReader, err := file.Open()
 				if err != nil {
 					return fmt.Errorf("failed to decrypt file with provided password: %w", err)
@@ -361,10 +379,12 @@ func (ze *ZIPExtractor) TestPassword(zipPath string) error {
 	}
 	defer reader.Close()
 
+	password := ze.getPasswordForZipFile(zipPath)
+
 	// Find first encrypted file
 	for _, file := range reader.File {
 		if file.IsEncrypted() && !file.FileInfo().IsDir() {
-			file.SetPassword(ze.config.Password)
+			file.SetPassword(password)
 			testReader, err := file.Open()
 			if err != nil {
 				return fmt.Errorf("password test failed: %w", err)

@@ -76,8 +76,9 @@ func TestZIPExtractor_ExtractPasswordProtectedZip(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create config
 			cfg := &config.ZIPConfig{
-				Password:       tt.zipPassword,
-				ExtractTimeout: tt.extractTimeout,
+				PasswordMVDSB:     tt.zipPassword,
+				PasswordPortal64:  tt.zipPassword, // Use same password for both in tests
+				ExtractTimeout:    tt.extractTimeout,
 			}
 
 			logger := log.New(os.Stdout, "TEST: ", log.LstdFlags)
@@ -267,33 +268,57 @@ func TestZIPExtractor_Configuration(t *testing.T) {
 		{
 			name: "valid configuration",
 			config: &config.ZIPConfig{
-				Password:       "secure_password123",
-				ExtractTimeout: 60 * time.Second,
+				PasswordMVDSB:     "secure_password123",
+				PasswordPortal64:  "another_password",
+				ExtractTimeout:    60 * time.Second,
 			},
 			expectedValid: true,
 		},
 		{
 			name: "valid configuration with longer timeout",
 			config: &config.ZIPConfig{
-				Password:       "another_password",
-				ExtractTimeout: 300 * time.Second,
+				PasswordMVDSB:     "mvdsb_password",
+				PasswordPortal64:  "portal64_password",
+				ExtractTimeout:    300 * time.Second,
 			},
 			expectedValid: true,
 		},
 		{
-			name: "empty password",
+			name: "empty passwords",
 			config: &config.ZIPConfig{
-				Password:       "",
-				ExtractTimeout: 60 * time.Second,
+				PasswordMVDSB:     "",
+				PasswordPortal64:  "",
+				ExtractTimeout:    60 * time.Second,
 			},
 			expectedValid: false,
-			errorMessage:  "password cannot be empty",
+			errorMessage:  "passwords cannot be empty",
+		},
+		{
+			name: "empty MVDSB password",
+			config: &config.ZIPConfig{
+				PasswordMVDSB:     "",
+				PasswordPortal64:  "portal64_password",
+				ExtractTimeout:    60 * time.Second,
+			},
+			expectedValid: false,
+			errorMessage:  "MVDSB password cannot be empty",
+		},
+		{
+			name: "empty Portal64 password",
+			config: &config.ZIPConfig{
+				PasswordMVDSB:     "mvdsb_password",
+				PasswordPortal64:  "",
+				ExtractTimeout:    60 * time.Second,
+			},
+			expectedValid: false,
+			errorMessage:  "Portal64 password cannot be empty",
 		},
 		{
 			name: "empty timeout",
 			config: &config.ZIPConfig{
-				Password:       "password123",
-				ExtractTimeout: 0,
+				PasswordMVDSB:     "password123",
+				PasswordPortal64:  "portal64_password",
+				ExtractTimeout:    0,
 			},
 			expectedValid: false,
 			errorMessage:  "extract timeout cannot be empty",
@@ -301,8 +326,9 @@ func TestZIPExtractor_Configuration(t *testing.T) {
 		{
 			name: "invalid timeout format",
 			config: &config.ZIPConfig{
-				Password:       "password123",
-				ExtractTimeout: -1 * time.Second,
+				PasswordMVDSB:     "password123",
+				PasswordPortal64:  "portal64_password",
+				ExtractTimeout:    -1 * time.Second,
 			},
 			expectedValid: false,
 			errorMessage:  "timeout must be positive",
@@ -310,8 +336,9 @@ func TestZIPExtractor_Configuration(t *testing.T) {
 		{
 			name: "negative timeout",
 			config: &config.ZIPConfig{
-				Password:       "password123",
-				ExtractTimeout: -10 * time.Second,
+				PasswordMVDSB:     "password123",
+				PasswordPortal64:  "portal64_password",
+				ExtractTimeout:    -10 * time.Second,
 			},
 			expectedValid: false,
 			errorMessage:  "timeout must be positive",
@@ -325,8 +352,12 @@ func TestZIPExtractor_Configuration(t *testing.T) {
 			// Test configuration validation logic
 			var configErrors []string
 
-			if tt.config.Password == "" {
-				configErrors = append(configErrors, "password cannot be empty")
+			if tt.config.PasswordMVDSB == "" && tt.config.PasswordPortal64 == "" {
+				configErrors = append(configErrors, "passwords cannot be empty")
+			} else if tt.config.PasswordMVDSB == "" {
+				configErrors = append(configErrors, "MVDSB password cannot be empty")
+			} else if tt.config.PasswordPortal64 == "" {
+				configErrors = append(configErrors, "Portal64 password cannot be empty")
 			}
 			if tt.config.ExtractTimeout == 0 {
 				configErrors = append(configErrors, "extract timeout cannot be empty")

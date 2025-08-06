@@ -22,8 +22,9 @@ func GetTestImportConfig(tempDir string) *config.ImportConfig {
 			Timeout:      "30s",
 		},
 		ZIP: config.ZIPConfig{
-			Password:       "testzip123",
-			ExtractTimeout: "30s",
+			PasswordMVDSB:     "testzip123",
+			PasswordPortal64:  "testzip123",
+			ExtractTimeout:    "30s",
 		},
 		Database: config.DatabaseImportConfig{
 			ImportTimeout: "600s",

@@ -102,8 +102,9 @@ type SCPConfig struct {
 
 // ZIPConfig holds ZIP extraction configuration
 type ZIPConfig struct {
-	Password       string        `yaml:"password"`
-	ExtractTimeout time.Duration `yaml:"extract_timeout"`
+	PasswordMVDSB     string        `yaml:"password_mvdsb"`
+	PasswordPortal64  string        `yaml:"password_portal64"`
+	ExtractTimeout    time.Duration `yaml:"extract_timeout"`
 }
 
 // StorageConfig holds local storage configuration
@@ -299,8 +300,9 @@ func loadConfig() *Config {
 				Timeout:      getDurationEnv("IMPORT_SCP_TIMEOUT", 300*time.Second),
 			},
 			ZIP: ZIPConfig{
-				Password:       getStringEnv("IMPORT_ZIP_PASSWORD", ""),
-				ExtractTimeout: getDurationEnv("IMPORT_ZIP_EXTRACT_TIMEOUT", 60*time.Second),
+				PasswordMVDSB:    getStringEnv("IMPORT_ZIP_PASSWORD_MVDSB", ""),
+				PasswordPortal64: getStringEnv("IMPORT_ZIP_PASSWORD_PORTAL64_BDW", ""),
+				ExtractTimeout:   getDurationEnv("IMPORT_ZIP_EXTRACT_TIMEOUT", 60*time.Second),
 			},
 			Storage: StorageConfig{
 				TempDir:          getStringEnv("IMPORT_TEMP_DIR", "./data/import/temp"),

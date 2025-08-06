@@ -84,8 +84,9 @@ func BenchmarkZIPExtractor_LargeFiles(b *testing.B) {
 
 func benchmarkZIPExtraction(b *testing.B, size string, fileSize int) {
 	cfg := &config.ZIPConfig{
-		Password:       "testpass123",
-		ExtractTimeout: "60s",
+		PasswordMVDSB:     "testpass123",
+		PasswordPortal64:  "testpass123",
+		ExtractTimeout:    "60s",
 	}
 
 	logger := log.New(os.Stdout, "BENCH: ", log.LstdFlags)
@@ -422,8 +423,9 @@ func getTestImportConfig(tempDir string) *config.ImportConfig {
 			Timeout:      "30s",
 		},
 		ZIP: config.ZIPConfig{
-			Password:       "testpass",
-			ExtractTimeout: "30s",
+			PasswordMVDSB:     "testpass",
+			PasswordPortal64:  "testpass",
+			ExtractTimeout:    "30s",
 		},
 		Database: config.DatabaseImportConfig{
 			ImportTimeout: "60s",
