@@ -20,8 +20,8 @@ func TestSwaggerEndpoints(t *testing.T) {
 	// Create empty database struct - Swagger doesn't use it
 	dbs := &database.Databases{}
 
-	// Setup routes
-	router := api.SetupRoutes(dbs)
+	// Setup routes with nil services - Swagger endpoints don't need them
+	router := api.SetupRoutes(dbs, nil, nil)
 
 	tests := []struct {
 		name           string

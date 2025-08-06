@@ -179,6 +179,37 @@ func (mcs *MockCacheService) Exists(ctx context.Context, key string) (bool, erro
 	return true, nil
 }
 
+// FlushAll clears all data from the mock cache
+func (mcs *MockCacheService) FlushAll(ctx context.Context) error {
+	start := time.Now()
+	defer func() {
+		mcs.metrics.RecordResponseTime(time.Since(start))
+	}()
+	
+	mcs.metrics.RecordOperation()
+	
+	if mcs.simulateLatency {
+		time.Sleep(mcs.latency)
+	}
+	
+	if mcs.simulateErrors && mcs.shouldSimulateError() {
+		mcs.metrics.RecordError()
+		return &CacheError{Operation: "flush_all", Err: fmt.Errorf("simulated error")}
+	}
+	
+	if !mcs.enabled {
+		return ErrCacheNotEnabled
+	}
+	
+	mcs.mu.Lock()
+	defer mcs.mu.Unlock()
+	
+	// Clear all data
+	mcs.data = make(map[string]cacheItem)
+	
+	return nil
+}
+
 // GetWithRefresh gets a value and optionally calls refresh function
 func (mcs *MockCacheService) GetWithRefresh(ctx context.Context, key string, dest interface{}, 
 	refreshFunc func() (interface{}, error), ttl time.Duration) error {

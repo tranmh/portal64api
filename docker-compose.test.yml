@@ -1,0 +1,214 @@
+# Docker Compose file for Portal64API Import Feature Testing
+version: '3.8'
+
+services:
+  # MySQL database for testing
+  mysql-test:
+    image: mysql:8.0
+    container_name: portal64api-mysql-test
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: testpass
+      MYSQL_DATABASE: portal64api_test
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_test_data:/var/lib/mysql
+      - ./scripts/init-test-db.sql:/docker-entrypoint-initdb.d/init-test-db.sql
+    command: --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+    networks:
+      - test-network
+
+  # Redis for caching tests
+  redis-test:
+    image: redis:7-alpine
+    container_name: portal64api-redis-test
+    restart: unless-stopped
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_test_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      timeout: 3s
+      retries: 5
+    networks:
+      - test-network
+
+  # Mock SCP server for testing
+  mock-scp-server:
+    image: atmoz/sftp
+    container_name: portal64api-mock-scp
+    restart: unless-stopped
+    ports:
+      - "2222:22"
+    volumes:
+      - ./tests/testdata/scp:/home/testuser/data
+      - ./tests/testdata/ssh_keys:/home/testuser/.ssh/keys
+    command: testuser:testpass123:1001
+    networks:
+      - test-network
+
+  # Portal64API application for E2E testing
+  portal64api-test:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: portal64api-test-app
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+    environment:
+      # Database configuration
+      DB_HOST: mysql-test
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASSWORD: testpass
+      DB_NAME: portal64api_test
+      
+      # Redis configuration
+      REDIS_HOST: redis-test
+      REDIS_PORT: 6379
+      CACHE_ENABLED: true
+      
+      # Import configuration
+      IMPORT_ENABLED: true
+      IMPORT_SCP_HOST: mock-scp-server
+      IMPORT_SCP_PORT: 22
+      IMPORT_SCP_USERNAME: testuser
+      IMPORT_SCP_PASSWORD: testpass123
+      IMPORT_ZIP_PASSWORD: testzip123
+      
+      # Logging
+      LOG_LEVEL: DEBUG
+      
+      # Test environment
+      ENV: test
+    depends_on:
+      mysql-test:
+        condition: service_healthy
+      redis-test:
+        condition: service_healthy
+      mock-scp-server:
+        condition: service_started
+    volumes:
+      - ./data/import/temp:/app/data/import/temp
+      - ./logs:/app/logs
+    networks:
+      - test-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      timeout: 10s
+      retries: 5
+
+  # Test runner service
+  test-runner:
+    build:
+      context: .
+      dockerfile: Dockerfile.test-runner
+    container_name: portal64api-test-runner
+    volumes:
+      - .:/app
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      # Test configuration
+      API_BASE_URL: http://portal64api-test:8080
+      MYSQL_HOST: mysql-test
+      MYSQL_PORT: 3306
+      MYSQL_USER: root
+      MYSQL_PASSWORD: testpass
+      REDIS_HOST: redis-test
+      REDIS_PORT: 6379
+      
+      # Test control
+      RUN_E2E_TESTS: true
+      RUN_INTEGRATION_TESTS: true
+      
+      # CI environment
+      CI: false
+    depends_on:
+      mysql-test:
+        condition: service_healthy
+      redis-test:
+        condition: service_healthy
+      portal64api-test:
+        condition: service_healthy
+    networks:
+      - test-network
+    command: ["tail", "-f", "/dev/null"]  # Keep container running
+
+  # Database migration service
+  db-migrate:
+    image: migrate/migrate
+    container_name: portal64api-db-migrate
+    volumes:
+      - ./migrations:/migrations
+    command: [
+      "-path", "/migrations",
+      "-database", "mysql://root:testpass@tcp(mysql-test:3306)/portal64api_test",
+      "up"
+    ]
+    depends_on:
+      mysql-test:
+        condition: service_healthy
+    networks:
+      - test-network
+
+volumes:
+  mysql_test_data:
+    driver: local
+  redis_test_data:
+    driver: local
+
+networks:
+  test-network:
+    driver: bridge
+
+# Additional services for specific testing scenarios
+---
+version: '3.8'
+
+# Separate compose file for performance testing
+services:
+  # Load testing with Artillery.io
+  load-tester:
+    image: artilleryio/artillery:latest
+    container_name: portal64api-load-tester
+    volumes:
+      - ./tests/performance:/scripts
+    command: ["tail", "-f", "/dev/null"]
+    networks:
+      - test-network
+
+  # Monitoring during tests
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: portal64api-prometheus-test
+    ports:
+      - "9091:9090"
+    volumes:
+      - ./tests/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+    networks:
+      - test-network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: portal64api-grafana-test
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=testpass
+    volumes:
+      - ./tests/monitoring/grafana:/var/lib/grafana
+    networks:
+      - test-network

@@ -13,6 +13,7 @@ type CacheService interface {
 	Set(ctx context.Context, key string, value interface{}, ttl time.Duration) error
 	Delete(ctx context.Context, key string) error
 	Exists(ctx context.Context, key string) (bool, error)
+	FlushAll(ctx context.Context) error
 	
 	// Background refresh operations
 	GetWithRefresh(ctx context.Context, key string, dest interface{}, 

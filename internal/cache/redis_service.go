@@ -178,6 +178,22 @@ func (rs *RedisService) Exists(ctx context.Context, key string) (bool, error) {
 	return count > 0, nil
 }
 
+// FlushAll clears all keys from the cache
+func (rs *RedisService) FlushAll(ctx context.Context) error {
+	rs.metrics.RecordOperation()
+	
+	if !rs.enabled {
+		return ErrCacheNotEnabled
+	}
+	
+	if err := rs.client.FlushDB(ctx).Err(); err != nil {
+		rs.metrics.RecordError()
+		return &CacheError{Operation: "flush_all", Err: err}
+	}
+	
+	return nil
+}
+
 // GetWithRefresh gets a value and schedules background refresh if needed
 func (rs *RedisService) GetWithRefresh(ctx context.Context, key string, dest interface{}, 
 	refreshFunc func() (interface{}, error), ttl time.Duration) error {

@@ -7,9 +7,11 @@ import (
 	"testing"
 
 	"portal64api/internal/api"
+	"portal64api/internal/cache"
 	"portal64api/internal/config"
 	"portal64api/internal/database"
 	"portal64api/internal/models"
+	"portal64api/internal/services"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -63,7 +65,13 @@ func (suite *IntegrationTestSuite) SetupSuite() {
 	gin.SetMode(gin.TestMode)
 
 	// Setup routes
-	suite.router = api.SetupRoutes(dbs)
+	// Create mock cache service for integration tests
+	mockCacheService := &cache.MockCacheService{}
+	
+	// Create nil import service for integration tests (not needed for basic API tests)
+	var importService *services.ImportService = nil
+	
+	suite.router = api.SetupRoutes(dbs, mockCacheService, importService)
 }
 
 // TearDownSuite runs once after all tests in the suite

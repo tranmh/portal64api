@@ -17,6 +17,7 @@ type Config struct {
 	Server   ServerConfig   `yaml:"server"`
 	Database DatabaseConfig `yaml:"database"`
 	Cache    CacheConfig    `yaml:"cache"`
+	Import   ImportConfig   `yaml:"import"`
 }
 
 // ServerConfig holds server-specific configuration
@@ -65,6 +66,81 @@ type CacheConfig struct {
 	// Background refresh settings
 	RefreshThreshold float64       `yaml:"refresh_threshold"` 
 	RefreshWorkers   int           `yaml:"refresh_workers"`   
+}
+
+// ImportConfig holds SCP import configuration
+type ImportConfig struct {
+	Enabled   bool             `yaml:"enabled"`
+	Schedule  string           `yaml:"schedule"`   // cron format
+	LoadCheck LoadCheckConfig  `yaml:"load_check"`
+	SCP       SCPConfig        `yaml:"scp"`
+	ZIP       ZIPConfig        `yaml:"zip"`
+	Storage   StorageConfig    `yaml:"storage"`
+	Freshness FreshnessConfig  `yaml:"freshness"`
+	Database  ImportDBConfig   `yaml:"database"`
+	Retry     RetryConfig      `yaml:"retry"`
+}
+
+// LoadCheckConfig holds load-based delay configuration
+type LoadCheckConfig struct {
+	Enabled       bool          `yaml:"enabled"`
+	DelayDuration time.Duration `yaml:"delay_duration"`
+	MaxDelays     int           `yaml:"max_delays"`
+	LoadThreshold int           `yaml:"load_threshold"`
+}
+
+// SCPConfig holds SCP connection configuration
+type SCPConfig struct {
+	Host         string        `yaml:"host"`
+	Port         int           `yaml:"port"`
+	Username     string        `yaml:"username"`
+	Password     string        `yaml:"password"`
+	RemotePath   string        `yaml:"remote_path"`
+	FilePatterns []string      `yaml:"file_patterns"`
+	Timeout      time.Duration `yaml:"timeout"`
+}
+
+// ZIPConfig holds ZIP extraction configuration
+type ZIPConfig struct {
+	Password       string        `yaml:"password"`
+	ExtractTimeout time.Duration `yaml:"extract_timeout"`
+}
+
+// StorageConfig holds local storage configuration
+type StorageConfig struct {
+	TempDir          string `yaml:"temp_dir"`
+	MetadataFile     string `yaml:"metadata_file"`
+	CleanupOnSuccess bool   `yaml:"cleanup_on_success"`
+	KeepFailedFiles  bool   `yaml:"keep_failed_files"`
+}
+
+// FreshnessConfig holds file freshness checking configuration
+type FreshnessConfig struct {
+	Enabled         bool `yaml:"enabled"`
+	CompareTimestamp bool `yaml:"compare_timestamp"`
+	CompareSize     bool `yaml:"compare_size"`
+	CompareChecksum bool `yaml:"compare_checksum"`
+	SkipIfNotNewer  bool `yaml:"skip_if_not_newer"`
+}
+
+// ImportDBConfig holds database import configuration
+type ImportDBConfig struct {
+	ImportTimeout    time.Duration       `yaml:"import_timeout"`
+	TargetDatabases  []TargetDatabase    `yaml:"target_databases"`
+}
+
+// TargetDatabase holds individual target database configuration
+type TargetDatabase struct {
+	Name        string `yaml:"name"`
+	FilePattern string `yaml:"file_pattern"`
+}
+
+// RetryConfig holds retry configuration
+type RetryConfig struct {
+	Enabled     bool          `yaml:"enabled"`
+	MaxAttempts int           `yaml:"max_attempts"`
+	RetryDelay  time.Duration `yaml:"retry_delay"`
+	FailFast    bool          `yaml:"fail_fast"`
 }
 
 // Load loads configuration from environment variables and .env file
@@ -204,6 +280,55 @@ func loadConfig() *Config {
 			RefreshThreshold: getFloat64Env("CACHE_REFRESH_THRESHOLD", 0.8),
 			RefreshWorkers:   getIntEnv("CACHE_REFRESH_WORKERS", 5),
 		},
+		Import: ImportConfig{
+			Enabled:  getBoolEnv("IMPORT_ENABLED", false),
+			Schedule: getStringEnv("IMPORT_SCHEDULE", "0 2 * * *"),
+			LoadCheck: LoadCheckConfig{
+				Enabled:       getBoolEnv("IMPORT_LOAD_CHECK_ENABLED", true),
+				DelayDuration: getDurationEnv("IMPORT_LOAD_CHECK_DELAY", 1*time.Hour),
+				MaxDelays:     getIntEnv("IMPORT_LOAD_CHECK_MAX_DELAYS", 3),
+				LoadThreshold: getIntEnv("IMPORT_LOAD_CHECK_THRESHOLD", 100),
+			},
+			SCP: SCPConfig{
+				Host:         getStringEnv("IMPORT_SCP_HOST", "portal.svw.info"),
+				Port:         getIntEnv("IMPORT_SCP_PORT", 22),
+				Username:     getStringEnv("IMPORT_SCP_USERNAME", "portal64user"),
+				Password:     getStringEnv("IMPORT_SCP_PASSWORD", ""),
+				RemotePath:   getStringEnv("IMPORT_SCP_REMOTE_PATH", "/data/exports/"),
+				FilePatterns: getStringSliceEnv("IMPORT_SCP_FILE_PATTERNS", []string{"mvdsb_*.zip", "portal64_bdw_*.zip"}),
+				Timeout:      getDurationEnv("IMPORT_SCP_TIMEOUT", 300*time.Second),
+			},
+			ZIP: ZIPConfig{
+				Password:       getStringEnv("IMPORT_ZIP_PASSWORD", ""),
+				ExtractTimeout: getDurationEnv("IMPORT_ZIP_EXTRACT_TIMEOUT", 60*time.Second),
+			},
+			Storage: StorageConfig{
+				TempDir:          getStringEnv("IMPORT_TEMP_DIR", "./data/import/temp"),
+				MetadataFile:     getStringEnv("IMPORT_METADATA_FILE", "./data/import/last_import.json"),
+				CleanupOnSuccess: getBoolEnv("IMPORT_CLEANUP_ON_SUCCESS", true),
+				KeepFailedFiles:  getBoolEnv("IMPORT_KEEP_FAILED_FILES", true),
+			},
+			Freshness: FreshnessConfig{
+				Enabled:         getBoolEnv("IMPORT_FRESHNESS_ENABLED", true),
+				CompareTimestamp: getBoolEnv("IMPORT_FRESHNESS_COMPARE_TIMESTAMP", true),
+				CompareSize:     getBoolEnv("IMPORT_FRESHNESS_COMPARE_SIZE", true),
+				CompareChecksum: getBoolEnv("IMPORT_FRESHNESS_COMPARE_CHECKSUM", false),
+				SkipIfNotNewer:  getBoolEnv("IMPORT_FRESHNESS_SKIP_IF_NOT_NEWER", true),
+			},
+			Database: ImportDBConfig{
+				ImportTimeout: getDurationEnv("IMPORT_DATABASE_TIMEOUT", 600*time.Second),
+				TargetDatabases: []TargetDatabase{
+					{Name: "mvdsb", FilePattern: "mvdsb_*"},
+					{Name: "portal64_bdw", FilePattern: "portal64_bdw_*"},
+				},
+			},
+			Retry: RetryConfig{
+				Enabled:     getBoolEnv("IMPORT_RETRY_ENABLED", true),
+				MaxAttempts: getIntEnv("IMPORT_RETRY_MAX_ATTEMPTS", 2),
+				RetryDelay:  getDurationEnv("IMPORT_RETRY_DELAY", 5*time.Minute),
+				FailFast:    getBoolEnv("IMPORT_RETRY_FAIL_FAST", true),
+			},
+		},
 	}
 }
 
@@ -252,6 +377,13 @@ func getFloat64Env(key string, defaultValue float64) float64 {
 		if floatValue, err := strconv.ParseFloat(value, 64); err == nil {
 			return floatValue
 		}
+	}
+	return defaultValue
+}
+
+func getStringSliceEnv(key string, defaultValue []string) []string {
+	if value := os.Getenv(key); value != "" {
+		return strings.Split(value, ",")
 	}
 	return defaultValue
 }

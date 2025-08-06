@@ -132,7 +132,7 @@ func (s *PlayerService) SearchPlayers(req models.SearchRequest, showActive bool)
 		return nil, nil, err
 	}
 	
-	searchResult := result.(searchResult)
+	searchResult := result.(*searchResult)
 	return searchResult.Responses, searchResult.Meta, nil
 }
 
@@ -227,7 +227,7 @@ func (s *PlayerService) GetPlayersByClub(clubID string, req models.SearchRequest
 		return nil, nil, err
 	}
 	
-	clubResult := result.(clubPlayersResult)
+	clubResult := result.(*clubPlayersResult)
 	return clubResult.Responses, clubResult.Meta, nil
 }
 

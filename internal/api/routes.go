@@ -16,7 +16,7 @@ import (
 )
 
 // SetupRoutes configures all API routes
-func SetupRoutes(dbs *database.Databases, cacheService cache.CacheService) *gin.Engine {
+func SetupRoutes(dbs *database.Databases, cacheService cache.CacheService, importService *services.ImportService) *gin.Engine {
 	// Ensure swagger docs are loaded
 	_ = docs.SwaggerInfo
 	
@@ -39,6 +39,12 @@ func SetupRoutes(dbs *database.Databases, cacheService cache.CacheService) *gin.
 	tournamentHandler := handlers.NewTournamentHandler(tournamentService)
 	addressHandler := handlers.NewAddressHandler(addressService)
 	adminHandler := handlers.NewAdminHandler(cacheService)
+	
+	// Create import handler if import service is available
+	var importHandler *handlers.ImportHandler
+	if importService != nil {
+		importHandler = handlers.NewImportHandler(importService)
+	}
 
 	// Create router
 	router := gin.New()
@@ -149,6 +155,19 @@ func SetupRoutes(dbs *database.Databases, cacheService cache.CacheService) *gin.
 			{
 				cache.GET("/stats", adminHandler.GetCacheStats)
 				cache.GET("/health", adminHandler.GetCacheHealth)
+			}
+		}
+
+		// Import routes (if import service is available)
+		if importHandler != nil {
+			importRoutes := v1.Group("/import")
+			{
+				importRoutes.GET("/status", importHandler.GetImportStatus)
+				importRoutes.POST("/start", importHandler.StartManualImport)
+				importRoutes.GET("/logs", importHandler.GetImportLogs)
+				importRoutes.POST("/test-connection", importHandler.TestImportConnection)
+				importRoutes.GET("/health", importHandler.GetImportHealth)
+				importRoutes.GET("/config", importHandler.GetImportConfig)
 			}
 		}
 	}

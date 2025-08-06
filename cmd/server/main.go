@@ -14,6 +14,7 @@ import (
 	"portal64api/internal/cache"
 	"portal64api/internal/config"
 	"portal64api/internal/database"
+	"portal64api/internal/services"
 
 	"github.com/gin-gonic/gin"
 )
@@ -87,8 +88,33 @@ func main() {
 		log.Println("Cache service disabled")
 	}
 
+	// Initialize import service if enabled
+	var importService *services.ImportService
+	if cfg.Import.Enabled {
+		importService = services.NewImportService(&cfg.Import, &cfg.Database, cacheService, log.Default())
+		
+		// Start import service
+		if err := importService.Start(); err != nil {
+			log.Printf("Warning: Failed to start import service: %v", err)
+			importService = nil
+		} else {
+			log.Println("Import service started successfully")
+		}
+		
+		// Ensure import service is stopped on shutdown
+		if importService != nil {
+			defer func() {
+				if stopErr := importService.Stop(); stopErr != nil {
+					log.Printf("Error stopping import service: %v", stopErr)
+				}
+			}()
+		}
+	} else {
+		log.Println("Import service disabled")
+	}
+
 	// Setup routes
-	router := api.SetupRoutes(dbs, cacheService)
+	router := api.SetupRoutes(dbs, cacheService, importService)
 
 	// Create HTTP server
 	addr := fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port)

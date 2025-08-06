@@ -1,9 +1,12 @@
 package services
 
 import (
+	"context"
+	"fmt"
 	"testing"
 	"time"
 
+	"portal64api/internal/cache"
 	"portal64api/internal/interfaces"
 	"portal64api/internal/models"
 	"portal64api/internal/services"
@@ -23,7 +26,23 @@ var _ interfaces.PlayerRepositoryInterface = (*MockPlayerRepository)(nil)
 
 func (m *MockPlayerRepository) GetPlayerByID(vkz string, personID uint) (*models.Person, *models.Organisation, *models.Evaluation, error) {
 	args := m.Called(vkz, personID)
-	return args.Get(0).(*models.Person), args.Get(1).(*models.Organisation), args.Get(2).(*models.Evaluation), args.Error(3)
+	
+	// Handle potential nil returns properly
+	var person *models.Person
+	var org *models.Organisation 
+	var eval *models.Evaluation
+	
+	if args.Get(0) != nil {
+		person = args.Get(0).(*models.Person)
+	}
+	if args.Get(1) != nil {
+		org = args.Get(1).(*models.Organisation)
+	}
+	if args.Get(2) != nil {
+		eval = args.Get(2).(*models.Evaluation)
+	}
+	
+	return person, org, eval, args.Error(3)
 }
 
 func (m *MockPlayerRepository) SearchPlayers(req models.SearchRequest, showActive bool) ([]models.Person, int64, error) {
@@ -85,11 +104,64 @@ func (m *MockClubRepository) GetAllClubs() ([]models.Organisation, error) {
 	return args.Get(0).([]models.Organisation), args.Error(1)
 }
 
+// MockTournamentRepository is a mock implementation of TournamentRepositoryInterface
+type MockTournamentRepository struct {
+	mock.Mock
+}
+
+// Ensure MockTournamentRepository implements TournamentRepositoryInterface
+var _ interfaces.TournamentRepositoryInterface = (*MockTournamentRepository)(nil)
+
+func (m *MockTournamentRepository) GetTournamentByID(tournamentID string) (*models.Tournament, error) {
+	args := m.Called(tournamentID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.Tournament), args.Error(1)
+}
+
+func (m *MockTournamentRepository) SearchTournaments(req models.SearchRequest) ([]models.Tournament, int64, error) {
+	args := m.Called(req)
+	return args.Get(0).([]models.Tournament), args.Get(1).(int64), args.Error(2)
+}
+
+func (m *MockTournamentRepository) GetTournamentsByDateRange(startDate, endDate string) ([]models.Tournament, error) {
+	args := m.Called(startDate, endDate)
+	return args.Get(0).([]models.Tournament), args.Error(1)
+}
+
+func (m *MockTournamentRepository) GetTournamentCodeByID(tournamentID uint) (string, error) {
+	args := m.Called(tournamentID)
+	return args.String(0), args.Error(1)
+}
+
+// MockCacheServiceForPlayer is a simple mock cache service for player tests
+type MockCacheServiceForPlayer struct{}
+
+var _ cache.CacheService = (*MockCacheServiceForPlayer)(nil)
+
+func (m *MockCacheServiceForPlayer) Get(ctx context.Context, key string, dest interface{}) error { return nil }
+func (m *MockCacheServiceForPlayer) Set(ctx context.Context, key string, value interface{}, ttl time.Duration) error { return nil }
+func (m *MockCacheServiceForPlayer) Delete(ctx context.Context, key string) error { return nil }
+func (m *MockCacheServiceForPlayer) Exists(ctx context.Context, key string) (bool, error) { return false, nil }
+func (m *MockCacheServiceForPlayer) FlushAll(ctx context.Context) error { return nil }
+func (m *MockCacheServiceForPlayer) GetWithRefresh(ctx context.Context, key string, dest interface{}, refreshFunc func() (interface{}, error), ttl time.Duration) error { 
+	// Simulate cache miss to trigger database lookup
+	return fmt.Errorf("cache miss") 
+}
+func (m *MockCacheServiceForPlayer) MGet(ctx context.Context, keys []string) (map[string]interface{}, error) { return nil, nil }
+func (m *MockCacheServiceForPlayer) MSet(ctx context.Context, items map[string]interface{}, ttl time.Duration) error { return nil }
+func (m *MockCacheServiceForPlayer) Ping(ctx context.Context) error { return nil }
+func (m *MockCacheServiceForPlayer) GetStats() cache.CacheStats { return cache.CacheStats{} }
+func (m *MockCacheServiceForPlayer) Close() error { return nil }
+
 func TestPlayerService_GetPlayerByID(t *testing.T) {
 	// Setup
 	mockPlayerRepo := new(MockPlayerRepository)
 	mockClubRepo := new(MockClubRepository)
-	service := services.NewPlayerService(mockPlayerRepo, mockClubRepo)
+	mockTournamentRepo := new(MockTournamentRepository)
+	mockCacheService := &MockCacheServiceForPlayer{}
+	service := services.NewPlayerService(mockPlayerRepo, mockClubRepo, mockTournamentRepo, mockCacheService)
 
 	// Test data
 	birth := time.Date(1980, 5, 15, 0, 0, 0, 0, time.UTC)
@@ -147,6 +219,7 @@ func TestPlayerService_GetPlayerByID(t *testing.T) {
 			name:     "Player not found",
 			playerID: "C0101-9999",
 			setupMocks: func() {
+				// Return nil values to simulate not found
 				mockPlayerRepo.On("GetPlayerByID", "C0101", uint(9999)).Return((*models.Person)(nil), (*models.Organisation)(nil), (*models.Evaluation)(nil), errors.NewNotFoundError("Player"))
 			},
 			expectError: true,
@@ -191,7 +264,9 @@ func TestPlayerService_SearchPlayers(t *testing.T) {
 	// Setup
 	mockPlayerRepo := new(MockPlayerRepository)
 	mockClubRepo := new(MockClubRepository)
-	service := services.NewPlayerService(mockPlayerRepo, mockClubRepo)
+	mockTournamentRepo := new(MockTournamentRepository)
+	mockCacheService := &MockCacheServiceForPlayer{}
+	service := services.NewPlayerService(mockPlayerRepo, mockClubRepo, mockTournamentRepo, mockCacheService)
 
 	// Test data
 	players := []models.Person{
