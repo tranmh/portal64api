@@ -86,10 +86,12 @@ function Show-Help {
     Write-ColorOutput ""
     Write-ColorOutput "Build Commands:" $GREEN
     Write-ColorOutput "  help          Show this help message" $WHITE
-    Write-ColorOutput "  build         Build the application binary" $WHITE
+    Write-ColorOutput "  build         Build for both Windows and Linux (default cross-platform build)" $WHITE
+    Write-ColorOutput "  build-windows Build for Windows only (faster for development)" $WHITE
+    Write-ColorOutput "  build-linux   Build for Linux only" $WHITE
     Write-ColorOutput "  run           Run the application in development mode" $WHITE
     Write-ColorOutput "  run-prod      Run the application with production config" $WHITE
-    Write-ColorOutput "  release       Build release versions for multiple platforms" $WHITE
+    Write-ColorOutput "  release       Build release versions for all supported platforms" $WHITE
     Write-ColorOutput ""
     Write-ColorOutput "Development Commands:" $GREEN
     Write-ColorOutput "  deps          Download and tidy dependencies" $WHITE
@@ -129,7 +131,62 @@ function Show-Help {
 
 function Build-Application {
     Test-Prerequisites
-    Write-ColorOutput "Building $BINARY_NAME..." $GREEN
+    Write-ColorOutput "Building $BINARY_NAME for Windows and Linux..." $GREEN
+    
+    if (-not (Test-Path "bin")) {
+        New-Item -ItemType Directory -Path "bin" -Force | Out-Null
+    }
+    
+    # Get version info if available
+    $version = "dev"
+    try {
+        $version = git describe --tags --always 2>$null
+        if (-not $version) { $version = "dev" }
+    } catch {
+        $version = "dev"
+    }
+    
+    $ldflags = "-w -s -X main.version=$version"
+    $env:CGO_ENABLED = "0"
+    
+    # Build for Windows (amd64)
+    Write-ColorOutput "Building for Windows (amd64)..." $WHITE
+    $env:GOOS = "windows"
+    $env:GOARCH = "amd64"
+    go build -ldflags="$ldflags" -o "bin\$BINARY_NAME-windows-amd64.exe" $MAIN_PATH
+    
+    if ($LASTEXITCODE -ne 0) {
+        Write-ColorOutput "Windows build failed" $RED
+        exit 1
+    }
+    
+    # Build for Linux (amd64)
+    Write-ColorOutput "Building for Linux (amd64)..." $WHITE
+    $env:GOOS = "linux"
+    $env:GOARCH = "amd64"
+    go build -ldflags="$ldflags" -o "bin\$BINARY_NAME-linux-amd64" $MAIN_PATH
+    
+    if ($LASTEXITCODE -ne 0) {
+        Write-ColorOutput "Linux build failed" $RED
+        exit 1
+    }
+    
+    # Also create the default Windows binary for backward compatibility
+    Copy-Item "bin\$BINARY_NAME-windows-amd64.exe" $BINARY_PATH -Force
+    
+    # Reset environment variables
+    Remove-Item Env:GOOS -ErrorAction SilentlyContinue
+    Remove-Item Env:GOARCH -ErrorAction SilentlyContinue
+    
+    Write-ColorOutput "Cross-platform binaries built successfully:" $GREEN
+    Write-ColorOutput "  - Windows: bin\$BINARY_NAME-windows-amd64.exe" $WHITE
+    Write-ColorOutput "  - Linux:   bin\$BINARY_NAME-linux-amd64" $WHITE
+    Write-ColorOutput "  - Default: $BINARY_PATH (Windows)" $WHITE
+}
+
+function Build-Windows {
+    Test-Prerequisites
+    Write-ColorOutput "Building $BINARY_NAME for Windows only..." $GREEN
     
     if (-not (Test-Path "bin")) {
         New-Item -ItemType Directory -Path "bin" -Force | Out-Null
@@ -139,7 +196,32 @@ function Build-Application {
     go build -ldflags="-w -s" -o $BINARY_PATH $MAIN_PATH
     
     if ($LASTEXITCODE -eq 0) {
-        Write-ColorOutput "Binary built: $BINARY_PATH" $GREEN
+        Write-ColorOutput "Windows binary built: $BINARY_PATH" $GREEN
+    } else {
+        Write-ColorOutput "Build failed" $RED
+        exit 1
+    }
+}
+
+function Build-Linux {
+    Test-Prerequisites
+    Write-ColorOutput "Building $BINARY_NAME for Linux only..." $GREEN
+    
+    if (-not (Test-Path "bin")) {
+        New-Item -ItemType Directory -Path "bin" -Force | Out-Null
+    }
+    
+    $env:CGO_ENABLED = "0"
+    $env:GOOS = "linux"
+    $env:GOARCH = "amd64"
+    go build -ldflags="-w -s" -o "bin\$BINARY_NAME-linux-amd64" $MAIN_PATH
+    
+    # Reset environment variables
+    Remove-Item Env:GOOS -ErrorAction SilentlyContinue
+    Remove-Item Env:GOARCH -ErrorAction SilentlyContinue
+    
+    if ($LASTEXITCODE -eq 0) {
+        Write-ColorOutput "Linux binary built: bin\$BINARY_NAME-linux-amd64" $GREEN
     } else {
         Write-ColorOutput "Build failed" $RED
         exit 1
@@ -372,22 +454,22 @@ function Build-Release {
     $env:CGO_ENABLED = "0"
     $env:GOOS = "linux"
     $env:GOARCH = "amd64"
-    go build -ldflags=$ldflags -o "bin\$BINARY_NAME-linux-amd64" $MAIN_PATH
+    go build -ldflags="$ldflags" -o "bin\$BINARY_NAME-linux-amd64" $MAIN_PATH
     
     Write-ColorOutput "Building for Windows (amd64)..." $WHITE
     $env:GOOS = "windows"
     $env:GOARCH = "amd64"
-    go build -ldflags=$ldflags -o "bin\$BINARY_NAME-windows-amd64.exe" $MAIN_PATH
+    go build -ldflags="$ldflags" -o "bin\$BINARY_NAME-windows-amd64.exe" $MAIN_PATH
     
     Write-ColorOutput "Building for macOS (amd64)..." $WHITE
     $env:GOOS = "darwin"
     $env:GOARCH = "amd64"
-    go build -ldflags=$ldflags -o "bin\$BINARY_NAME-darwin-amd64" $MAIN_PATH
+    go build -ldflags="$ldflags" -o "bin\$BINARY_NAME-darwin-amd64" $MAIN_PATH
     
     Write-ColorOutput "Building for macOS (arm64)..." $WHITE
     $env:GOOS = "darwin"
     $env:GOARCH = "arm64"
-    go build -ldflags=$ldflags -o "bin\$BINARY_NAME-darwin-arm64" $MAIN_PATH
+    go build -ldflags="$ldflags" -o "bin\$BINARY_NAME-darwin-arm64" $MAIN_PATH
     
     # Reset environment variables
     Remove-Item Env:GOOS -ErrorAction SilentlyContinue
@@ -432,6 +514,8 @@ function Install-Air {
 switch ($Command.ToLower()) {
     "help" { Show-Help }
     "build" { Build-Application }
+    "build-windows" { Build-Windows }
+    "build-linux" { Build-Linux }
     "run" { Run-Application }
     "run-prod" { Run-Production }
     "deps" { Get-Dependencies }

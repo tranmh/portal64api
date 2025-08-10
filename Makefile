@@ -1,6 +1,6 @@
 # Portal64 API Makefile
 
-.PHONY: help build run test test-unit test-integration clean deps swagger docker docker-build docker-run
+.PHONY: help build build-windows build-linux build-native run test test-unit test-integration clean deps swagger docker docker-build docker-run
 
 # Variables
 BINARY_NAME=portal64api
@@ -21,12 +21,40 @@ help:
 	@echo ""
 	@sed -n 's/^##//p' $(MAKEFILE_LIST) | column -t -s ':' | sed -e 's/^/ /'
 
-## build: Build the application binary
+## build: Build for both Windows and Linux (default cross-platform build)
 build:
-	@echo "$(GREEN)Building $(BINARY_NAME)...$(NC)"
+	@echo "$(GREEN)Building $(BINARY_NAME) for Windows and Linux...$(NC)"
+	@mkdir -p bin
+	@echo "$(GREEN)Building for Windows (amd64)...$(NC)"
+	@CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags="-w -s -X main.version=$$(git describe --tags --always 2>/dev/null || echo 'dev')" -o bin/$(BINARY_NAME)-windows-amd64.exe $(MAIN_PATH)
+	@echo "$(GREEN)Building for Linux (amd64)...$(NC)"
+	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s -X main.version=$$(git describe --tags --always 2>/dev/null || echo 'dev')" -o bin/$(BINARY_NAME)-linux-amd64 $(MAIN_PATH)
+	@cp bin/$(BINARY_NAME)-linux-amd64 $(BINARY_PATH)
+	@echo "$(GREEN)Cross-platform binaries built successfully:$(NC)"
+	@echo "  - Windows: bin/$(BINARY_NAME)-windows-amd64.exe"
+	@echo "  - Linux:   bin/$(BINARY_NAME)-linux-amd64"
+	@echo "  - Default: $(BINARY_PATH) (Linux)"
+
+## build-windows: Build for Windows only (faster for development)
+build-windows:
+	@echo "$(GREEN)Building $(BINARY_NAME) for Windows only...$(NC)"
+	@mkdir -p bin
+	@CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags="-w -s" -o bin/$(BINARY_NAME)-windows-amd64.exe $(MAIN_PATH)
+	@echo "$(GREEN)Windows binary built: bin/$(BINARY_NAME)-windows-amd64.exe$(NC)"
+
+## build-linux: Build for Linux only  
+build-linux:
+	@echo "$(GREEN)Building $(BINARY_NAME) for Linux only...$(NC)"
+	@mkdir -p bin
+	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o bin/$(BINARY_NAME)-linux-amd64 $(MAIN_PATH)
+	@echo "$(GREEN)Linux binary built: bin/$(BINARY_NAME)-linux-amd64$(NC)"
+
+## build-native: Build for current platform only (fastest for development)
+build-native:
+	@echo "$(GREEN)Building $(BINARY_NAME) for current platform...$(NC)"
 	@mkdir -p bin
 	@go build -ldflags="-w -s" -o $(BINARY_PATH) $(MAIN_PATH)
-	@echo "$(GREEN)Binary built: $(BINARY_PATH)$(NC)"
+	@echo "$(GREEN)Native binary built: $(BINARY_PATH)$(NC)"
 
 ## run: Run the application in development mode
 run:
@@ -141,13 +169,18 @@ setup: deps install-tools
 	@echo "$(YELLOW)Please update .env with your database credentials$(NC)"
 	@echo "$(GREEN)Setup complete!$(NC)"
 
-## release: Build release version
+## release: Build release versions for all supported platforms
 release: clean test
-	@echo "$(GREEN)Building release version...$(NC)"
+	@echo "$(GREEN)Building release versions...$(NC)"
 	@mkdir -p bin
-	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s -X main.version=$(shell git describe --tags --always)" -o bin/$(BINARY_NAME)-linux-amd64 $(MAIN_PATH)
-	@CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags="-w -s -X main.version=$(shell git describe --tags --always)" -o bin/$(BINARY_NAME)-windows-amd64.exe $(MAIN_PATH)
-	@CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -ldflags="-w -s -X main.version=$(shell git describe --tags --always)" -o bin/$(BINARY_NAME)-darwin-amd64 $(MAIN_PATH)
+	@echo "$(GREEN)Building for Linux (amd64)...$(NC)"
+	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s -X main.version=$$(git describe --tags --always 2>/dev/null || echo '1.0.0')" -o bin/$(BINARY_NAME)-linux-amd64 $(MAIN_PATH)
+	@echo "$(GREEN)Building for Windows (amd64)...$(NC)"
+	@CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags="-w -s -X main.version=$$(git describe --tags --always 2>/dev/null || echo '1.0.0')" -o bin/$(BINARY_NAME)-windows-amd64.exe $(MAIN_PATH)
+	@echo "$(GREEN)Building for macOS (amd64)...$(NC)"
+	@CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -ldflags="-w -s -X main.version=$$(git describe --tags --always 2>/dev/null || echo '1.0.0')" -o bin/$(BINARY_NAME)-darwin-amd64 $(MAIN_PATH)
+	@echo "$(GREEN)Building for macOS (arm64)...$(NC)"
+	@CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -ldflags="-w -s -X main.version=$$(git describe --tags --always 2>/dev/null || echo '1.0.0')" -o bin/$(BINARY_NAME)-darwin-arm64 $(MAIN_PATH)
 	@echo "$(GREEN)Release binaries built in bin/$(NC)"
 
 ## check: Run quality checks
