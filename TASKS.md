@@ -123,7 +123,7 @@ Redis Caching Implementation:
    - ✅ AddressService: Caching for regions (24h TTL) and addresses (24h TTL)
 
 3. **Configuration & Environment** // DONE
-   - ✅ Complete cache configuration in config.yaml and environment variables
+   - ✅ Complete cache configuration in .env and environment variables
    - ✅ Cache enabled/disabled toggle functionality
    - ✅ Redis connection pooling and timeout configuration
    - ✅ Background refresh threshold and worker configuration
@@ -172,7 +172,7 @@ The Redis caching system is **production-ready** and provides significant perfor
   - ❌ Removed Portal64SVW connection setup and teardown from database Connect() and Close() methods
   - ❌ Removed Portal64SVW configuration from `internal/config/config.go`
   - ❌ Removed Portal64_SVW environment variables from `.env`, `docker-compose.yml`, and `bar.sh`
-  - ❌ Removed Portal64_SVW configuration from `configs/config.yaml` and `configs/config.prod.yaml`
+  - ❌ Removed Portal64_SVW configuration from YAML config files (now removed)
   - ❌ Removed Portal64_SVW database creation and permissions from `scripts/init-db.sql`
   - ❌ Removed Portal64SVW configuration from integration tests in `tests/integration/api_test.go`
   - ❌ Updated README.md to reflect only two databases are now required (mvdsb, portal64_bdw)
@@ -211,3 +211,14 @@ The Redis caching system is **production-ready** and provides significant perfor
   - Created `generate-swagger.bat` script for consistent documentation generation
 - **Command**: Use `swag init -g cmd/server/main.go -o docs/generated --parseInternal`
 - **Verification**: Swagger generation completes without errors, all cache admin endpoints properly documented
+
+**FIXED: YAML Configuration Cleanup** // DONE  
+- **Issue**: Project contained unused YAML configuration files and YAML struct tags that were not being used
+- **Root Cause**: Configuration system was implemented using only `.env` files, but YAML config files and struct tags remained from initial development
+- **Solution**: Complete cleanup of unused YAML configuration:
+  - ❌ Removed `configs/config.yaml` and `configs/config.prod.yaml` files and empty `configs/` directory
+  - ❌ Removed all YAML struct tags from configuration structs in `internal/config/config.go`
+  - ❌ Updated documentation in README.md, TASKS.md, and `docs/` to reflect `.env`-only configuration
+  - ❌ Updated code examples in documentation from YAML format to `.env` format
+- **Result**: Simplified configuration system with single source of truth (`.env` files only)
+- **Verification**: Application builds and runs successfully with cleaned configuration structure

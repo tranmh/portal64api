@@ -14,134 +14,134 @@ import (
 
 // Config holds all configuration for the application
 type Config struct {
-	Server   ServerConfig   `yaml:"server"`
-	Database DatabaseConfig `yaml:"database"`
-	Cache    CacheConfig    `yaml:"cache"`
-	Import   ImportConfig   `yaml:"import"`
+	Server   ServerConfig
+	Database DatabaseConfig
+	Cache    CacheConfig
+	Import   ImportConfig
 }
 
 // ServerConfig holds server-specific configuration
 type ServerConfig struct {
-	Port         int    `yaml:"port"`
-	Host         string `yaml:"host"`
-	Environment  string `yaml:"environment"`
-	EnableHTTPS  bool   `yaml:"enable_https"`
-	CertFile     string `yaml:"cert_file"`
-	KeyFile      string `yaml:"key_file"`
-	ReadTimeout  int    `yaml:"read_timeout"`
-	WriteTimeout int    `yaml:"write_timeout"`
+	Port         int
+	Host         string
+	Environment  string
+	EnableHTTPS  bool
+	CertFile     string
+	KeyFile      string
+	ReadTimeout  int
+	WriteTimeout int
 }
 
 // DatabaseConfig holds database connection configuration
 type DatabaseConfig struct {
-	MVDSB      DatabaseConnection `yaml:"mvdsb"`
-	Portal64BDW DatabaseConnection `yaml:"portal64_bdw"`
+	MVDSB      DatabaseConnection
+	Portal64BDW DatabaseConnection
 }
 // DatabaseConnection holds individual database connection details
 type DatabaseConnection struct {
-	Host     string `yaml:"host"`
-	Port     int    `yaml:"port"`
-	Username string `yaml:"username"`
-	Password string `yaml:"password"`
-	Database string `yaml:"database"`
-	Charset  string `yaml:"charset"`
+	Host     string
+	Port     int
+	Username string
+	Password string
+	Database string
+	Charset  string
 }
 
 // CacheConfig holds Redis cache configuration
 type CacheConfig struct {
-	Enabled          bool          `yaml:"enabled"`
-	Address          string        `yaml:"address"`           
-	Password         string        `yaml:"password"`          
-	Database         int           `yaml:"database"`          
-	MaxRetries       int           `yaml:"max_retries"`       
-	PoolSize         int           `yaml:"pool_size"`         
-	MinIdleConns     int           `yaml:"min_idle_conns"`    
-	DialTimeout      time.Duration `yaml:"dial_timeout"`      
-	ReadTimeout      time.Duration `yaml:"read_timeout"`      
-	WriteTimeout     time.Duration `yaml:"write_timeout"`     
-	PoolTimeout      time.Duration `yaml:"pool_timeout"`      
-	IdleTimeout      time.Duration `yaml:"idle_timeout"`      
-	MaxConnAge       time.Duration `yaml:"max_conn_age"`      
+	Enabled          bool
+	Address          string           
+	Password         string          
+	Database         int          
+	MaxRetries       int       
+	PoolSize         int         
+	MinIdleConns     int    
+	DialTimeout      time.Duration      
+	ReadTimeout      time.Duration      
+	WriteTimeout     time.Duration     
+	PoolTimeout      time.Duration      
+	IdleTimeout      time.Duration      
+	MaxConnAge       time.Duration      
 	
 	// Background refresh settings
-	RefreshThreshold float64       `yaml:"refresh_threshold"` 
-	RefreshWorkers   int           `yaml:"refresh_workers"`   
+	RefreshThreshold float64 
+	RefreshWorkers   int           
 }
 
 // ImportConfig holds SCP import configuration
 type ImportConfig struct {
-	Enabled   bool             `yaml:"enabled"`
-	Schedule  string           `yaml:"schedule"`   // cron format
-	LoadCheck LoadCheckConfig  `yaml:"load_check"`
-	SCP       SCPConfig        `yaml:"scp"`
-	ZIP       ZIPConfig        `yaml:"zip"`
-	Storage   StorageConfig    `yaml:"storage"`
-	Freshness FreshnessConfig  `yaml:"freshness"`
-	Database  ImportDBConfig   `yaml:"database"`
-	Retry     RetryConfig      `yaml:"retry"`
+	Enabled   bool
+	Schedule  string   // cron format
+	LoadCheck LoadCheckConfig
+	SCP       SCPConfig
+	ZIP       ZIPConfig
+	Storage   StorageConfig
+	Freshness FreshnessConfig
+	Database  ImportDBConfig
+	Retry     RetryConfig
 }
 
 // LoadCheckConfig holds load-based delay configuration
 type LoadCheckConfig struct {
-	Enabled       bool          `yaml:"enabled"`
-	DelayDuration time.Duration `yaml:"delay_duration"`
-	MaxDelays     int           `yaml:"max_delays"`
-	LoadThreshold int           `yaml:"load_threshold"`
+	Enabled       bool
+	DelayDuration time.Duration
+	MaxDelays     int
+	LoadThreshold int
 }
 
 // SCPConfig holds SCP connection configuration
 type SCPConfig struct {
-	Host         string        `yaml:"host"`
-	Port         int           `yaml:"port"`
-	Username     string        `yaml:"username"`
-	Password     string        `yaml:"password"`
-	RemotePath   string        `yaml:"remote_path"`
-	FilePatterns []string      `yaml:"file_patterns"`
-	Timeout      time.Duration `yaml:"timeout"`
+	Host         string
+	Port         int
+	Username     string
+	Password     string
+	RemotePath   string
+	FilePatterns []string
+	Timeout      time.Duration
 }
 
 // ZIPConfig holds ZIP extraction configuration
 type ZIPConfig struct {
-	PasswordMVDSB     string        `yaml:"password_mvdsb"`
-	PasswordPortal64  string        `yaml:"password_portal64"`
-	ExtractTimeout    time.Duration `yaml:"extract_timeout"`
+	PasswordMVDSB     string
+	PasswordPortal64  string
+	ExtractTimeout    time.Duration
 }
 
 // StorageConfig holds local storage configuration
 type StorageConfig struct {
-	TempDir          string `yaml:"temp_dir"`
-	MetadataFile     string `yaml:"metadata_file"`
-	CleanupOnSuccess bool   `yaml:"cleanup_on_success"`
-	KeepFailedFiles  bool   `yaml:"keep_failed_files"`
+	TempDir          string
+	MetadataFile     string
+	CleanupOnSuccess bool
+	KeepFailedFiles  bool
 }
 
 // FreshnessConfig holds file freshness checking configuration
 type FreshnessConfig struct {
-	Enabled         bool `yaml:"enabled"`
-	CompareTimestamp bool `yaml:"compare_timestamp"`
-	CompareSize     bool `yaml:"compare_size"`
-	CompareChecksum bool `yaml:"compare_checksum"`
-	SkipIfNotNewer  bool `yaml:"skip_if_not_newer"`
+	Enabled         bool
+	CompareTimestamp bool
+	CompareSize     bool
+	CompareChecksum bool
+	SkipIfNotNewer  bool
 }
 
 // ImportDBConfig holds database import configuration
 type ImportDBConfig struct {
-	ImportTimeout    time.Duration       `yaml:"import_timeout"`
-	TargetDatabases  []TargetDatabase    `yaml:"target_databases"`
+	ImportTimeout    time.Duration
+	TargetDatabases  []TargetDatabase
 }
 
 // TargetDatabase holds individual target database configuration
 type TargetDatabase struct {
-	Name        string `yaml:"name"`
-	FilePattern string `yaml:"file_pattern"`
+	Name        string
+	FilePattern string
 }
 
 // RetryConfig holds retry configuration
 type RetryConfig struct {
-	Enabled     bool          `yaml:"enabled"`
-	MaxAttempts int           `yaml:"max_attempts"`
-	RetryDelay  time.Duration `yaml:"retry_delay"`
-	FailFast    bool          `yaml:"fail_fast"`
+	Enabled     bool
+	MaxAttempts int
+	RetryDelay  time.Duration
+	FailFast    bool
 }
 
 // Load loads configuration from environment variables and .env file

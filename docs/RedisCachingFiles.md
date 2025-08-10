@@ -34,9 +34,8 @@ portal64api/
 │       └── utils.go                   # NEW - Cache utility functions
 ├── cmd/server/
 │   └── main.go                        # MODIFIED - Initialize cache service
-├── configs/
-│   ├── config.yaml                    # MODIFIED - Add cache config
-│   └── config.example.yaml            # MODIFIED - Cache config example
+├── .env                               # MODIFIED - Add cache configuration
+├── .env.example                       # MODIFIED - Cache config example
 ├── tests/
 │   ├── cache/                         # NEW - Cache-specific tests
 │   │   ├── cache_service_test.go
@@ -376,8 +375,8 @@ All cache configuration will be loaded from environment variables or `.env` file
 - `CACHE_DATABASE`
 - etc.
 
-### YAML Configuration
-Cache configuration will be integrated into the existing `config.yaml` structure.
+### Environment Configuration
+Cache configuration is managed through the `.env` file.
 
 ## Testing Strategy
 

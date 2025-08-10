@@ -390,12 +390,6 @@ The application can be configured using environment variables or a `.env` file:
 | `MVDSB_PORT` | MVDSB database port | `3306` |
 | ... | (and similar for other databases) | |
 
-### YAML Configuration
-
-Alternatively, use YAML configuration files in the `configs/` directory:
-- `config.yaml` - Development configuration
-- `config.prod.yaml` - Production configuration
-
 ## Production Deployment
 
 ### HTTPS Setup

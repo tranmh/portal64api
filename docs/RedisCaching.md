@@ -143,23 +143,23 @@ func (s *PlayerService) GetPlayerByID(playerID string) (*models.PlayerResponse, 
 
 ```go
 type CacheConfig struct {
-    Enabled          bool          `yaml:"enabled"`
-    Address          string        `yaml:"address"`           // "localhost:6379"
-    Password         string        `yaml:"password"`          // ""
-    Database         int           `yaml:"database"`          // 0
-    MaxRetries       int           `yaml:"max_retries"`       // 3
-    PoolSize         int           `yaml:"pool_size"`         // 10
-    MinIdleConns     int           `yaml:"min_idle_conns"`    // 5
-    DialTimeout      time.Duration `yaml:"dial_timeout"`      // 5s
-    ReadTimeout      time.Duration `yaml:"read_timeout"`      // 3s
-    WriteTimeout     time.Duration `yaml:"write_timeout"`     // 3s
-    PoolTimeout      time.Duration `yaml:"pool_timeout"`      // 4s
-    IdleTimeout      time.Duration `yaml:"idle_timeout"`      // 5m
-    MaxConnAge       time.Duration `yaml:"max_conn_age"`      // 0 (no limit)
+    Enabled          bool          // true/false
+    Address          string        // "localhost:6379"
+    Password         string        // ""
+    Database         int           // 0
+    MaxRetries       int           // 3
+    PoolSize         int           // 10
+    MinIdleConns     int           // 5
+    DialTimeout      time.Duration // 5s
+    ReadTimeout      time.Duration // 3s
+    WriteTimeout     time.Duration // 3s
+    PoolTimeout      time.Duration // 4s
+    IdleTimeout      time.Duration // 5m
+    MaxConnAge       time.Duration // 0 (no limit)
     
     // Background refresh settings
-    RefreshThreshold float64       `yaml:"refresh_threshold"` // 0.8 (80%)
-    RefreshWorkers   int           `yaml:"refresh_workers"`   // 5
+    RefreshThreshold float64       // 0.8 (80%)
+    RefreshWorkers   int           // 5
 }
 ```
 
@@ -345,19 +345,18 @@ CACHE_REFRESH_THRESHOLD=0.8
 CACHE_REFRESH_WORKERS=5
 ```
 
-### Config File Integration
+### Environment Configuration
 
-```yaml
-# config.yaml
-cache:
-  enabled: true
-  address: "localhost:6379"
-  password: ""
-  database: 0
-  pool_size: 10
-  dial_timeout: 5s
-  read_timeout: 3s
-  write_timeout: 3s
+```env
+# .env file
+CACHE_ENABLED=true
+CACHE_ADDRESS=localhost:6379
+CACHE_PASSWORD=
+CACHE_DATABASE=0
+CACHE_POOL_SIZE=10
+CACHE_DIAL_TIMEOUT=5s
+CACHE_READ_TIMEOUT=3s
+CACHE_WRITE_TIMEOUT=3s
   refresh_threshold: 0.8
   refresh_workers: 5
 ```

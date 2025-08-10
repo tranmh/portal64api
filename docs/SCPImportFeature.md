@@ -225,68 +225,54 @@ SOURCE /path/to/extracted/mvdsb_dump.sql;
 
 ## Configuration Design
 
-### Main Configuration (`configs/config.yaml`)
+### Main Configuration (`.env` file)
 
-```yaml
-import:
-  enabled: true
-  schedule: "0 2 * * *"  # Daily at 2 AM (crontab format)
+```env
+# Import configuration
+IMPORT_ENABLED=true
+IMPORT_SCHEDULE=0 2 * * *
+
+# Load-based delay configuration
+IMPORT_LOAD_CHECK_ENABLED=true
+IMPORT_LOAD_CHECK_DELAY=1h
+IMPORT_LOAD_CHECK_MAX_DELAYS=3
+IMPORT_LOAD_CHECK_THRESHOLD=100
   
-  # Load-based delay configuration
-  load_check:
-    enabled: true
-    delay_duration: "1h"        # Delay 1 hour if under heavy load
-    max_delays: 3               # Maximum 3 delays (total 3 hours)
-    load_threshold: 100         # Concurrent requests threshold
+# SCP Configuration
+IMPORT_SCP_HOST=portal.svw.info
+IMPORT_SCP_PORT=22
+IMPORT_SCP_USERNAME=portal64user
+IMPORT_SCP_PASSWORD=your_scp_password
+IMPORT_SCP_REMOTE_PATH=/data/exports/
+IMPORT_SCP_FILE_PATTERNS=mvdsb_*.zip,portal64_bdw_*.zip
+IMPORT_SCP_TIMEOUT=300s
   
-  # SCP Configuration
-  scp:
-    host: "portal.svw.info"
-    port: 22
-    username: "portal64user"
-    password: "${IMPORT_SCP_PASSWORD}"  # From environment
-    remote_path: "/data/exports/"
-    file_patterns:
-      - "mvdsb_*.zip"             # Matches mvdsb_20250806.zip
-      - "portal64_bdw_*.zip"      # Matches portal64_bdw_20250806.zip
-    timeout: "300s"
+# ZIP Configuration
+IMPORT_ZIP_PASSWORD_MVDSB=your_mvdsb_password
+IMPORT_ZIP_PASSWORD_PORTAL64_BDW=your_portal64_password
+IMPORT_ZIP_EXTRACT_TIMEOUT=60s
   
-  # ZIP Configuration
-  zip:
-    password_mvdsb: "${IMPORT_ZIP_PASSWORD_MVDSB}"           # Password for MVDSB ZIP files
-    password_portal64: "${IMPORT_ZIP_PASSWORD_PORTAL64_BDW}" # Password for Portal64 ZIP files
-    extract_timeout: "60s"
+# Local Storage
+IMPORT_TEMP_DIR=./data/import/temp
+IMPORT_METADATA_FILE=./data/import/last_import.json
+IMPORT_CLEANUP_ON_SUCCESS=true
+IMPORT_KEEP_FAILED_FILES=true
   
-  # Local Storage
-  storage:
-    temp_dir: "./data/import/temp"        # Configurable download location
-    metadata_file: "./data/import/last_import.json"  # Last successful import metadata
-    cleanup_on_success: true              # Clean old files after success
-    keep_failed_files: true               # Keep files for debugging on failure
+# File Freshness Check
+IMPORT_FRESHNESS_ENABLED=true
+IMPORT_FRESHNESS_COMPARE_TIMESTAMP=true
+IMPORT_FRESHNESS_COMPARE_SIZE=true
+IMPORT_FRESHNESS_COMPARE_CHECKSUM=false
+IMPORT_FRESHNESS_SKIP_IF_NOT_NEWER=true
   
-  # File Freshness Check
-  freshness:
-    enabled: true                         # Enable file freshness checking
-    compare_timestamp: true               # Compare file modification time
-    compare_size: true                    # Compare file size
-    compare_checksum: false               # Optional: Compare file checksum (slower)
-    skip_if_not_newer: true               # Skip import if files are not newer
+# Database Import
+IMPORT_DATABASE_TIMEOUT=600s
   
-  # Database Import
-  database:
-    import_timeout: "600s"
-    target_databases:
-      - name: "mvdsb"
-        file_pattern: "mvdsb_*"
-      - name: "portal64_bdw" 
-        file_pattern: "portal64_bdw_*"
-  
-  # Error Handling
-  retry:
-    enabled: true
-    max_attempts: 2               # Original + 1 retry = 2 total
-    retry_delay: "5m"             # Wait 5 minutes before retry
-    fail_fast: true               # Don't continue on critical errors
+# Error Handling
+IMPORT_RETRY_ENABLED=true
+IMPORT_RETRY_MAX_ATTEMPTS=2
+IMPORT_RETRY_DELAY=5m
+IMPORT_RETRY_FAIL_FAST=true
 ```
 
 ### Environment Variables
