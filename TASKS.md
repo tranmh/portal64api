@@ -63,6 +63,7 @@ Missing Features:
 7. Review all routes and design Caching with Redis. Write the high level design to docs/RedisCaching.md // DONE
 8. For player details we want to have more information: DWZ (current) and DWZ 12 months ago. How many rates games were played. Ranking in Bezirk and Land (C for region Württemberg). NOT Implemented yet! Performance problems, if not solving properly.
 9. Create a feature, which copy 2 zip files per scp from portal.svw.info to local disk. The zip files are password protected, so decompress them. Afterward use same configuration for MySQL DB as the "main app" and import the content and replace it with original DB mvdsb and portal64_bdw. Do this once a day. Integrate this very loosly to the main app. Create an asyncrhone route for reporting the proceeding of the current import and when the last import was done. Provide also a route for asyncrhone start an import instantly. After the import is done, reset all TTL of redis caches, since we have completely new data. // DONE
+10. /demo and /swagger are two routes with static HTML / Javascript content. Please use embedded, so that there is one single binary file for easier deployment. Please check also other routes, which may also need to be embedded. // DONE
 
 **FIXED: Dual ZIP Password Configuration** // DONE
 - **Issue**: Import system used single password (IMPORT_ZIP_PASSWORD) for both ZIP files, but mvdsb and portal64_bdw ZIP files require different passwords
