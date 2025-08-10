@@ -14,6 +14,7 @@ import (
 	"portal64api/internal/cache"
 	"portal64api/internal/config"
 	"portal64api/internal/database"
+	"portal64api/internal/logging"
 	"portal64api/internal/services"
 
 	"github.com/gin-gonic/gin"
@@ -51,6 +52,12 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to load configuration: %v", err)
 	}
+
+	// Setup logging system
+	if err := logging.SetupLogging(&cfg.Logging); err != nil {
+		log.Fatalf("Failed to setup logging: %v", err)
+	}
+	log.Println("Logging system initialized")
 
 	// Set Gin mode based on environment
 	if cfg.Server.Environment == "production" {
@@ -91,7 +98,13 @@ func main() {
 	// Initialize import service if enabled
 	var importService *services.ImportService
 	if cfg.Import.Enabled {
-		importService = services.NewImportService(&cfg.Import, &cfg.Database, cacheService, log.Default())
+		// Create separate logger for import service
+		importLogger, err := logging.CreateImportLogger(&cfg.Logging)
+		if err != nil {
+			log.Fatalf("Failed to create import logger: %v", err)
+		}
+
+		importService = services.NewImportService(&cfg.Import, &cfg.Database, cacheService, importLogger)
 		
 		// Start import service
 		if err := importService.Start(); err != nil {

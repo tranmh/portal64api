@@ -18,6 +18,7 @@ type Config struct {
 	Database DatabaseConfig
 	Cache    CacheConfig
 	Import   ImportConfig
+	Logging  LoggingConfig
 }
 
 // ServerConfig holds server-specific configuration
@@ -142,6 +143,18 @@ type RetryConfig struct {
 	MaxAttempts int
 	RetryDelay  time.Duration
 	FailFast    bool
+}
+
+// LoggingConfig holds logging configuration
+type LoggingConfig struct {
+	Enabled        bool
+	Level          string
+	MainLogFile    string
+	ImportLogFile  string
+	MaxSizeMB      int
+	MaxBackups     int
+	MaxAgeDays     int
+	Compress       bool
 }
 
 // Load loads configuration from environment variables and .env file
@@ -330,6 +343,16 @@ func loadConfig() *Config {
 				RetryDelay:  getDurationEnv("IMPORT_RETRY_DELAY", 5*time.Minute),
 				FailFast:    getBoolEnv("IMPORT_RETRY_FAIL_FAST", true),
 			},
+		},
+		Logging: LoggingConfig{
+			Enabled:       getBoolEnv("LOG_ENABLED", true),
+			Level:         getStringEnv("LOG_LEVEL", "info"),
+			MainLogFile:   getStringEnv("LOG_FILE_PATH", "./logs/portal64api.log"),
+			ImportLogFile: getStringEnv("LOG_IMPORT_FILE_PATH", "./logs/portal64api-import.log"),
+			MaxSizeMB:     getIntEnv("LOG_MAX_SIZE_MB", 100),
+			MaxBackups:    getIntEnv("LOG_MAX_BACKUPS", 5),
+			MaxAgeDays:    getIntEnv("LOG_MAX_AGE_DAYS", 30),
+			Compress:      getBoolEnv("LOG_COMPRESS", true),
 		},
 	}
 }
