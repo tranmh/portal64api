@@ -36,15 +36,33 @@ class Utils {
     }
 
     // Display success message
-    static showSuccess(containerId, message) {
+    static showSuccess(containerId, message, timeout = null) {
         const container = document.getElementById(containerId);
         if (container) {
-            container.innerHTML = `
-                <div class="alert alert-success">
+            const alertId = `success-alert-${Date.now()}`;
+            const alertHTML = `
+                <div id="${alertId}" class="alert alert-success">
                     <h4>Erfolg</h4>
                     <p>${message}</p>
                 </div>
             `;
+            
+            // If container already has content, prepend the success message
+            if (container.innerHTML.trim()) {
+                container.insertAdjacentHTML('afterbegin', alertHTML);
+            } else {
+                container.innerHTML = alertHTML;
+            }
+            
+            // Auto-remove after timeout if specified
+            if (timeout && timeout > 0) {
+                setTimeout(() => {
+                    const alertElement = document.getElementById(alertId);
+                    if (alertElement) {
+                        alertElement.remove();
+                    }
+                }, timeout);
+            }
         }
     }
 

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 
@@ -46,7 +47,7 @@ func init() {
 	rootCmd.Flags().StringVar(&clubPrefix, "club-prefix", "", "Filter clubs by ID prefix (e.g., 'C0' for C0327, C0401, etc.)")
 	rootCmd.Flags().StringVar(&outputFormat, "output-format", "csv", "Output format (csv|json|excel)")
 	rootCmd.Flags().StringVar(&outputDir, "output-dir", ".", "Output directory")
-	rootCmd.Flags().IntVar(&concurrency, "concurrency", 1, "Number of concurrent API requests")
+	rootCmd.Flags().IntVar(&concurrency, "concurrency", runtime.NumCPU(), "Number of concurrent API requests")
 	rootCmd.Flags().BoolVar(&resumeFlag, "resume", false, "Resume from previous run using checkpoint file")
 	rootCmd.Flags().StringVar(&checkpointFile, "checkpoint-file", "", "Custom checkpoint file path")
 	rootCmd.Flags().StringVar(&apiBaseURL, "api-base-url", "http://localhost:8080", "Base URL for Portal64 API")

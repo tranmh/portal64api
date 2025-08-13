@@ -245,6 +245,50 @@ Missing Features:
 11. Handle log file with logration properly. // DONE 
 12. Create a new Golang standalone application using the REST-API only for Kader-Planung. The end result is a CSV file with the following columns: Club name, club ID like C0327, player id like C0327-297, lastname of the player, firstname of the player, birthyear of the player, current DWZ, DWZ 12 months ago, number of games playing in the last 12 months, success rate of those games in the last 12 months. // DONE
 
+**ADDED: Kader-Planung Integration into Main Server** // DONE
+- **Feature**: Integrated standalone Kader-Planung application into main Portal64 server
+- **Implementation**: 
+  - Created `KaderPlanungService` in `internal/services/` with full lifecycle management
+  - Implemented `ImportCompleteCallback` interface for automatic execution after successful DB imports
+  - Added REST API endpoints for manual trigger and status monitoring:
+    - `GET /api/v1/kader-planung/status` - Get current execution status and available files
+    - `POST /api/v1/kader-planung/start` - Start manual execution with optional parameters
+    - `GET /api/v1/kader-planung/files` - List available CSV files
+    - `GET /api/v1/kader-planung/download/{filename}` - Download specific CSV file
+  - Updated kader-planung binary to use `runtime.NumCPU()` as default concurrency (was 1, now 16 on test system)
+  - Added comprehensive configuration via `.env` variables with all kader-planung command-line parameters
+  - Integrated file management with automatic cleanup (keeps 7 versions, deletes older files)
+  - Added proper error handling, logging, and status tracking
+  - Files stored in `internal/static/demo/kader-planung/` for demo access
+- **Configuration Added to .env.example**:
+  ```
+  KADER_PLANUNG_ENABLED=true
+  KADER_PLANUNG_BINARY_PATH=kader-planung/bin/kader-planung.exe
+  KADER_PLANUNG_OUTPUT_DIR=internal/static/demo/kader-planung
+  KADER_PLANUNG_API_BASE_URL=http://localhost:8080
+  KADER_PLANUNG_CLUB_PREFIX=
+  KADER_PLANUNG_OUTPUT_FORMAT=csv
+  KADER_PLANUNG_TIMEOUT=30
+  KADER_PLANUNG_CONCURRENCY=0
+  KADER_PLANUNG_VERBOSE=false
+  KADER_PLANUNG_MAX_VERSIONS=7
+  ```
+- **Files Modified**:
+  - `internal/services/kader_planung_service.go` - New service implementation
+  - `internal/api/handlers/kader_planung_handlers.go` - New API handlers
+  - `internal/services/import_service.go` - Added callback mechanism
+  - `internal/config/config.go` - Added KaderPlanung configuration
+  - `cmd/server/main.go` - Service integration and lifecycle management
+  - `internal/api/routes.go` - Added API routes
+  - `kader-planung/cmd/kader-planung/main.go` - Updated default concurrency to use CPU cores
+- **Verification**: 
+  - ✅ Main server builds and starts successfully with Kader-Planung service
+  - ✅ API routes registered: `/api/v1/kader-planung/*`
+  - ✅ Kader-planung binary updated with CPU core default concurrency
+  - ✅ Service integrates with import completion callbacks
+  - ✅ Configuration system supports all kader-planung parameters
+- **Status**: ✅ **PRODUCTION READY** - Integration complete, automatic post-import execution, manual API trigger, file management
+
 **ADDED: Club ID Prefix Columns for Hierarchical Filtering** // DONE
 - **Feature**: Added three new prefix columns at the very beginning of kader-planung CSV output to enable easy hierarchical filtering
 - **Columns Added**:

@@ -18,6 +18,7 @@ import (
 	"portal64api/internal/services"
 
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 )
 
 // @title Portal64 API
@@ -126,8 +127,43 @@ func main() {
 		log.Println("Import service disabled")
 	}
 
+	// Initialize Kader-Planung service if enabled
+	var kaderPlanungService *services.KaderPlanungService
+	if cfg.KaderPlanung.Enabled {
+		// Create logrus logger for Kader-Planung service
+		kaderPlanungLogger := logrus.New()
+		kaderPlanungLogger.SetLevel(logrus.InfoLevel)
+		
+		kaderPlanungService = services.NewKaderPlanungService(&cfg.KaderPlanung, kaderPlanungLogger)
+		
+		// Start Kader-Planung service
+		if err := kaderPlanungService.Start(); err != nil {
+			log.Printf("Warning: Failed to start Kader-Planung service: %v", err)
+			kaderPlanungService = nil
+		} else {
+			log.Println("Kader-Planung service started successfully")
+		}
+		
+		// Register with import service if both are enabled
+		if importService != nil && kaderPlanungService != nil {
+			importService.AddCompletionCallback(kaderPlanungService)
+			log.Println("Kader-Planung service registered for post-import execution")
+		}
+		
+		// Ensure service is stopped on shutdown
+		if kaderPlanungService != nil {
+			defer func() {
+				if stopErr := kaderPlanungService.Stop(); stopErr != nil {
+					log.Printf("Error stopping Kader-Planung service: %v", stopErr)
+				}
+			}()
+		}
+	} else {
+		log.Println("Kader-Planung service disabled")
+	}
+
 	// Setup routes
-	router := api.SetupRoutes(dbs, cacheService, importService)
+	router := api.SetupRoutes(dbs, cacheService, importService, kaderPlanungService)
 
 	// Create HTTP server
 	addr := fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port)

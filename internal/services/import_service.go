@@ -16,6 +16,11 @@ import (
 	"github.com/robfig/cron/v3"
 )
 
+// ImportCompleteCallback defines the interface for import completion callbacks
+type ImportCompleteCallback interface {
+	OnImportComplete()
+}
+
 // ImportService handles scheduled and manual database imports
 type ImportService struct {
 	config            *config.ImportConfig
@@ -38,6 +43,9 @@ type ImportService struct {
 	isRunning         bool
 	stopChan          chan struct{}
 	mutex             sync.RWMutex
+	
+	// Callbacks
+	onCompleteCallbacks []ImportCompleteCallback
 }
 
 // NewImportService creates a new import service instance
@@ -214,6 +222,10 @@ func (is *ImportService) executeImport() error {
 	is.statusTracker.LogDuration(models.StepCompleted, "Import completed successfully", duration)
 
 	is.logger.Printf("Import process completed successfully in %s", duration)
+	
+	// Notify completion callbacks
+	is.notifyCompletionCallbacks()
+	
 	return nil
 }
 
@@ -481,4 +493,31 @@ func (is *ImportService) isAPIUnderHeavyLoad() bool {
 	// Placeholder implementation
 	// In production, this could check actual metrics
 	return false
+}
+
+// AddCompletionCallback adds a callback to be called when import completes successfully
+func (is *ImportService) AddCompletionCallback(callback ImportCompleteCallback) {
+	is.mutex.Lock()
+	defer is.mutex.Unlock()
+	is.onCompleteCallbacks = append(is.onCompleteCallbacks, callback)
+}
+
+// notifyCompletionCallbacks calls all registered completion callbacks
+func (is *ImportService) notifyCompletionCallbacks() {
+	is.mutex.RLock()
+	callbacks := make([]ImportCompleteCallback, len(is.onCompleteCallbacks))
+	copy(callbacks, is.onCompleteCallbacks)
+	is.mutex.RUnlock()
+	
+	for _, callback := range callbacks {
+		// Call callback in a separate goroutine to avoid blocking
+		go func(cb ImportCompleteCallback) {
+			defer func() {
+				if r := recover(); r != nil {
+					is.logger.Printf("Import completion callback panicked: %v", r)
+				}
+			}()
+			cb.OnImportComplete()
+		}(callback)
+	}
 }

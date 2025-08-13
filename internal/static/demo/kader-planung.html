@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vereinsdaten Export für Kader-Planung - Portal64 API Demo</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/forms.css">
+    <link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <h1>Vereinsdaten Export für Kader-Planung</h1>
+            <p>Automatisch generierte CSV-Dateien für die Kaderplanung von Schachvereinen</p>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="container">
+            <!-- Navigation -->
+            <div class="card">
+                <p><a href="index.html" class="btn btn-secondary">← Zurück zum Dashboard</a></p>
+            </div>
+
+            <!-- Status Section -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">📊 Aktueller Status</h2>
+                </div>
+                <div id="status-result">
+                    <!-- Status information will be displayed here -->
+                </div>
+                <button onclick="refreshStatus()" class="btn btn-secondary">Status aktualisieren</button>
+            </div>
+
+            <!-- Available Files Section -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">📁 Verfügbare Export-Dateien</h2>
+                </div>
+                <p>Hier finden Sie alle automatisch generierten CSV-Dateien für die Kaderplanung. Die Dateien werden täglich nach dem Datenbankimport erstellt und enthalten aktuelle Vereins- und Spielerdaten.</p>
+                
+                <div id="files-loading" class="loading-spinner" style="display: none;">
+                    <div class="spinner"></div>
+                    <p>Lade verfügbare Dateien...</p>
+                </div>
+                
+                <div id="files-result">
+                    <!-- Files table will be displayed here -->
+                </div>
+                
+                <button onclick="refreshFiles()" class="btn btn-secondary">Dateiliste aktualisieren</button>
+            </div>
+
+            <!-- Information Section -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">ℹ️ Informationen</h2>
+                </div>
+                <div class="form-row">
+                    <div>
+                        <h4>Automatische Generierung</h4>
+                        <p>Die Kader-Planung Dateien werden automatisch einmal täglich nach dem Datenbankimport erstellt. Es ist keine manuelle Erstellung durch Benutzer erforderlich.</p>
+                        
+                        <h4>Dateiformat</h4>
+                        <p>Alle Dateien sind im CSV-Format (Semikolon-getrennt) und können direkt in Excel oder andere Tabellenkalkulationsprogramme importiert werden.</p>
+                        
+                        <h4>Dateninhalt</h4>
+                        <p>Jede CSV-Datei enthält folgende Spalten:</p>
+                        <ul>
+                            <li><strong>Vereinsinformationen:</strong> Vereinsname, Vereins-ID, Präfixe</li>
+                            <li><strong>Spielerdaten:</strong> Spieler-ID, Nachname, Vorname, Geburtsjahr</li>
+                            <li><strong>DWZ-Daten:</strong> Aktuelle DWZ, DWZ vor 12 Monaten</li>
+                            <li><strong>Spielstatistiken:</strong> Anzahl Spiele, Erfolgsquote der letzten 12 Monate</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4>Dateihistorie</h4>
+                        <p>Das System speichert die letzten 7 Versionen der generierten Dateien für historische Vergleiche.</p>
+                        
+                        <h4>Verwendung</h4>
+                        <p>Diese Dateien sind speziell für die Kaderplanung von Schachvereinen optimiert und enthalten alle notwendigen Spieler- und Vereinsinformationen.</p>
+                        
+                        <h4>Aktualisierung</h4>
+                        <p>Die Daten werden täglich automatisch aktualisiert. Die neueste verfügbare Datei ist immer hervorgehoben.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 Portal64 API Demo. Vereinsdaten Export für Kader-Planung.</p>
+        </div>
+    </footer>
+
+    <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/kader-planung.js"></script>
+    
+    <script>
+        // Create global API instance
+        const api = new Portal64API();
+        
+        // Initialize page on load
+        document.addEventListener('DOMContentLoaded', function() {
+            refreshStatus();
+            refreshFiles();
+        });
+    </script>
+</body>
+</html>

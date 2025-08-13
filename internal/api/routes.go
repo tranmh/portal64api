@@ -17,7 +17,7 @@ import (
 )
 
 // SetupRoutes configures all API routes
-func SetupRoutes(dbs *database.Databases, cacheService cache.CacheService, importService *services.ImportService) *gin.Engine {
+func SetupRoutes(dbs *database.Databases, cacheService cache.CacheService, importService *services.ImportService, kaderPlanungService *services.KaderPlanungService) *gin.Engine {
 	// Ensure swagger docs are loaded
 	_ = docs.SwaggerInfo
 	
@@ -45,6 +45,12 @@ func SetupRoutes(dbs *database.Databases, cacheService cache.CacheService, impor
 	var importHandler *handlers.ImportHandler
 	if importService != nil {
 		importHandler = handlers.NewImportHandler(importService)
+	}
+	
+	// Create Kader-Planung handler if service is available
+	var kaderPlanungHandler *handlers.KaderPlanungHandler
+	if kaderPlanungService != nil {
+		kaderPlanungHandler = handlers.NewKaderPlanungHandler(kaderPlanungService)
 	}
 
 	// Create router
@@ -148,6 +154,17 @@ func SetupRoutes(dbs *database.Databases, cacheService cache.CacheService, impor
 				importRoutes.POST("/test-connection", importHandler.TestImportConnection)
 				importRoutes.GET("/health", importHandler.GetImportHealth)
 				importRoutes.GET("/config", importHandler.GetImportConfig)
+			}
+		}
+		
+		// Kader-Planung routes (if service is available)
+		if kaderPlanungHandler != nil {
+			kaderPlanungRoutes := v1.Group("/kader-planung")
+			{
+				kaderPlanungRoutes.GET("/status", kaderPlanungHandler.GetKaderPlanungStatus)
+				kaderPlanungRoutes.POST("/start", kaderPlanungHandler.StartKaderPlanungExecution)
+				kaderPlanungRoutes.GET("/files", kaderPlanungHandler.ListKaderPlanungFiles)
+				kaderPlanungRoutes.GET("/download/:filename", kaderPlanungHandler.DownloadKaderPlanungFile)
 			}
 		}
 	}

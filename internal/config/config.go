@@ -14,11 +14,12 @@ import (
 
 // Config holds all configuration for the application
 type Config struct {
-	Server   ServerConfig
-	Database DatabaseConfig
-	Cache    CacheConfig
-	Import   ImportConfig
-	Logging  LoggingConfig
+	Server        ServerConfig
+	Database      DatabaseConfig
+	Cache         CacheConfig
+	Import        ImportConfig
+	Logging       LoggingConfig
+	KaderPlanung  KaderPlanungConfig
 }
 
 // ServerConfig holds server-specific configuration
@@ -155,6 +156,20 @@ type LoggingConfig struct {
 	MaxBackups     int
 	MaxAgeDays     int
 	Compress       bool
+}
+
+// KaderPlanungConfig holds configuration for integrated Kader-Planung functionality
+type KaderPlanungConfig struct {
+	Enabled       bool
+	BinaryPath    string
+	OutputDir     string
+	APIBaseURL    string
+	ClubPrefix    string
+	OutputFormat  string
+	Timeout       int
+	Concurrency   int   // 0 = use runtime.NumCPU()
+	Verbose       bool
+	MaxVersions   int
 }
 
 // Load loads configuration from environment variables and .env file
@@ -353,6 +368,18 @@ func loadConfig() *Config {
 			MaxBackups:    getIntEnv("LOG_MAX_BACKUPS", 5),
 			MaxAgeDays:    getIntEnv("LOG_MAX_AGE_DAYS", 30),
 			Compress:      getBoolEnv("LOG_COMPRESS", true),
+		},
+		KaderPlanung: KaderPlanungConfig{
+			Enabled:      getBoolEnv("KADER_PLANUNG_ENABLED", true),
+			BinaryPath:   getStringEnv("KADER_PLANUNG_BINARY_PATH", "kader-planung/bin/kader-planung.exe"),
+			OutputDir:    getStringEnv("KADER_PLANUNG_OUTPUT_DIR", "internal/static/demo/kader-planung"),
+			APIBaseURL:   getStringEnv("KADER_PLANUNG_API_BASE_URL", "http://localhost:8080"),
+			ClubPrefix:   getStringEnv("KADER_PLANUNG_CLUB_PREFIX", ""),
+			OutputFormat: getStringEnv("KADER_PLANUNG_OUTPUT_FORMAT", "csv"),
+			Timeout:      getIntEnv("KADER_PLANUNG_TIMEOUT", 30),
+			Concurrency:  getIntEnv("KADER_PLANUNG_CONCURRENCY", 0), // 0 = use runtime.NumCPU()
+			Verbose:      getBoolEnv("KADER_PLANUNG_VERBOSE", false),
+			MaxVersions:  getIntEnv("KADER_PLANUNG_MAX_VERSIONS", 7),
 		},
 	}
 }
