@@ -76,6 +76,9 @@ type RatingHistory struct {
 
 // KaderPlanungRecord represents a single row in the final export
 type KaderPlanungRecord struct {
+	ClubIDPrefix1              string `json:"club_id_prefix1" csv:"club_id_prefix1"`
+	ClubIDPrefix2              string `json:"club_id_prefix2" csv:"club_id_prefix2"`
+	ClubIDPrefix3              string `json:"club_id_prefix3" csv:"club_id_prefix3"`
 	ClubName                   string `json:"club_name" csv:"club_name"`
 	ClubID                     string `json:"club_id" csv:"club_id"`
 	PlayerID                   string `json:"player_id" csv:"player_id"`
@@ -168,3 +171,28 @@ type Tournament struct {
 const (
 	DataNotAvailable = "DATA_NOT_AVAILABLE"
 )
+
+// CalculateClubIDPrefixes calculates the three club_id prefixes from a club_id
+// For example: "C0327" -> {"C", "C0", "C03"}
+func CalculateClubIDPrefixes(clubID string) (string, string, string) {
+	if clubID == "" {
+		return "", "", ""
+	}
+	
+	// Get prefixes of different lengths
+	prefix1 := ""
+	prefix2 := ""
+	prefix3 := ""
+	
+	if len(clubID) >= 1 {
+		prefix1 = clubID[:1]
+	}
+	if len(clubID) >= 2 {
+		prefix2 = clubID[:2]
+	}
+	if len(clubID) >= 3 {
+		prefix3 = clubID[:3]
+	}
+	
+	return prefix1, prefix2, prefix3
+}

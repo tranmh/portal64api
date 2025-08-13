@@ -57,13 +57,18 @@ func (e *Exporter) exportCSV(records []models.KaderPlanungRecord, outputPath str
 	defer file.Close()
 
 	writer := csv.NewWriter(file)
+	writer.Comma = ';' // Use semicolon separator for German Excel compatibility
 	defer writer.Flush()
 
 	// Write header
 	header := []string{
+		"club_id_prefix1",
+		"club_id_prefix2", 
+		"club_id_prefix3",
 		"club_name",
 		"club_id", 
-		"player_id",		"lastname",
+		"player_id",
+		"lastname",
 		"firstname",
 		"birthyear",
 		"current_dwz",
@@ -79,6 +84,9 @@ func (e *Exporter) exportCSV(records []models.KaderPlanungRecord, outputPath str
 	// Write data rows
 	for _, record := range records {
 		row := []string{
+			record.ClubIDPrefix1,
+			record.ClubIDPrefix2,
+			record.ClubIDPrefix3,
 			record.ClubName,
 			record.ClubID,
 			record.PlayerID,
@@ -145,16 +153,19 @@ func (e *Exporter) exportExcel(records []models.KaderPlanungRecord, outputPath s
 
 	// Set headers
 	headers := map[string]string{
-		"A1": "Club Name",
-		"B1": "Club ID",
-		"C1": "Player ID", 
-		"D1": "Last Name",
-		"E1": "First Name",
-		"F1": "Birth Year",
-		"G1": "Current DWZ",
-		"H1": "DWZ 12 Months Ago",
-		"I1": "Games Last 12 Months",
-		"J1": "Success Rate Last 12 Months (%)",
+		"A1": "Club ID Prefix1",
+		"B1": "Club ID Prefix2", 
+		"C1": "Club ID Prefix3",
+		"D1": "Club Name",
+		"E1": "Club ID",
+		"F1": "Player ID", 
+		"G1": "Last Name",
+		"H1": "First Name",
+		"I1": "Birth Year",
+		"J1": "Current DWZ",
+		"K1": "DWZ 12 Months Ago",
+		"L1": "Games Last 12 Months",
+		"M1": "Success Rate Last 12 Months (%)",
 	}
 
 	// Write headers with formatting
@@ -190,20 +201,23 @@ func (e *Exporter) exportExcel(records []models.KaderPlanungRecord, outputPath s
 	for i, record := range records {
 		row := i + 2 // Start from row 2 (after header)
 		
-		file.SetCellValue(sheetName, fmt.Sprintf("A%d", row), record.ClubName)
-		file.SetCellValue(sheetName, fmt.Sprintf("B%d", row), record.ClubID)
-		file.SetCellValue(sheetName, fmt.Sprintf("C%d", row), record.PlayerID)
-		file.SetCellValue(sheetName, fmt.Sprintf("D%d", row), record.Lastname)
-		file.SetCellValue(sheetName, fmt.Sprintf("E%d", row), record.Firstname)
-		file.SetCellValue(sheetName, fmt.Sprintf("F%d", row), record.Birthyear)
-		file.SetCellValue(sheetName, fmt.Sprintf("G%d", row), record.CurrentDWZ)
-		file.SetCellValue(sheetName, fmt.Sprintf("H%d", row), record.DWZ12MonthsAgo)
-		file.SetCellValue(sheetName, fmt.Sprintf("I%d", row), record.GamesLast12Months)
-		file.SetCellValue(sheetName, fmt.Sprintf("J%d", row), record.SuccessRateLast12Months)
+		file.SetCellValue(sheetName, fmt.Sprintf("A%d", row), record.ClubIDPrefix1)
+		file.SetCellValue(sheetName, fmt.Sprintf("B%d", row), record.ClubIDPrefix2)
+		file.SetCellValue(sheetName, fmt.Sprintf("C%d", row), record.ClubIDPrefix3)
+		file.SetCellValue(sheetName, fmt.Sprintf("D%d", row), record.ClubName)
+		file.SetCellValue(sheetName, fmt.Sprintf("E%d", row), record.ClubID)
+		file.SetCellValue(sheetName, fmt.Sprintf("F%d", row), record.PlayerID)
+		file.SetCellValue(sheetName, fmt.Sprintf("G%d", row), record.Lastname)
+		file.SetCellValue(sheetName, fmt.Sprintf("H%d", row), record.Firstname)
+		file.SetCellValue(sheetName, fmt.Sprintf("I%d", row), record.Birthyear)
+		file.SetCellValue(sheetName, fmt.Sprintf("J%d", row), record.CurrentDWZ)
+		file.SetCellValue(sheetName, fmt.Sprintf("K%d", row), record.DWZ12MonthsAgo)
+		file.SetCellValue(sheetName, fmt.Sprintf("L%d", row), record.GamesLast12Months)
+		file.SetCellValue(sheetName, fmt.Sprintf("M%d", row), record.SuccessRateLast12Months)
 	}
 
 	// Auto-fit columns
-	cols := []string{"A", "B", "C", "D", "E", "F", "G", "H", "I", "J"}
+	cols := []string{"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M"}
 	for _, col := range cols {
 		file.SetColWidth(sheetName, col, col, 15)
 	}

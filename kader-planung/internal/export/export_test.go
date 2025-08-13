@@ -90,6 +90,9 @@ func TestExportCSV(t *testing.T) {
 	// Create test data
 	records := []models.KaderPlanungRecord{
 		{
+			ClubIDPrefix1:           "C",
+			ClubIDPrefix2:           "C0", 
+			ClubIDPrefix3:           "C03",
 			ClubName:                "Test Chess Club",
 			ClubID:                  "C0327",
 			PlayerID:                "C0327-297",
@@ -102,6 +105,9 @@ func TestExportCSV(t *testing.T) {
 			SuccessRateLast12Months: "62.5",
 		},
 		{
+			ClubIDPrefix1:           "C",
+			ClubIDPrefix2:           "C0", 
+			ClubIDPrefix3:           "C04",
 			ClubName:                "Another Club",
 			ClubID:                  "C0401",
 			PlayerID:                "C0401-123",
@@ -138,18 +144,18 @@ func TestExportCSV(t *testing.T) {
 
 	contentStr := string(content)
 
-	// Check header
-	if !strings.Contains(contentStr, "club_name,club_id,player_id") {
-		t.Error("CSV header not found")
+	// Check header - should start with the new prefix columns
+	if !strings.Contains(contentStr, "club_id_prefix1;club_id_prefix2;club_id_prefix3;club_name;club_id;player_id") {
+		t.Error("CSV header with prefix columns not found")
 	}
 
-	// Check data
-	if !strings.Contains(contentStr, "Test Chess Club,C0327,C0327-297") {
-		t.Error("First record not found in CSV")
+	// Check data - should include the prefix values
+	if !strings.Contains(contentStr, "C;C0;C03;Test Chess Club;C0327;C0327-297") {
+		t.Error("First record with prefix columns not found in CSV")
 	}
 
-	if !strings.Contains(contentStr, "Another Club,C0401,C0401-123") {
-		t.Error("Second record not found in CSV")
+	if !strings.Contains(contentStr, "C;C0;C04;Another Club;C0401;C0401-123") {
+		t.Error("Second record with prefix columns not found in CSV")
 	}
 
 	if !strings.Contains(contentStr, models.DataNotAvailable) {
@@ -163,6 +169,9 @@ func TestExportJSON(t *testing.T) {
 	// Create test data
 	records := []models.KaderPlanungRecord{
 		{
+			ClubIDPrefix1:           "C",
+			ClubIDPrefix2:           "C0", 
+			ClubIDPrefix3:           "C03",
 			ClubName:                "Test Chess Club",
 			ClubID:                  "C0327",
 			PlayerID:                "C0327-297",
@@ -232,13 +241,16 @@ func TestExportSample(t *testing.T) {
 	records := make([]models.KaderPlanungRecord, 10)
 	for i := 0; i < 10; i++ {
 		records[i] = models.KaderPlanungRecord{
-			ClubName:   "Test Club",
-			ClubID:     "C0327",
-			PlayerID:   "C0327-" + string(rune(297+i)),
-			Firstname:  "Player",
-			Lastname:   string(rune(65 + i)), // A, B, C, etc.
-			Birthyear:  1990,
-			CurrentDWZ: 1600,
+			ClubIDPrefix1: "C",
+			ClubIDPrefix2: "C0", 
+			ClubIDPrefix3: "C03",
+			ClubName:      "Test Club",
+			ClubID:        "C0327",
+			PlayerID:      "C0327-" + string(rune(297+i)),
+			Firstname:     "Player",
+			Lastname:      string(rune(65 + i)), // A, B, C, etc.
+			Birthyear:     1990,
+			CurrentDWZ:    1600,
 		}
 	}
 

@@ -335,7 +335,13 @@ func (p *Processor) createKaderPlanungRecord(club models.Club, player models.Pla
 		birthyear = *player.BirthYear
 	}
 	
+	// Calculate club_id prefixes
+	prefix1, prefix2, prefix3 := models.CalculateClubIDPrefixes(club.ID)
+	
 	record := &models.KaderPlanungRecord{
+		ClubIDPrefix1:           prefix1,
+		ClubIDPrefix2:           prefix2,
+		ClubIDPrefix3:           prefix3,
 		ClubName:                club.Name,
 		ClubID:                  club.ID,
 		PlayerID:                player.ID,

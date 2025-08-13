@@ -243,7 +243,32 @@ Missing Features:
 9. Create a feature, which copy 2 zip files per scp from portal.svw.info to local disk. The zip files are password protected, so decompress them. Afterward use same configuration for MySQL DB as the "main app" and import the content and replace it with original DB mvdsb and portal64_bdw. Do this once a day. Integrate this very loosly to the main app. Create an asyncrhone route for reporting the proceeding of the current import and when the last import was done. Provide also a route for asyncrhone start an import instantly. After the import is done, reset all TTL of redis caches, since we have completely new data. // DONE
 10. /demo and /swagger are two routes with static HTML / Javascript content. Please use embedded, so that there is one single binary file for easier deployment. Please check also other routes, which may also need to be embedded. // DONE
 11. Handle log file with logration properly. // DONE 
-12. Create a new Golang standalone application using the REST-API only for Kader-Planung. The end result is a CSV file with the following columns: Club name, club ID like C0327, player id like C0327-297, lastname of the player, firstname of the player, birthyear of the player, current DWZ, DWZ 12 months ago, number of games playing in the last 12 months, success rate of those games in the last 12 months.
+12. Create a new Golang standalone application using the REST-API only for Kader-Planung. The end result is a CSV file with the following columns: Club name, club ID like C0327, player id like C0327-297, lastname of the player, firstname of the player, birthyear of the player, current DWZ, DWZ 12 months ago, number of games playing in the last 12 months, success rate of those games in the last 12 months. // DONE
+
+**ADDED: Club ID Prefix Columns for Hierarchical Filtering** // DONE
+- **Feature**: Added three new prefix columns at the very beginning of kader-planung CSV output to enable easy hierarchical filtering
+- **Columns Added**:
+  - `club_id_prefix1`: First character of club_id (e.g., "C" from "C0327")  
+  - `club_id_prefix2`: First 2 characters of club_id (e.g., "C0" from "C0327")
+  - `club_id_prefix3`: First 3 characters of club_id (e.g., "C03" from "C0327")
+- **Purpose**: Enable easy filtering by region/district hierarchies since chess club organizations are structured hierarchically
+- **Implementation**: 
+  - Added `CalculateClubIDPrefixes()` utility function to models package
+  - Updated `KaderPlanungRecord` struct with new prefix fields
+  - Modified CSV export to include new columns at the beginning
+  - Updated Excel export with new columns and proper headers
+  - Added comprehensive unit tests for prefix calculation function
+  - Updated all existing tests to include new fields
+- **Files Modified**:
+  - `kader-planung/internal/models/models.go` - Added prefix fields and calculation function
+  - `kader-planung/internal/processor/processor.go` - Updated record creation logic
+  - `kader-planung/internal/export/export.go` - Updated CSV and Excel export headers and data
+  - `kader-planung/internal/export/export_test.go` - Updated tests with new fields
+  - `kader-planung/internal/models/models_test.go` - Added unit tests for prefix calculation
+- **Verification**: Successfully tested with club C0327, output shows correct prefix values:
+  - club_id_prefix1;club_id_prefix2;club_id_prefix3;club_name;club_id;player_id...
+  - C;C0;C03;SF 1876 Göppingen;C0327;C0327-261;...
+- **Result**: CSV now supports easy hierarchical filtering by chess organization structure
 
 **FIXED: Dual ZIP Password Configuration** // DONE
 - **Issue**: Import system used single password (IMPORT_ZIP_PASSWORD) for both ZIP files, but mvdsb and portal64_bdw ZIP files require different passwords
@@ -489,3 +514,16 @@ The Redis caching system is **production-ready** and provides significant perfor
   - ❌ Updated code examples in documentation from YAML format to `.env` format
 - **Result**: Simplified configuration system with single source of truth (`.env` files only)
 - **Verification**: Application builds and runs successfully with cleaned configuration structure
+
+**FIXED: Kader-Planung CSV Separator for German Excel Compatibility** // DONE
+- **Issue**: Kader-planung CSV export used comma (,) as separator, but German Excel prefers semicolon (;) as default separator
+- **Root Cause**: Go's `csv.NewWriter()` uses comma as default separator, which is not optimal for German locale Excel applications
+- **Solution**: Updated CSV export functionality to use semicolon separator for German Excel compatibility:
+  - Modified `exportCSV()` function in `kader-planung/internal/export/export.go` to set `writer.Comma = ';'`
+  - Updated unit tests in `export_test.go` to expect semicolon-separated values instead of comma-separated values
+  - Added comment explaining the German Excel compatibility reason
+- **Files Modified**:
+  - `kader-planung/internal/export/export.go` - Set CSV writer to use semicolon separator
+  - `kader-planung/internal/export/export_test.go` - Updated test expectations for semicolon separator
+- **Result**: Generated CSV files now use semicolon (;) as separator, making them directly compatible with German Excel installations without requiring import configuration changes
+- **Verification**: CSV export now generates files with format: `club_name;club_id;player_id;lastname;firstname;...` instead of comma-separated format
