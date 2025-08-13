@@ -9,6 +9,7 @@ import (
 	"portal64api/internal/cache"
 	"portal64api/internal/interfaces"
 	"portal64api/internal/models"
+	"portal64api/internal/repositories"
 	"portal64api/internal/services"
 	"portal64api/pkg/errors"
 
@@ -55,9 +56,9 @@ func (m *MockPlayerRepository) GetPlayersByClub(vkz string, req models.SearchReq
 	return args.Get(0).([]models.Person), args.Get(1).(int64), args.Error(2)
 }
 
-func (m *MockPlayerRepository) GetPlayerRatingHistory(personID uint) ([]models.Evaluation, error) {
+func (m *MockPlayerRepository) GetPlayerRatingHistory(personID uint) ([]repositories.EvaluationWithTournament, error) {
 	args := m.Called(personID)
-	return args.Get(0).([]models.Evaluation), args.Error(1)
+	return args.Get(0).([]repositories.EvaluationWithTournament), args.Error(1)
 }
 
 func (m *MockPlayerRepository) GetPlayerCurrentClub(personID uint) (*models.Organisation, error) {

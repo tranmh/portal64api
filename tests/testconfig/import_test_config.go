@@ -19,15 +19,15 @@ func GetTestImportConfig(tempDir string) *config.ImportConfig {
 			Password:     "testpass123",
 			RemotePath:   "/test/data/exports/",
 			FilePatterns: []string{"test_mvdsb_*.zip", "test_portal64_bdw_*.zip"},
-			Timeout:      "30s",
+			Timeout:      30 * time.Second,
 		},
 		ZIP: config.ZIPConfig{
 			PasswordMVDSB:     "testzip123",
 			PasswordPortal64:  "testzip123",
-			ExtractTimeout:    "30s",
+			ExtractTimeout:    30 * time.Second,
 		},
-		Database: config.DatabaseImportConfig{
-			ImportTimeout: "600s",
+		Database: config.ImportDBConfig{
+			ImportTimeout: 600 * time.Second,
 			TargetDatabases: []config.TargetDatabase{
 				{Name: "test_mvdsb", FilePattern: "test_mvdsb_*"},
 				{Name: "test_portal64_bdw", FilePattern: "test_portal64_bdw_*"},
@@ -52,11 +52,22 @@ func GetTestImportConfig(tempDir string) *config.ImportConfig {
 // GetTestDatabaseConfig returns a database configuration for testing
 func GetTestDatabaseConfig() *config.DatabaseConfig {
 	return &config.DatabaseConfig{
-		Host:     "localhost",
-		Port:     3306,
-		Username: "root",
-		Password: "",
-		Name:     "test_portal64api",
+		MVDSB: config.DatabaseConnection{
+			Host:     "localhost",
+			Port:     3306,
+			Username: "root",
+			Password: "",
+			Database: "test_mvdsb",
+			Charset:  "utf8mb4",
+		},
+		Portal64BDW: config.DatabaseConnection{
+			Host:     "localhost",
+			Port:     3306,
+			Username: "root",
+			Password: "",
+			Database: "test_portal64_bdw",
+			Charset:  "utf8mb4",
+		},
 	}
 }
 
@@ -72,14 +83,15 @@ func GetMinimalImportConfig(tempDir string) *config.ImportConfig {
 			Password:     "testpass",
 			RemotePath:   "/test/",
 			FilePatterns: []string{"*.zip"},
-			Timeout:      "30s",
+			Timeout:      30 * time.Second,
 		},
 		ZIP: config.ZIPConfig{
-			Password:       "testpass",
-			ExtractTimeout: "30s",
+			PasswordMVDSB:    "testpass",
+			PasswordPortal64: "testpass",
+			ExtractTimeout:   30 * time.Second,
 		},
-		Database: config.DatabaseImportConfig{
-			ImportTimeout: "60s",
+		Database: config.ImportDBConfig{
+			ImportTimeout: 60 * time.Second,
 			TargetDatabases: []config.TargetDatabase{
 				{Name: "test_db", FilePattern: "*"},
 			},

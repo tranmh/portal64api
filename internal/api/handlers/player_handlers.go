@@ -130,6 +130,11 @@ func (h *PlayerHandler) SearchPlayers(c *gin.Context) {
 func (h *PlayerHandler) GetPlayerRatingHistory(c *gin.Context) {
 	playerID := c.Param("id")
 	
+	// Add cache-control headers to prevent browser caching
+	c.Header("Cache-Control", "no-cache, no-store, must-revalidate")
+	c.Header("Pragma", "no-cache")
+	c.Header("Expires", "0")
+	
 	// Validate player ID format
 	if err := utils.ValidatePlayerID(playerID); err != nil {
 		utils.SendJSONResponse(c, http.StatusBadRequest, err)

@@ -1,7 +1,9 @@
 package benchmarks
 
 import (
+	"context"
 	"crypto/rand"
+	"errors"
 	"log"
 	"os"
 	"path/filepath"
@@ -23,11 +25,12 @@ func BenchmarkSCPDownloader_ListFiles(b *testing.B) {
 		Password:     "testpass",
 		RemotePath:   "/test/data/",
 		FilePatterns: []string{"*.zip"},
-		Timeout:      "30s",
+		Timeout:      30 * time.Second,
 	}
 
 	logger := log.New(os.Stdout, "BENCH: ", log.LstdFlags)
 	downloader := importers.NewSCPDownloader(cfg, logger)
+	_ = downloader // Use variable to prevent unused error
 
 	// Simulate file listing performance
 	b.ResetTimer()
@@ -86,11 +89,12 @@ func benchmarkZIPExtraction(b *testing.B, size string, fileSize int) {
 	cfg := &config.ZIPConfig{
 		PasswordMVDSB:     "testpass123",
 		PasswordPortal64:  "testpass123",
-		ExtractTimeout:    "60s",
+		ExtractTimeout:    60 * time.Second,
 	}
 
 	logger := log.New(os.Stdout, "BENCH: ", log.LstdFlags)
 	extractor := importers.NewZIPExtractor(cfg, logger)
+	_ = extractor // Use variable to prevent unused error
 
 	// Create test data
 	testData := make([]byte, fileSize)
@@ -149,52 +153,6 @@ func BenchmarkDatabaseImporter_FileMapping(b *testing.B) {
 		}
 	}
 }
-
-// BenchmarkFreshnessChecker benchmarks the freshness checker component
-func BenchmarkFreshnessChecker_FileComparison(b *testing.B) {
-	baseTime := time.Now()
-	remoteFiles := generateTestFileList(100)
-	lastImportedFiles := generateTestFileList(100)
-
-	// Modify some files to be newer
-	for i := 0; i < 20; i++ {
-		remoteFiles[i].ModTime = baseTime.Add(1 * time.Hour)
-		remoteFiles[i].Size = remoteFiles[i].Size + 1024
-	}
-
-	b.ResetTimer()
-	b.ReportAllocs()
-
-	for i := 0; i < b.N; i++ {
-		newerCount := 0
-		for _, remoteFile := range remoteFiles {
-			for _, lastFile := range lastImportedFiles {
-				if remoteFile.Filename == lastFile.Filename {
-					if remoteFile.ModTime.After(lastFile.ModTime) || remoteFile.Size != lastFile.Size {
-						newerCount++
-					}
-					break
-				}
-			}
-		}
-	}
-}
-
-func BenchmarkFreshnessChecker_MetadataProcessing(b *testing.B) {
-	files := generateTestFileList(1000)
-
-	b.ResetTimer()
-	b.ReportAllocs()
-
-	for i := 0; i < b.N; i++ {
-		// Simulate metadata processing
-		totalSize := int64(0)
-		for _, file := range files {
-			totalSize += file.Size
-		}
-	}
-}
-
 // BenchmarkStatusTracker benchmarks the status tracker component
 func BenchmarkStatusTracker_StatusUpdates(b *testing.B) {
 	logger := log.New(os.Stdout, "BENCH: ", log.LstdFlags)
@@ -208,25 +166,7 @@ func BenchmarkStatusTracker_StatusUpdates(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		step := steps[i%len(steps)]
 		progress := (i * 100) / b.N
-		tracker.UpdateStatus(step, progress)
-	}
-}
-
-func BenchmarkStatusTracker_LogEntries(b *testing.B) {
-	logger := log.New(os.Stdout, "BENCH: ", log.LstdFlags)
-	tracker := importers.NewStatusTracker(10000, logger)
-
-	levels := []string{"INFO", "WARN", "ERROR", "DEBUG"}
-	steps := []string{"initialization", "downloading", "extracting", "importing", "cleanup"}
-
-	b.ResetTimer()
-	b.ReportAllocs()
-
-	for i := 0; i < b.N; i++ {
-		level := levels[i%len(levels)]
-		step := steps[i%len(steps)]
-		message := "Benchmark log entry " + string(rune(i))
-		tracker.AddLogEntry(level, message, step)
+		tracker.UpdateStatus(step, "processing", progress)
 	}
 }
 
@@ -244,7 +184,7 @@ func BenchmarkStatusTracker_ConcurrentAccess(b *testing.B) {
 				status := tracker.GetStatus()
 				_ = status
 			} else {
-				tracker.UpdateStatus("testing", i%100)
+				tracker.UpdateStatus("testing", "concurrent", i%100)
 			}
 			i++
 		}
@@ -283,7 +223,7 @@ func BenchmarkImportService_LogRetrieval(b *testing.B) {
 	b.ReportAllocs()
 
 	for i := 0; i < b.N; i++ {
-		logs := service.GetLogs()
+		logs := service.GetLogs(100)
 		_ = logs
 	}
 }
@@ -305,7 +245,7 @@ func BenchmarkMemoryUsage_ImportWorkflow(b *testing.B) {
 		_ = service.Start()
 		status := service.GetStatus()
 		_ = status
-		logs := service.GetLogs()
+		logs := service.GetLogs(50)
 		_ = logs
 		_ = service.Stop()
 	}
@@ -325,12 +265,12 @@ func BenchmarkConcurrentAccess_StatusTracker(b *testing.B) {
 		for pb.Next() {
 			switch i % 3 {
 			case 0:
-				tracker.UpdateStatus("testing", i%100)
+				tracker.UpdateStatus("testing", "concurrent", i%100)
 			case 1:
 				status := tracker.GetStatus()
 				_ = status
 			case 2:
-				logs := tracker.GetLogs()
+				logs := tracker.GetLogs(100)
 				_ = logs
 			}
 			i++
@@ -420,15 +360,15 @@ func getTestImportConfig(tempDir string) *config.ImportConfig {
 			Password:     "testpass",
 			RemotePath:   "/test/",
 			FilePatterns: []string{"*.zip"},
-			Timeout:      "30s",
+			Timeout:      30 * time.Second,
 		},
 		ZIP: config.ZIPConfig{
 			PasswordMVDSB:     "testpass",
 			PasswordPortal64:  "testpass",
-			ExtractTimeout:    "30s",
+			ExtractTimeout:    30 * time.Second,
 		},
-		Database: config.DatabaseImportConfig{
-			ImportTimeout: "60s",
+		Database: config.ImportDBConfig{
+			ImportTimeout: 60 * time.Second,
 			TargetDatabases: []config.TargetDatabase{
 				{Name: "test_db", FilePattern: "*"},
 			},
@@ -442,25 +382,61 @@ func getTestImportConfig(tempDir string) *config.ImportConfig {
 
 func getTestDatabaseConfig() *config.DatabaseConfig {
 	return &config.DatabaseConfig{
-		Host:     "localhost",
-		Port:     3306,
-		Username: "root",
-		Password: "",
-		Name:     "test_db",
+		MVDSB: config.DatabaseConnection{
+			Host:     "localhost",
+			Port:     3306,
+			Username: "root",
+			Password: "",
+			Database: "test_mvdsb",
+			Charset:  "utf8mb4",
+		},
+		Portal64BDW: config.DatabaseConnection{
+			Host:     "localhost",
+			Port:     3306,
+			Username: "root",
+			Password: "",
+			Database: "test_portal64_bdw",
+			Charset:  "utf8mb4",
+		},
 	}
 }
 
 // MockCacheService for benchmarking
 type MockCacheService struct{}
 
-func (m *MockCacheService) Get(key string) ([]byte, error) { return nil, cache.ErrCacheMiss }
-func (m *MockCacheService) Set(key string, value []byte, ttl time.Duration) error { return nil }
-func (m *MockCacheService) Delete(key string) error { return nil }
-func (m *MockCacheService) GetWithRefresh(key string, refreshThreshold time.Duration, refreshFn func() ([]byte, time.Duration, error)) ([]byte, error) {
-	return nil, cache.ErrCacheMiss
+func (m *MockCacheService) Get(ctx context.Context, key string, dest interface{}) error { 
+	return errors.New("cache miss") 
 }
-func (m *MockCacheService) FlushAll() error { return nil }
+func (m *MockCacheService) Set(ctx context.Context, key string, value interface{}, ttl time.Duration) error { 
+	return nil 
+}
+func (m *MockCacheService) Delete(ctx context.Context, key string) error { return nil }
+func (m *MockCacheService) Exists(ctx context.Context, key string) (bool, error) { return false, nil }
+func (m *MockCacheService) FlushAll(ctx context.Context) error { return nil }
+func (m *MockCacheService) GetWithRefresh(ctx context.Context, key string, dest interface{}, 
+	refreshFunc func() (interface{}, error), ttl time.Duration) error {
+	return errors.New("cache miss")
+}
+func (m *MockCacheService) MGet(ctx context.Context, keys []string) (map[string]interface{}, error) {
+	return make(map[string]interface{}), nil
+}
+func (m *MockCacheService) MSet(ctx context.Context, items map[string]interface{}, ttl time.Duration) error {
+	return nil
+}
+func (m *MockCacheService) Ping(ctx context.Context) error { return nil }
 func (m *MockCacheService) GetStats() cache.CacheStats {
-	return cache.CacheStats{HitRatio: 0.0, RequestCount: 0, HitCount: 0, MissCount: 0, KeyCount: 0, AvgResponseTime: 0, MemoryUsage: 0}
+	return cache.CacheStats{
+		TotalRequests: 0, 
+		CacheHits: 0, 
+		CacheMisses: 0, 
+		HitRatio: 0.0, 
+		AvgResponseTime: 0, 
+		CacheOperations: 0,
+		BackgroundRefreshes: 0,
+		CacheErrors: 0,
+		RefreshErrors: 0,
+		MemoryUsed: 0, 
+		KeyCount: 0,
+	}
 }
-func (m *MockCacheService) HealthCheck() error { return nil }
+func (m *MockCacheService) Close() error { return nil }

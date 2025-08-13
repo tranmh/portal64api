@@ -97,7 +97,7 @@ type Tournament struct {
 
 // TableName returns the table name for Tournament
 func (Tournament) TableName() string {
-	return "tournament"
+	return "tournamentmaster"  // ✅ FIXED: Use tournamentmaster instead of tournament
 }
 
 // Evaluation represents a DWZ rating evaluation from the portal64_bdw database
@@ -186,19 +186,21 @@ type PlayerResponse struct {
 
 // RatingHistoryResponse represents a rating history entry in API responses
 type RatingHistoryResponse struct {
-	ID           uint    `json:"id"`
-	TournamentID string  `json:"tournament_id"`   // Format: C531-634-S25 (tournament code)
-	ECoefficient int     `json:"e_coefficient"`
-	We           float64 `json:"we"`
-	Achievement  int     `json:"achievement"`
-	Level        int     `json:"level"`
-	Games        int     `json:"games"`
-	UnratedGames int     `json:"unrated_games"`
-	Points       float64 `json:"points"`
-	DWZOld       int     `json:"dwz_old"`
-	DWZOldIndex  int     `json:"dwz_old_index"`
-	DWZNew       int     `json:"dwz_new"`
-	DWZNewIndex  int     `json:"dwz_new_index"`
+	ID             uint       `json:"id"`
+	TournamentID   string     `json:"tournament_id"`   // Format: C531-634-S25 (tournament code)
+	TournamentName string     `json:"tournament_name"` // Tournament name for display
+	TournamentDate *time.Time `json:"tournament_date"` // Tournament date (prefers finishedOn over computedOn)
+	ECoefficient   int        `json:"e_coefficient"`
+	We             float64    `json:"we"`
+	Achievement    int        `json:"achievement"`
+	Level          int        `json:"level"`
+	Games          int        `json:"games"`
+	UnratedGames   int        `json:"unrated_games"`
+	Points         float64    `json:"points"`
+	DWZOld         int        `json:"dwz_old"`
+	DWZOldIndex    int        `json:"dwz_old_index"`
+	DWZNew         int        `json:"dwz_new"`
+	DWZNewIndex    int        `json:"dwz_new_index"`
 }
 
 // ClubResponse represents a club in API responses

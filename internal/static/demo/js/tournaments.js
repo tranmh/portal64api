@@ -52,6 +52,14 @@ class TournamentManager {
                 this.getTournamentPlayers();
             });
         }
+
+        // Check for tournament parameter in URL and auto-load tournament details
+        const urlParams = new URLSearchParams(window.location.search);
+        const tournamentId = urlParams.get('tournament');
+        if (tournamentId) {
+            // Auto-load tournament details and switch to that tab
+            this.autoLoadTournamentDetails(tournamentId);
+        }
     }
 
     async searchTournaments() {
@@ -626,6 +634,57 @@ class TournamentManager {
         } catch (error) {
             const modalBody = document.querySelector('#tournament-detail-modal .modal-body');
             modalBody.innerHTML = `<div class="alert alert-error"><p>Failed to load tournament details: ${error.message}</p></div>`;
+        }
+    }
+
+    autoLoadTournamentDetails(tournamentId) {
+        // Pre-fill the tournament lookup form with the tournament ID
+        const tournamentForm = document.getElementById('tournament-lookup-form');
+        if (tournamentForm) {
+            const tournamentIdInput = tournamentForm.querySelector('input[name="tournament_id"]');
+            if (tournamentIdInput) {
+                tournamentIdInput.value = tournamentId;
+            }
+        }
+
+        // Automatically trigger the tournament lookup
+        this.loadSpecificTournament(tournamentId);
+        
+        // Switch to the tournament lookup tab if tabs exist
+        const tournamentTab = document.querySelector('a[href="#tournament-lookup"]');
+        if (tournamentTab) {
+            tournamentTab.click();
+        }
+    }
+
+    async loadSpecificTournament(tournamentId) {
+        try {
+            Utils.showLoading('tournament-lookup-results');
+            
+            const result = await api.getTournament(tournamentId);
+            this.displayTournamentDetail('tournament-lookup-results', result.data || result);
+            
+            // Also show tournament players automatically
+            const playersResult = await api.getTournamentPlayers(tournamentId);
+            
+            // Create a combined display showing both tournament details and players
+            let combinedHtml = `
+                <div class="tournament-detail-wrapper">
+                    <h3>Turnier-Details</h3>
+                    <div id="tournament-info-section"></div>
+                    
+                    <h3>Turnier-Spieler und Ergebnisse</h3>
+                    <div id="tournament-players-section"></div>
+                </div>
+            `;
+            
+            document.getElementById('tournament-lookup-results').innerHTML = combinedHtml;
+            
+            this.displayTournamentDetail('tournament-info-section', result.data || result);
+            this.displayTournamentPlayers('tournament-players-section', playersResult.data || playersResult);
+            
+        } catch (error) {
+            Utils.showError('tournament-lookup-results', `Turnier-Details laden fehlgeschlagen: ${error.message}`);
         }
     }
 }

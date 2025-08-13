@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"fmt"
+	"time"
 
 	"portal64api/internal/database"
 	"portal64api/internal/models"
@@ -272,12 +273,26 @@ func (r *PlayerRepository) GetPlayersByClub(vkz string, req models.SearchRequest
 	}
 }
 
-// GetPlayerRatingHistory gets rating history for a player
-func (r *PlayerRepository) GetPlayerRatingHistory(personID uint) ([]models.Evaluation, error) {
-	var evaluations []models.Evaluation
-	err := r.dbs.Portal64BDW.Where("idPerson = ?", personID).
-		Order("id DESC").Find(&evaluations).Error
-	return evaluations, err
+// EvaluationWithTournament represents an evaluation with joined tournament data
+// This eliminates N+1 queries by getting tournament name and date in a single query
+type EvaluationWithTournament struct {
+	models.Evaluation
+	TournamentName     string     `gorm:"column:tname"`
+	TournamentCode     string     `gorm:"column:tcode"`
+	TournamentFinishedOn *time.Time `gorm:"column:finishedOn"`
+	TournamentComputedOn *time.Time `gorm:"column:computedOn"`
+}
+
+// GetPlayerRatingHistory gets rating history for a player with tournament details in single query
+// This eliminates the previous N+1 query problem where we had to fetch tournament details separately
+func (r *PlayerRepository) GetPlayerRatingHistory(personID uint) ([]EvaluationWithTournament, error) {
+	var results []EvaluationWithTournament
+	err := r.dbs.Portal64BDW.Table("evaluation e").
+		Select("e.*, tm.tname, tm.tcode, tm.finishedOn, tm.computedOn").
+		Joins("INNER JOIN tournamentmaster tm ON e.idMaster = tm.id").
+		Where("e.idPerson = ? AND tm.computedOn IS NOT NULL", personID).
+		Order("e.id DESC").Find(&results).Error
+	return results, err
 }
 
 // GetPlayerCurrentClub gets the current club for a player

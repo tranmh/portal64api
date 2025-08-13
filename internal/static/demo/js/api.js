@@ -64,7 +64,9 @@ class Portal64API {
     }
 
     async getPlayerRatingHistory(id, format = 'json') {
-        return this.request(`/api/v1/players/${id}/rating-history?format=${format}`);
+        // Add cache-busting parameter to prevent browser caching
+        const timestamp = new Date().getTime();
+        return this.request(`/api/v1/players/${id}/rating-history?format=${format}&_t=${timestamp}`);
     }
 
     // Club endpoints

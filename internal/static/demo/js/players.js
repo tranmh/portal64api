@@ -153,6 +153,7 @@ class PlayerManager {
             }
             
             const result = await api.getPlayerRatingHistory(playerId, format);
+            console.log('API result for', playerId, ':', result); // DEBUG
             
             if (format === 'json') {
                 // API returns {success: true, data: [...]}
@@ -375,6 +376,7 @@ class PlayerManager {
     }
 
     displayRatingHistory(containerId, history) {
+        console.log('displayRatingHistory called with:', containerId, history); // DEBUG
         const container = document.getElementById(containerId);
         if (!container) return;
 
@@ -400,7 +402,7 @@ class PlayerManager {
                             <th>Spiele</th>
                             <th>Punkte</th>
                             <th>Leistung</th>
-                            <th>Turnier-ID</th>
+                            <th>Turnier</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -408,6 +410,22 @@ class PlayerManager {
 
         history.forEach(entry => {
             const ratingChange = entry.dwz_new - entry.dwz_old;
+            
+            // Create clickable tournament link if tournament_name is available
+            let tournamentCell;
+            if (entry.tournament_name && entry.tournament_id) {
+                tournamentCell = `
+                    <a href="#" class="tournament-link" 
+                       data-tournament-id="${Utils.sanitizeHTML(entry.tournament_id)}"
+                       title="Turnier-Spieler und Ergebnisse anzeigen">
+                        ${Utils.sanitizeHTML(entry.tournament_name)}
+                    </a>`;
+            } else if (entry.tournament_id) {
+                // Fallback to tournament ID if name not available
+                tournamentCell = `<code>${Utils.sanitizeHTML(entry.tournament_id)}</code>`;
+            } else {
+                tournamentCell = 'N/A';
+            }
             
             html += `
                 <tr>
@@ -425,7 +443,7 @@ class PlayerManager {
                     <td>${Utils.sanitizeHTML(entry.games || 'N/A')}</td>
                     <td>${Utils.sanitizeHTML(entry.points || 'N/A')}</td>
                     <td>${Utils.sanitizeHTML(entry.achievement || 'N/A')}</td>
-                    <td><code>${Utils.sanitizeHTML(entry.tournament_id || 'N/A')}</code></td>
+                    <td>${tournamentCell}</td>
                 </tr>
             `;
         });
@@ -437,6 +455,24 @@ class PlayerManager {
         `;
 
         container.innerHTML = html;
+        
+        // Add click handlers for tournament links
+        container.querySelectorAll('.tournament-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const tournamentId = e.target.dataset.tournamentId;
+                if (tournamentId) {
+                    // Navigate to tournament detail page (Turnier-Spieler und Ergebnisse)
+                    this.showTournamentDetails(tournamentId);
+                }
+            });
+        });
+    }
+
+    showTournamentDetails(tournamentId) {
+        // Navigate to tournament detail page with the specific tournament ID
+        // This will show "Turnier-Spieler und Ergebnisse" for the selected tournament
+        window.location.href = `/demo/tournaments.html?tournament=${encodeURIComponent(tournamentId)}`;
     }
 
     async viewPlayerDetail(playerId) {

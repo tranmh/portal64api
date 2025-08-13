@@ -323,6 +323,7 @@ func (s *PlayerService) GetPlayerRatingHistory(playerID string) ([]models.Rating
 }
 
 // loadPlayerRatingHistoryFromDB loads player rating history from database (used by cache refresh)
+// Uses optimized single query with JOIN to eliminate N+1 query problem
 func (s *PlayerService) loadPlayerRatingHistoryFromDB(playerID string) ([]models.RatingHistoryResponse, error) {
 	// Parse player ID to get VKZ and spielernummer
 	vkz, spielernummer, err := utils.ParsePlayerID(playerID)
@@ -336,48 +337,50 @@ func (s *PlayerService) loadPlayerRatingHistoryFromDB(playerID string) ([]models
 		return nil, errors.NewNotFoundError("Player")
 	}
 
-	evaluations, err := s.playerRepo.GetPlayerRatingHistory(person.ID)
+	// Get rating history with tournament details in single optimized query
+	results, err := s.playerRepo.GetPlayerRatingHistory(person.ID)
 	if err != nil {
 		return nil, errors.NewInternalServerError("Failed to get rating history")
 	}
 
-	// Convert evaluations to response format with tournament codes
-	responses := make([]models.RatingHistoryResponse, len(evaluations))
-	for i, eval := range evaluations {
-		// Get tournament code from tournament ID
-		var tournamentCode string
-		if eval.IDMaster == 0 {
-			// No tournament ID available
-			tournamentCode = "N/A"
-		} else {
-			// Try to get the actual tournament code
-			code, err := s.tournamentRepo.GetTournamentCodeByID(eval.IDMaster)
-			if err != nil || code == "" {
-				// If we can't find the tournament code or it's empty, use the ID as string
-				tournamentCode = fmt.Sprintf("T%d", eval.IDMaster)
-			} else {
-				tournamentCode = code
-			}
+	// Convert results to response format - no more N+1 queries needed!
+	validEvaluations := []models.RatingHistoryResponse{}
+	for _, result := range results {
+		// Tournament code and name are already available from the JOIN
+		if result.TournamentCode == "" {
+			continue // Skip evaluations without valid tournament codes
 		}
 
-		responses[i] = models.RatingHistoryResponse{
-			ID:           eval.ID,
-			TournamentID: tournamentCode,
-			ECoefficient: eval.ECoefficient,
-			We:           eval.We,
-			Achievement:  eval.Achievement,
-			Level:        eval.Level,
-			Games:        eval.Games,
-			UnratedGames: eval.UnratedGames,
-			Points:       eval.Points,
-			DWZOld:       eval.DWZOld,
-			DWZOldIndex:  eval.DWZOldIndex,
-			DWZNew:       eval.DWZNew,
-			DWZNewIndex:  eval.DWZNewIndex,
+		// Select tournament date: prefer finishedOn over computedOn as requested
+		var tournamentDate *time.Time
+		if result.TournamentFinishedOn != nil {
+			tournamentDate = result.TournamentFinishedOn
+		} else if result.TournamentComputedOn != nil {
+			tournamentDate = result.TournamentComputedOn
 		}
+
+		validEvaluation := models.RatingHistoryResponse{
+			ID:             result.ID,
+			TournamentID:   result.TournamentCode, // From JOIN - no separate query needed
+			TournamentName: result.TournamentName, // From JOIN - new field for demo
+			TournamentDate: tournamentDate,        // From JOIN - new field for kader-planung  
+			ECoefficient:   result.ECoefficient,
+			We:             result.We,
+			Achievement:    result.Achievement,
+			Level:          result.Level,
+			Games:          result.Games,
+			UnratedGames:   result.UnratedGames,
+			Points:         result.Points,
+			DWZOld:         result.DWZOld,
+			DWZOldIndex:    result.DWZOldIndex,
+			DWZNew:         result.DWZNew,
+			DWZNewIndex:    result.DWZNewIndex,
+		}
+		
+		validEvaluations = append(validEvaluations, validEvaluation)
 	}
 
-	return responses, nil
+	return validEvaluations, nil
 }
 
 // Helper methods
@@ -399,11 +402,12 @@ func (s *PlayerService) getPlayerCurrentMembership(personID uint) (*models.Mitgl
 
 // getPlayerLatestEvaluation gets the latest DWZ evaluation for a player
 func (s *PlayerService) getPlayerLatestEvaluation(personID uint) (*models.Evaluation, error) {
-	evaluations, err := s.playerRepo.GetPlayerRatingHistory(personID)
-	if err != nil || len(evaluations) == 0 {
+	results, err := s.playerRepo.GetPlayerRatingHistory(personID)
+	if err != nil || len(results) == 0 {
 		return nil, err
 	}
-	return &evaluations[0], nil
+	// Extract the Evaluation part from EvaluationWithTournament
+	return &results[0].Evaluation, nil
 }
 
 // getGenderString converts gender code to string

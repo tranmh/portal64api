@@ -33,6 +33,9 @@ func (r *TournamentRepository) SearchTournaments(req models.SearchRequest) ([]mo
 
 	query := r.dbs.Portal64BDW.Model(&models.Tournament{})
 
+	// Filter out tournaments with NULL or empty tcode
+	query = query.Where("tcode IS NOT NULL AND tcode != ''")
+
 	// Add search filter
 	if req.Query != "" {
 		searchPattern := "%" + req.Query + "%"
@@ -69,7 +72,7 @@ func (r *TournamentRepository) GetTournamentsByDateRange(startDate, endDate time
 	var total int64
 
 	query := r.dbs.Portal64BDW.Model(&models.Tournament{}).
-		Where("finishedOn BETWEEN ? AND ?", startDate, endDate)
+		Where("finishedOn BETWEEN ? AND ? AND tcode IS NOT NULL AND tcode != ''", startDate, endDate)
 
 	// Add search filter
 	if req.Query != "" {
@@ -108,7 +111,7 @@ func (r *TournamentRepository) GetRecentTournaments(days int, limit int) ([]mode
 	var tournaments []models.Tournament
 	cutoff := time.Now().AddDate(0, 0, -days)
 	
-	err := r.dbs.Portal64BDW.Where("finishedOn >= ?", cutoff).
+	err := r.dbs.Portal64BDW.Where("finishedOn >= ? AND tcode IS NOT NULL AND tcode != ''", cutoff).
 		Order("finishedOn DESC").Limit(limit).Find(&tournaments).Error
 	
 	return tournaments, err
@@ -143,6 +146,10 @@ func (r *TournamentRepository) GetEnhancedTournamentData(tournamentCode string) 
 		Status:           r.getTournamentStatus(&tournament),
 		Note:             tournament.Note,
 	}
+
+	// Apply date normalization algorithm: if any date fields are null,
+	// use the latest available date to fill in null fields
+	r.normalizeTournamentDates(response)
 
 	// Get organization information
 	if tournament.IDOrganisation > 0 {
@@ -522,4 +529,52 @@ func (r *TournamentRepository) GetTournamentCodeByID(tournamentID uint) (string,
 		return "", err
 	}
 	return tournament.TCode, nil
+}
+
+// normalizeTournamentDates implements the algorithm to fill null date fields
+// If any of the 4 date fields (start_date, end_date, finished_on, computed_on) are null,
+// compare the non-null dates and use the latest date to fill in the null fields
+func (r *TournamentRepository) normalizeTournamentDates(response *models.EnhancedTournamentResponse) {
+	// Collect all available dates
+	var availableDates []*time.Time
+	
+	if response.StartDate != nil {
+		availableDates = append(availableDates, response.StartDate)
+	}
+	if response.EndDate != nil {
+		availableDates = append(availableDates, response.EndDate)
+	}
+	if response.FinishedOn != nil {
+		availableDates = append(availableDates, response.FinishedOn)
+	}
+	if response.ComputedOn != nil {
+		availableDates = append(availableDates, response.ComputedOn)
+	}
+	
+	// If no dates available, nothing to do
+	if len(availableDates) == 0 {
+		return
+	}
+	
+	// Find the latest date
+	var latestDate *time.Time
+	for _, date := range availableDates {
+		if latestDate == nil || date.After(*latestDate) {
+			latestDate = date
+		}
+	}
+	
+	// Fill in null fields with the latest date
+	if response.StartDate == nil && latestDate != nil {
+		response.StartDate = latestDate
+	}
+	if response.EndDate == nil && latestDate != nil {
+		response.EndDate = latestDate
+	}
+	if response.FinishedOn == nil && latestDate != nil {
+		response.FinishedOn = latestDate
+	}
+	if response.ComputedOn == nil && latestDate != nil {
+		response.ComputedOn = latestDate
+	}
 }

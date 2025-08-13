@@ -86,6 +86,19 @@ func (c *Client) GetClubPlayers(clubID string, active bool, limit, offset int) (
 
 	return &response.Data, nil
 }
+// GetTournamentDetails retrieves detailed information about a specific tournament
+func (c *Client) GetTournamentDetails(tournamentID string) (*models.Tournament, error) {
+	endpoint := fmt.Sprintf("/api/v1/tournaments/%s", tournamentID)
+	
+	var tournament models.Tournament
+	if err := c.makeRequest("GET", endpoint, nil, &tournament); err != nil {
+		c.logger.Debugf("Failed to get tournament details for %s: %v", tournamentID, err)
+		return nil, fmt.Errorf("failed to get tournament details for %s: %w", tournamentID, err)
+	}
+
+	return &tournament, nil
+}
+
 // GetPlayerProfile retrieves detailed information about a specific player
 func (c *Client) GetPlayerProfile(playerID string) (*models.Player, error) {
 	endpoint := fmt.Sprintf("/api/v1/players/%s", playerID)
@@ -119,12 +132,22 @@ func (c *Client) GetPlayerRatingHistory(playerID string) (*models.RatingHistory,
 
 	// Convert tournament results to rating points
 	for _, result := range response.Data {
+		// Use pre-computed tournament date from optimized API - no more API calls needed!
+		var tournamentDate time.Time
+		if result.TournamentDate != nil {
+			tournamentDate = *result.TournamentDate
+		} else {
+			// Fallback to estimation only if date not available from API
+			c.logger.Debugf("Tournament %s has no pre-computed date, using estimation fallback", result.TournamentID)
+			tournamentDate = c.estimateTournamentDate(result.TournamentID)
+		}
+
 		point := models.RatingPoint{
-			Date:       c.estimateTournamentDate(result.TournamentID),
-			DWZ:        result.DWZNew, // Use the new DWZ after the tournament
+			Date:       tournamentDate,        // Use pre-computed date - PERFORMANCE OPTIMIZED!
+			DWZ:        result.DWZNew,         // Use the new DWZ after the tournament
 			Games:      result.Games,
-			Points:     result.Points,  // Use points directly from API
-			Tournament: result.TournamentID,
+			Points:     result.Points,         // Use points directly from API
+			Tournament: result.TournamentName, // Use tournament name instead of ID for better display
 		}
 
 		history.Points = append(history.Points, point)
@@ -270,10 +293,75 @@ func (c *Client) SetLogger(logger *logrus.Logger) {
 	c.logger = logger
 }
 
+// getTournamentDate fetches tournament details and returns the latest available date
+// from start_date, end_date, finished_on, computed_on fields
+// 
+// DEPRECATED: This method is no longer used due to API optimization.
+// The Portal64 API now returns pre-computed tournament dates in rating history responses,
+// eliminating the need for additional API calls. This method is kept for reference only.
+func (c *Client) getTournamentDate(tournamentID string) time.Time {
+	// Try to fetch tournament details
+	tournament, err := c.GetTournamentDetails(tournamentID)
+	if err != nil {
+		c.logger.Debugf("Could not fetch tournament details for %s, trying to estimate date from ID: %v", tournamentID, err)
+		// Use estimation as fallback instead of generic date
+		estimatedDate := c.estimateTournamentDate(tournamentID)
+		c.logger.Debugf("Tournament %s: estimated date %v from tournament ID", tournamentID, estimatedDate)
+		return estimatedDate
+	}
+
+	// Collect all available dates
+	var availableDates []time.Time
+	
+	if tournament.StartDate != nil {
+		availableDates = append(availableDates, *tournament.StartDate)
+		c.logger.Debugf("Tournament %s has start_date: %v", tournamentID, *tournament.StartDate)
+	}
+	
+	if tournament.EndDate != nil {
+		availableDates = append(availableDates, *tournament.EndDate)
+		c.logger.Debugf("Tournament %s has end_date: %v", tournamentID, *tournament.EndDate)
+	}
+	
+	if tournament.FinishedOn != nil {
+		availableDates = append(availableDates, *tournament.FinishedOn)
+		c.logger.Debugf("Tournament %s has finished_on: %v", tournamentID, *tournament.FinishedOn)
+	}
+	
+	if tournament.ComputedOn != nil {
+		availableDates = append(availableDates, *tournament.ComputedOn)
+		c.logger.Debugf("Tournament %s has computed_on: %v", tournamentID, *tournament.ComputedOn)
+	}
+
+	// If no dates are available, use estimation as fallback
+	if len(availableDates) == 0 {
+		c.logger.Debugf("Tournament %s has no available dates, estimating date from ID", tournamentID)
+		estimatedDate := c.estimateTournamentDate(tournamentID)
+		c.logger.Debugf("Tournament %s: estimated date %v from tournament ID", tournamentID, estimatedDate)
+		return estimatedDate
+	}
+
+	// Find the latest date
+	latestDate := availableDates[0]
+	for _, date := range availableDates[1:] {
+		if date.After(latestDate) {
+			latestDate = date
+		}
+	}
+
+	c.logger.Debugf("Tournament %s: selected latest date %v from %d available dates", 
+		tournamentID, latestDate, len(availableDates))
+	
+	return latestDate
+}
+
 // estimateTournamentDate attempts to estimate tournament date from tournament ID
 // Tournament IDs follow patterns like: B914-550-P4P, C413-612-DSV, T117893
 // Format appears to be: [LETTER][YY][WW]-[OTHER]-[SUFFIX]
 // Where YY = year (14 = 2014, 13 = 2013, etc.) and WW = week of year
+// 
+// DEPRECATED: This function is kept for fallback purposes only.
+// Use getTournamentDate() instead which fetches real tournament data.
 func (c *Client) estimateTournamentDate(tournamentID string) time.Time {
 	// Default fallback date if parsing fails
 	fallbackDate := time.Now().AddDate(-1, 0, 0) // 1 year ago

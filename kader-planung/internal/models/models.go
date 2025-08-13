@@ -36,19 +36,21 @@ type Player struct {
 }
 // TournamentResult represents a single tournament result from the API
 type TournamentResult struct {
-	ID            int     `json:"id"`
-	TournamentID  string  `json:"tournament_id"`
-	ECoefficient  int     `json:"e_coefficient"`
-	We            float64 `json:"we"`
-	Achievement   int     `json:"achievement"`
-	Level         int     `json:"level"`
-	Games         int     `json:"games"`
-	UnratedGames  int     `json:"unrated_games"`
-	Points        float64 `json:"points"`
-	DWZOld        int     `json:"dwz_old"`
-	DWZOldIndex   int     `json:"dwz_old_index"`
-	DWZNew        int     `json:"dwz_new"`
-	DWZNewIndex   int     `json:"dwz_new_index"`
+	ID             int        `json:"id"`
+	TournamentID   string     `json:"tournament_id"`
+	TournamentName string     `json:"tournament_name"` // NEW: Tournament name from optimized API
+	TournamentDate *time.Time `json:"tournament_date"` // NEW: Pre-computed tournament date
+	ECoefficient   int        `json:"e_coefficient"`
+	We             float64    `json:"we"`
+	Achievement    int        `json:"achievement"`
+	Level          int        `json:"level"`
+	Games          int        `json:"games"`
+	UnratedGames   int        `json:"unrated_games"`
+	Points         float64    `json:"points"`
+	DWZOld         int        `json:"dwz_old"`
+	DWZOldIndex    int        `json:"dwz_old_index"`
+	DWZNew         int        `json:"dwz_new"`
+	DWZNewIndex    int        `json:"dwz_new_index"`
 }
 
 // RatingHistoryResponse represents the API response for rating history
@@ -147,6 +149,19 @@ type APIError struct {
 
 func (e APIError) Error() string {
 	return e.Message
+}
+
+// Tournament represents a tournament with date information
+type Tournament struct {
+	ID           string     `json:"id"`
+	Name         string     `json:"name"`
+	Code         string     `json:"code"`
+	Type         string     `json:"type"`
+	StartDate    *time.Time `json:"start_date"`
+	EndDate      *time.Time `json:"end_date"`
+	FinishedOn   *time.Time `json:"finished_on"`
+	ComputedOn   *time.Time `json:"computed_on"`
+	Status       string     `json:"status"`
 }
 
 // Constants for data availability
