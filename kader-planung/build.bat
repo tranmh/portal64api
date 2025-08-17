@@ -17,8 +17,17 @@ if "%COMMAND%"=="build" (
         echo Error: Build failed
         exit /b 1
     )
+
+    set GOARCH=amd64
+    set GOOS=linux
+    go build -ldflags="-s -w" -o .\bin\kader-planung .\cmd\kader-planung
+    if !errorlevel! neq 0 (
+        echo Error: Build failed
+        exit /b 1
+    )
     
     echo Build successful: .\bin\kader-planung.exe
+    echo Build successful: .\bin\kader-planung
     goto :eof
 )
 
