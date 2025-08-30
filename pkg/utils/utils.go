@@ -23,7 +23,7 @@ func ParseSearchParams(c *gin.Context) (models.SearchRequest, error) {
 
 // ParseSearchParamsWithDefaults parses search parameters with custom defaults
 func ParseSearchParamsWithDefaults(c *gin.Context, defaultSortBy, defaultSortOrder string) (models.SearchRequest, error) {
-	limitStr := c.DefaultQuery("limit", "20")
+	limitStr := c.DefaultQuery("limit", "500")
 	offsetStr := c.DefaultQuery("offset", "0")
 
 	limit, err := strconv.Atoi(limitStr)
@@ -36,9 +36,9 @@ func ParseSearchParamsWithDefaults(c *gin.Context, defaultSortBy, defaultSortOrd
 		return models.SearchRequest{}, errors.NewBadRequestError("Invalid offset parameter")
 	}
 
-	// Validate limit (max 100, min 1)
-	if limit > 100 {
-		return models.SearchRequest{}, errors.NewBadRequestError("Limit cannot exceed 100")
+	// Validate limit (max 500, min 1)
+	if limit > 500 {
+		return models.SearchRequest{}, errors.NewBadRequestError("Limit cannot exceed 500")
 	}
 	if limit < 1 {
 		return models.SearchRequest{}, errors.NewBadRequestError("Limit must be at least 1")
@@ -71,12 +71,12 @@ func ValidateClubID(clubID string) error {
 	if clubID == "" {
 		return errors.NewBadRequestError("Club ID cannot be empty")
 	}
-	
+
 	// Club ID should be alphanumeric and between 3-10 characters
 	if len(clubID) < 3 || len(clubID) > 10 {
 		return errors.NewBadRequestError("Invalid club ID format")
 	}
-	
+
 	// Check if all characters are alphanumeric
 	for i := 0; i < len(clubID); i++ {
 		c := clubID[i]
@@ -84,7 +84,7 @@ func ValidateClubID(clubID string) error {
 			return errors.NewBadRequestError("Invalid club ID format")
 		}
 	}
-	
+
 	return nil
 }
 
@@ -93,80 +93,80 @@ func ValidatePlayerID(playerID string) error {
 	if playerID == "" {
 		return errors.NewBadRequestError("Player ID cannot be empty")
 	}
-	
+
 	parts := strings.Split(playerID, "-")
 	if len(parts) != 2 {
 		return errors.NewBadRequestError("Invalid player ID format (expected: CLUBID-PERSONID)")
 	}
-	
+
 	// Validate club part
 	if err := ValidateClubID(parts[0]); err != nil {
 		return errors.NewBadRequestError("Invalid player ID format (expected: CLUBID-PERSONID)")
 	}
-	
+
 	// Validate person ID part
 	if _, err := strconv.ParseUint(parts[1], 10, 32); err != nil {
 		return errors.NewBadRequestError("Invalid player ID format (expected: CLUBID-PERSONID)")
 	}
-	
+
 	return nil
 }
 
-// ValidateTournamentID validates a tournament ID format 
+// ValidateTournamentID validates a tournament ID format
 // Supports multiple formats: B718-A08-BEL, C529-K00-HT1, T117893
 func ValidateTournamentID(tournamentID string) error {
 	if tournamentID == "" {
 		return errors.NewBadRequestError("Tournament ID cannot be empty")
 	}
-	
+
 	// First character must be a letter A-Z
 	if len(tournamentID) < 1 || tournamentID[0] < 'A' || tournamentID[0] > 'Z' {
 		return errors.NewBadRequestError("Invalid tournament ID format (expected: B718-A08-BEL, C529-K00-HT1, or T117893)")
 	}
-	
+
 	// Handle "T" format tournaments (e.g., T117893)
 	if tournamentID[0] == 'T' {
 		// T format: T followed by digits
 		if len(tournamentID) < 2 {
 			return errors.NewBadRequestError("Invalid tournament ID format (expected: B718-A08-BEL, C529-K00-HT1, or T117893)")
 		}
-		
+
 		// Rest should be digits
 		for j := 1; j < len(tournamentID); j++ {
 			if tournamentID[j] < '0' || tournamentID[j] > '9' {
 				return errors.NewBadRequestError("Invalid tournament ID format (expected: B718-A08-BEL, C529-K00-HT1, or T117893)")
 			}
 		}
-		
+
 		return nil
 	}
-	
+
 	// Handle traditional format tournaments (e.g., B718-A08-BEL, C529-K00-HT1)
 	parts := strings.Split(tournamentID, "-")
 	if len(parts) != 3 {
 		return errors.NewBadRequestError("Invalid tournament ID format (expected: B718-A08-BEL, C529-K00-HT1, or T117893)")
 	}
-	
+
 	// First part: should start with a letter (A-Z) followed by digits
 	// Letter represents decade: A=2000-2009, B=2010-2019, C=2020-2029, etc.
 	if len(parts[0]) < 2 {
 		return errors.NewBadRequestError("Invalid tournament ID format (expected: B718-A08-BEL, C529-K00-HT1, or T117893)")
 	}
-	
+
 	// Rest of first part should be digits (year digit + week number)
 	for j := 1; j < len(parts[0]); j++ {
 		if parts[0][j] < '0' || parts[0][j] > '9' {
 			return errors.NewBadRequestError("Invalid tournament ID format (expected: B718-A08-BEL, C529-K00-HT1, or T117893)")
 		}
 	}
-	
+
 	// Validate other parts have some basic structure
 	for i := 1; i < len(parts); i++ {
 		if len(parts[i]) < 1 {
 			return errors.NewBadRequestError("Invalid tournament ID format (expected: B718-A08-BEL, C529-K00-HT1, or T117893)")
 		}
 	}
-	
+
 	return nil
 }
 func GeneratePlayerID(vkz string, spielernummer uint) string {
@@ -247,8 +247,8 @@ func validateCSVData(data interface{}) error {
 func SendCSVResponse(c *gin.Context, filename string, data interface{}) {
 	// Validate data first before setting headers
 	if err := validateCSVData(data); err != nil {
-		SendJSONResponse(c, http.StatusInternalServerError, 
-			errors.NewInternalServerError("Failed to generate CSV: " + err.Error()))
+		SendJSONResponse(c, http.StatusInternalServerError,
+			errors.NewInternalServerError("Failed to generate CSV: "+err.Error()))
 		return
 	}
 
@@ -320,12 +320,12 @@ func writeCSV(writer *csv.Writer, data interface{}) error {
 
 	// Get headers from first element
 	firstElement := v.Index(0)
-	
+
 	// Handle interface{} elements - extract underlying value
 	if firstElement.Kind() == reflect.Interface && !firstElement.IsNil() {
 		firstElement = firstElement.Elem()
 	}
-	
+
 	if firstElement.Kind() == reflect.Ptr {
 		if firstElement.IsNil() {
 			return fmt.Errorf("first element is nil")
@@ -349,12 +349,12 @@ func writeCSV(writer *csv.Writer, data interface{}) error {
 	// Write data rows
 	for i := 0; i < v.Len(); i++ {
 		element := v.Index(i)
-		
+
 		// Handle interface{} elements - extract underlying value
 		if element.Kind() == reflect.Interface && !element.IsNil() {
 			element = element.Elem()
 		}
-		
+
 		if element.Kind() == reflect.Ptr {
 			if element.IsNil() {
 				continue // Skip nil elements
@@ -513,7 +513,7 @@ func ExtractBirthYear(birthDate *time.Time) *int {
 	if birthDate == nil {
 		return nil
 	}
-	
+
 	year := birthDate.Year()
 	return &year
 }

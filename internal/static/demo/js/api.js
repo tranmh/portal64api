@@ -102,7 +102,7 @@ class Portal64API {
         return this.request(`/api/v1/tournaments?${queryString}`);
     }
 
-    async getRecentTournaments(days = 30, limit = 20, format = 'json') {
+    async getRecentTournaments(days = 30, limit = 500, format = 'json') {
         return this.request(`/api/v1/tournaments/recent?days=${days}&limit=${limit}&format=${format}`);
     }
 

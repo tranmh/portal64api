@@ -15,13 +15,13 @@ import (
 // searchResult holds cached search results
 type searchResult struct {
 	Responses []models.PlayerResponse `json:"responses"`
-	Meta      *models.Meta           `json:"meta"`
+	Meta      *models.Meta            `json:"meta"`
 }
 
 // clubPlayersResult holds cached club players results
 type clubPlayersResult struct {
 	Responses []models.PlayerResponse `json:"responses"`
-	Meta      *models.Meta           `json:"meta"`
+	Meta      *models.Meta            `json:"meta"`
 }
 
 // PlayerService handles player business logic
@@ -48,18 +48,18 @@ func NewPlayerService(playerRepo interfaces.PlayerRepositoryInterface, clubRepo 
 func (s *PlayerService) GetPlayerByID(playerID string) (*models.PlayerResponse, error) {
 	ctx := context.Background()
 	cacheKey := s.keyGen.PlayerKey(playerID)
-	
+
 	// Try cache first with background refresh
 	var cachedPlayer models.PlayerResponse
-	err := s.cacheService.GetWithRefresh(ctx, cacheKey, &cachedPlayer, 
+	err := s.cacheService.GetWithRefresh(ctx, cacheKey, &cachedPlayer,
 		func() (interface{}, error) {
 			return s.loadPlayerFromDB(playerID)
 		}, 1*time.Hour)
-	
+
 	if err == nil {
 		return &cachedPlayer, nil
 	}
-	
+
 	// Cache miss or error - load directly from database
 	return s.loadPlayerFromDB(playerID)
 }
@@ -110,28 +110,28 @@ func (s *PlayerService) loadPlayerFromDB(playerID string) (*models.PlayerRespons
 // SearchPlayers searches players by name
 func (s *PlayerService) SearchPlayers(req models.SearchRequest, showActive bool) ([]models.PlayerResponse, *models.Meta, error) {
 	ctx := context.Background()
-	
+
 	// Generate cache key for this search
 	searchHash := s.keyGen.GenerateSearchHash(req, showActive)
 	cacheKey := s.keyGen.SearchKey("player", searchHash)
-	
+
 	// Try cache first with background refresh
 	var cachedResult searchResult
 	err := s.cacheService.GetWithRefresh(ctx, cacheKey, &cachedResult,
 		func() (interface{}, error) {
 			return s.executePlayerSearch(req, showActive)
 		}, 15*time.Minute) // Cache search results for 15 minutes
-	
+
 	if err == nil {
 		return cachedResult.Responses, cachedResult.Meta, nil
 	}
-	
+
 	// Cache miss or error - execute search directly
 	result, err := s.executePlayerSearch(req, showActive)
 	if err != nil {
 		return nil, nil, err
 	}
-	
+
 	searchResult := result.(*searchResult)
 	return searchResult.Responses, searchResult.Meta, nil
 }
@@ -149,12 +149,12 @@ func (s *PlayerService) executePlayerSearch(req models.SearchRequest, showActive
 		// Try to get club information
 		club, clubErr := s.getPlayerCurrentClub(player.ID)
 		membership, membershipErr := s.getPlayerCurrentMembership(player.ID)
-		
+
 		// If showActive is true, skip players without valid memberships
 		if showActive && (clubErr != nil || membershipErr != nil || club == nil || membership == nil) {
 			continue
 		}
-		
+
 		response := models.PlayerResponse{
 			Name:      player.Name,
 			Firstname: player.Vorname,
@@ -205,28 +205,28 @@ func (s *PlayerService) executePlayerSearch(req models.SearchRequest, showActive
 // GetPlayersByClub gets all players in a specific club
 func (s *PlayerService) GetPlayersByClub(clubID string, req models.SearchRequest, showActive bool) ([]models.PlayerResponse, *models.Meta, error) {
 	ctx := context.Background()
-	
+
 	// Generate cache key for club players (include sort order and showActive flag)
 	sortKey := fmt.Sprintf("%s:%s:%t", req.SortBy, req.SortOrder, showActive)
 	cacheKey := s.keyGen.ClubPlayersKey(clubID, sortKey)
-	
+
 	// Try cache first with background refresh
 	var cachedResult clubPlayersResult
 	err := s.cacheService.GetWithRefresh(ctx, cacheKey, &cachedResult,
 		func() (interface{}, error) {
 			return s.executeClubPlayersSearch(clubID, req, showActive)
 		}, 30*time.Minute) // Cache club players for 30 minutes
-	
+
 	if err == nil {
 		return cachedResult.Responses, cachedResult.Meta, nil
 	}
-	
+
 	// Cache miss or error - execute search directly
 	result, err := s.executeClubPlayersSearch(clubID, req, showActive)
 	if err != nil {
 		return nil, nil, err
 	}
-	
+
 	clubResult := result.(*clubPlayersResult)
 	return clubResult.Responses, clubResult.Meta, nil
 }
@@ -249,12 +249,12 @@ func (s *PlayerService) executeClubPlayersSearch(clubID string, req models.Searc
 	for _, player := range players {
 		// Get membership to retrieve spielernummer
 		membership, membershipErr := s.getPlayerCurrentMembership(player.ID)
-		
+
 		// If showActive is true, skip players without valid memberships
 		if showActive && (membershipErr != nil || membership == nil) {
 			continue
 		}
-		
+
 		response := models.PlayerResponse{
 			Name:      player.Name,
 			Firstname: player.Vorname,
@@ -306,18 +306,18 @@ func (s *PlayerService) executeClubPlayersSearch(clubID string, req models.Searc
 func (s *PlayerService) GetPlayerRatingHistory(playerID string) ([]models.RatingHistoryResponse, error) {
 	ctx := context.Background()
 	cacheKey := s.keyGen.PlayerRatingHistoryKey(playerID)
-	
+
 	// Try cache first with background refresh
 	var cachedHistory []models.RatingHistoryResponse
 	err := s.cacheService.GetWithRefresh(ctx, cacheKey, &cachedHistory,
 		func() (interface{}, error) {
 			return s.loadPlayerRatingHistoryFromDB(playerID)
 		}, 7*24*time.Hour) // Cache rating history for 7 days (historical data rarely changes)
-	
+
 	if err == nil {
 		return cachedHistory, nil
 	}
-	
+
 	// Cache miss or error - load directly from database
 	return s.loadPlayerRatingHistoryFromDB(playerID)
 }
@@ -363,7 +363,7 @@ func (s *PlayerService) loadPlayerRatingHistoryFromDB(playerID string) ([]models
 			ID:             result.ID,
 			TournamentID:   result.TournamentCode, // From JOIN - no separate query needed
 			TournamentName: result.TournamentName, // From JOIN - new field for demo
-			TournamentDate: tournamentDate,        // From JOIN - new field for kader-planung  
+			TournamentDate: tournamentDate,        // From JOIN - new field for kader-planung
 			ECoefficient:   result.ECoefficient,
 			We:             result.We,
 			Achievement:    result.Achievement,
@@ -376,7 +376,7 @@ func (s *PlayerService) loadPlayerRatingHistoryFromDB(playerID string) ([]models
 			DWZNew:         result.DWZNew,
 			DWZNewIndex:    result.DWZNewIndex,
 		}
-		
+
 		validEvaluations = append(validEvaluations, validEvaluation)
 	}
 
@@ -426,9 +426,11 @@ func getGenderString(gender int) string {
 func getPlayerStatus(status uint) string {
 	switch status {
 	case 0:
-		return "active"
+		return "active" // Primary membership
 	case 1:
-		return "inactive"
+		return "active" // Approved membership (was incorrectly "inactive")
+	case 2:
+		return "inactive" // Passive membership
 	default:
 		return "unknown"
 	}

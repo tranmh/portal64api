@@ -23,27 +23,27 @@ type ImportCompleteCallback interface {
 
 // ImportService handles scheduled and manual database imports
 type ImportService struct {
-	config            *config.ImportConfig
-	dbConfig          *config.DatabaseConfig
-	cacheService      cache.CacheService
-	logger            *log.Logger
-	
+	config       *config.ImportConfig
+	dbConfig     *config.DatabaseConfig
+	cacheService cache.CacheService
+	logger       *log.Logger
+
 	// Components
-	downloader        *importers.SCPDownloader
-	extractor         *importers.ZIPExtractor
-	importer          *importers.DatabaseImporter
-	freshnessChecker  *importers.FreshnessChecker
-	statusTracker     *importers.StatusTracker
-	
+	downloader       *importers.SCPDownloader
+	extractor        *importers.ZIPExtractor
+	importer         *importers.DatabaseImporter
+	freshnessChecker *importers.FreshnessChecker
+	statusTracker    *importers.StatusTracker
+
 	// Scheduling
-	cron              *cron.Cron
-	cronJobID         cron.EntryID
-	
+	cron      *cron.Cron
+	cronJobID cron.EntryID
+
 	// Control
-	isRunning         bool
-	stopChan          chan struct{}
-	mutex             sync.RWMutex
-	
+	isRunning bool
+	stopChan  chan struct{}
+	mutex     sync.RWMutex
+
 	// Callbacks
 	onCompleteCallbacks []ImportCompleteCallback
 }
@@ -158,7 +158,7 @@ func (is *ImportService) GetStatus() *models.ImportStatus {
 // GetLogs returns recent import log entries
 func (is *ImportService) GetLogs(limit int) []models.ImportLogEntry {
 	if limit <= 0 {
-		limit = 100 // Default limit
+		limit = 500 // Default limit
 	}
 	return is.statusTracker.GetLogs(limit)
 }
@@ -222,10 +222,10 @@ func (is *ImportService) executeImport() error {
 	is.statusTracker.LogDuration(models.StepCompleted, "Import completed successfully", duration)
 
 	is.logger.Printf("Import process completed successfully in %s", duration)
-	
+
 	// Notify completion callbacks
 	is.notifyCompletionCallbacks()
-	
+
 	return nil
 }
 
@@ -294,7 +294,7 @@ func (is *ImportService) executeFreshnessCheck() error {
 	filesInfo := &models.ImportFilesInfo{
 		RemoteFiles: remoteFiles,
 	}
-	
+
 	if lastImport, err := is.freshnessChecker.GetLastImportInfo(); err == nil {
 		filesInfo.LastImported = lastImport.Files
 	}
@@ -462,14 +462,14 @@ func (is *ImportService) executeCleanupPhase(downloadedFiles []models.FileMetada
 func (is *ImportService) checkLoadAndDelay() error {
 	// For now, implement a simple check
 	// This could be enhanced to check actual API metrics
-	
+
 	for attempt := 0; attempt < is.config.LoadCheck.MaxDelays; attempt++ {
 		// Simple load check - in production this could check:
 		// - Active database connections
 		// - CPU usage
 		// - Memory usage
 		// - Request rate
-		
+
 		if !is.isAPIUnderHeavyLoad() {
 			return nil // Proceed with import
 		}
@@ -508,7 +508,7 @@ func (is *ImportService) notifyCompletionCallbacks() {
 	callbacks := make([]ImportCompleteCallback, len(is.onCompleteCallbacks))
 	copy(callbacks, is.onCompleteCallbacks)
 	is.mutex.RUnlock()
-	
+
 	for _, callback := range callbacks {
 		// Call callback in a separate goroutine to avoid blocking
 		go func(cb ImportCompleteCallback) {

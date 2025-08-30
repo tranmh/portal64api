@@ -161,7 +161,7 @@ func (c *Client) GetPlayerRatingHistory(playerID string) (*models.RatingHistory,
 
 // GetAllClubs retrieves all clubs by making multiple paginated requests
 func (c *Client) GetAllClubs(prefix string) ([]models.Club, error) {
-	const batchSize = 100
+	const batchSize = 500
 	var allClubs []models.Club
 	offset := 0
 
@@ -200,7 +200,7 @@ func (c *Client) GetAllClubs(prefix string) ([]models.Club, error) {
 }
 // GetAllClubPlayers retrieves all players for a specific club
 func (c *Client) GetAllClubPlayers(clubID string, activeOnly bool) ([]models.Player, error) {
-	const batchSize = 100
+	const batchSize = 500
 	var allPlayers []models.Player
 	offset := 0
 

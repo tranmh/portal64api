@@ -120,8 +120,9 @@ func (di *DatabaseImporter) dropDatabase(db *sql.DB, dbName string) error {
 
 // createDatabase creates a new database with specified charset
 func (di *DatabaseImporter) createDatabase(db *sql.DB, dbName, charset string) error {
-	query := fmt.Sprintf("CREATE DATABASE `%s` CHARACTER SET %s COLLATE %s_general_ci", 
-		dbName, charset, charset)
+	// Always use utf8mb4 for database creation to match production server
+	// The charset parameter is used for client connections, not database creation
+	query := fmt.Sprintf("CREATE DATABASE `%s` CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci", dbName)
 	_, err := db.Exec(query)
 	return err
 }

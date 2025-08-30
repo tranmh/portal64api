@@ -6,7 +6,7 @@ import (
 	"sort"
 	"strings"
 	"time"
-	
+
 	"portal64api/internal/cache"
 	"portal64api/internal/models"
 	"portal64api/internal/repositories"
@@ -41,18 +41,18 @@ func (s *ClubService) SetPlayerRepository(playerRepo *repositories.PlayerReposit
 func (s *ClubService) GetClubByID(clubID string) (*models.ClubResponse, error) {
 	ctx := context.Background()
 	cacheKey := s.keyGen.ClubKey(clubID)
-	
+
 	// Try cache first with background refresh
 	var cachedClub models.ClubResponse
 	err := s.cacheService.GetWithRefresh(ctx, cacheKey, &cachedClub,
 		func() (interface{}, error) {
 			return s.loadClubFromDB(clubID)
 		}, 1*time.Hour) // Cache club details for 1 hour
-	
+
 	if err == nil {
 		return &cachedClub, nil
 	}
-	
+
 	// Cache miss or error - load directly from database
 	return s.loadClubFromDB(clubID)
 }
@@ -88,7 +88,7 @@ func (s *ClubService) loadClubFromDB(clubID string) (*models.ClubResponse, error
 // clubSearchResult wraps search results for caching
 type clubSearchResult struct {
 	Responses []models.ClubResponse `json:"responses"`
-	Meta      *models.Meta         `json:"meta"`
+	Meta      *models.Meta          `json:"meta"`
 }
 
 // SearchClubs searches clubs by name or other criteria
@@ -230,9 +230,9 @@ func (s *ClubService) loadClubProfileFromDB(clubID string) (*models.ClubProfileR
 
 	// Initialize the profile response
 	profile := &models.ClubProfileResponse{
-		Club:            *club,
-		Players:         []models.PlayerResponse{},
-		PlayerCount:     club.MemberCount,
+		Club:              *club,
+		Players:           []models.PlayerResponse{},
+		PlayerCount:       club.MemberCount,
 		ActivePlayerCount: 0,
 		RatingStats: models.ClubRatingStats{
 			AverageDWZ:         club.AverageDWZ,
@@ -240,8 +240,8 @@ func (s *ClubService) loadClubProfileFromDB(clubID string) (*models.ClubProfileR
 		},
 		RecentTournaments: []models.TournamentResponse{},
 		TournamentCount:   0,
-		Teams:            []models.ClubTeam{},
-		Contact:          s.generateClubContact(clubID, club.Name),
+		Teams:             []models.ClubTeam{},
+		Contact:           s.generateClubContact(clubID, club.Name),
 	}
 
 	// Get club players if player repository is available
@@ -250,10 +250,10 @@ func (s *ClubService) loadClubProfileFromDB(clubID string) (*models.ClubProfileR
 		if err == nil {
 			profile.Players = players
 			profile.PlayerCount = len(players)
-			
+
 			// Calculate rating statistics
 			profile.RatingStats = s.calculateRatingStats(players)
-			
+
 			// Count active players
 			activeCount := 0
 			for _, player := range players {
@@ -272,12 +272,12 @@ func (s *ClubService) loadClubProfileFromDB(clubID string) (*models.ClubProfileR
 func (s *ClubService) getClubPlayersForProfile(clubID string) ([]models.PlayerResponse, error) {
 	// Get players for this club (active only)
 	req := models.SearchRequest{
-		Limit:  100, // Limit to first 100 players for profile display
-		Offset: 0,
-		SortBy: "current_dwz",
+		Limit:     500, // Limit to first 500 players for profile display
+		Offset:    0,
+		SortBy:    "current_dwz",
 		SortOrder: "desc", // Highest rated first
 	}
-	
+
 	players, _, err := s.playerRepo.GetPlayersByClub(clubID, req, true) // true = active only
 	if err != nil {
 		return nil, err
@@ -346,7 +346,7 @@ func (s *ClubService) calculateRatingStats(players []models.PlayerResponse) mode
 
 		// Sort ratings for median and min/max
 		sort.Ints(dwzRatings)
-		
+
 		// Median DWZ
 		if len(dwzRatings)%2 == 0 {
 			stats.MedianDWZ = float64(dwzRatings[len(dwzRatings)/2-1]+dwzRatings[len(dwzRatings)/2]) / 2
@@ -385,19 +385,19 @@ func (s *ClubService) getRatingCategory(dwz int) string {
 // generateClubContact generates contact information for a club
 func (s *ClubService) generateClubContact(clubID, clubName string) models.ClubContact {
 	contact := models.ClubContact{}
-	
+
 	// Get the organization record first to get the ID
 	club, err := s.clubRepo.GetClubByVKZ(clubID)
 	if err != nil {
 		return contact // Return empty contact if club not found
 	}
-	
+
 	// Get contact information from the address tables
 	contactInfo, err := s.clubRepo.GetClubContactInfo(club.ID)
 	if err != nil {
 		return contact // Return empty contact if query fails
 	}
-	
+
 	// Map the contact information to the response model
 	if website, exists := contactInfo["website"]; exists {
 		// Ensure website has proper protocol
@@ -411,23 +411,23 @@ func (s *ClubService) generateClubContact(clubID, clubName string) models.ClubCo
 			contact.Website = website
 		}
 	}
-	
+
 	if email, exists := contactInfo["email"]; exists {
 		contact.Email = email
 	}
-	
+
 	if phone, exists := contactInfo["phone"]; exists {
 		contact.Phone = phone
 	}
-	
+
 	if address, exists := contactInfo["address"]; exists {
 		contact.Address = address
 	}
-	
+
 	if meetingTime, exists := contactInfo["meeting_time"]; exists {
 		contact.MeetingTime = meetingTime
 	}
-	
+
 	// If we have additional address components, use them for meeting place
 	if city, exists := contactInfo["city"]; exists {
 		if additional, hasAdditional := contactInfo["additional"]; hasAdditional && additional != "" {
@@ -438,7 +438,7 @@ func (s *ClubService) generateClubContact(clubID, clubName string) models.ClubCo
 			contact.MeetingPlace = city
 		}
 	}
-	
+
 	return contact
 }
 

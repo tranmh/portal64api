@@ -36,20 +36,20 @@ func NewPlayerHandler(playerService *services.PlayerService) *PlayerHandler {
 // @Router /api/v1/players/{id} [get]
 func (h *PlayerHandler) GetPlayer(c *gin.Context) {
 	playerID := c.Param("id")
-	
+
 	// Validate player ID format
 	if err := utils.ValidatePlayerID(playerID); err != nil {
 		utils.SendJSONResponse(c, http.StatusBadRequest, err)
 		return
 	}
-	
+
 	player, err := h.playerService.GetPlayerByID(playerID)
 	if err != nil {
 		if apiErr, ok := err.(errors.APIError); ok {
 			utils.SendJSONResponse(c, apiErr.Code, apiErr)
 			return
 		}
-		utils.SendJSONResponse(c, http.StatusInternalServerError, 
+		utils.SendJSONResponse(c, http.StatusInternalServerError,
 			errors.NewInternalServerError("Failed to get player"))
 		return
 	}
@@ -64,7 +64,7 @@ func (h *PlayerHandler) GetPlayer(c *gin.Context) {
 // @Accept json
 // @Produce json,text/csv
 // @Param query query string false "Search query"
-// @Param limit query int false "Limit (max 100)" default(20)
+// @Param limit query int false "Limit (max 500)" default(20)
 // @Param offset query int false "Offset" default(0)
 // @Param sort_by query string false "Sort by field" default(name)
 // @Param sort_order query string false "Sort order (asc/desc)" default(asc)
@@ -88,7 +88,7 @@ func (h *PlayerHandler) SearchPlayers(c *gin.Context) {
 	activeStr := c.DefaultQuery("active", "true")
 	showActive, err := strconv.ParseBool(activeStr)
 	if err != nil {
-		utils.SendJSONResponse(c, http.StatusBadRequest, 
+		utils.SendJSONResponse(c, http.StatusBadRequest,
 			errors.NewBadRequestError("Invalid active parameter"))
 		return
 	}
@@ -99,7 +99,7 @@ func (h *PlayerHandler) SearchPlayers(c *gin.Context) {
 			utils.SendJSONResponse(c, apiErr.Code, apiErr)
 			return
 		}
-		utils.SendJSONResponse(c, http.StatusInternalServerError, 
+		utils.SendJSONResponse(c, http.StatusInternalServerError,
 			errors.NewInternalServerError("Failed to search players"))
 		return
 	}
@@ -129,25 +129,25 @@ func (h *PlayerHandler) SearchPlayers(c *gin.Context) {
 // @Router /api/v1/players/{id}/rating-history [get]
 func (h *PlayerHandler) GetPlayerRatingHistory(c *gin.Context) {
 	playerID := c.Param("id")
-	
+
 	// Add cache-control headers to prevent browser caching
 	c.Header("Cache-Control", "no-cache, no-store, must-revalidate")
 	c.Header("Pragma", "no-cache")
 	c.Header("Expires", "0")
-	
+
 	// Validate player ID format
 	if err := utils.ValidatePlayerID(playerID); err != nil {
 		utils.SendJSONResponse(c, http.StatusBadRequest, err)
 		return
 	}
-	
+
 	history, err := h.playerService.GetPlayerRatingHistory(playerID)
 	if err != nil {
 		if apiErr, ok := err.(errors.APIError); ok {
 			utils.SendJSONResponse(c, apiErr.Code, apiErr)
 			return
 		}
-		utils.SendJSONResponse(c, http.StatusInternalServerError, 
+		utils.SendJSONResponse(c, http.StatusInternalServerError,
 			errors.NewInternalServerError("Failed to get rating history"))
 		return
 	}
@@ -163,7 +163,7 @@ func (h *PlayerHandler) GetPlayerRatingHistory(c *gin.Context) {
 // @Produce json,text/csv
 // @Param id path string true "Club ID (format: C0101)"
 // @Param query query string false "Search query"
-// @Param limit query int false "Limit (max 100)" default(20)
+// @Param limit query int false "Limit (max 500)" default(20)
 // @Param offset query int false "Offset" default(0)
 // @Param sort_by query string false "Sort by field" default(current_dwz)
 // @Param sort_order query string false "Sort order (asc/desc)" default(desc)
@@ -175,13 +175,13 @@ func (h *PlayerHandler) GetPlayerRatingHistory(c *gin.Context) {
 // @Router /api/v1/clubs/{id}/players [get]
 func (h *PlayerHandler) GetPlayersByClub(c *gin.Context) {
 	clubID := c.Param("id")
-	
+
 	// Validate club ID format
 	if err := utils.ValidateClubID(clubID); err != nil {
 		utils.SendJSONResponse(c, http.StatusBadRequest, err)
 		return
 	}
-	
+
 	req, err := utils.ParseSearchParamsWithDefaults(c, "current_dwz", "desc")
 	if err != nil {
 		if apiErr, ok := err.(errors.APIError); ok {
@@ -196,7 +196,7 @@ func (h *PlayerHandler) GetPlayersByClub(c *gin.Context) {
 	activeStr := c.DefaultQuery("active", "true")
 	showActive, err := strconv.ParseBool(activeStr)
 	if err != nil {
-		utils.SendJSONResponse(c, http.StatusBadRequest, 
+		utils.SendJSONResponse(c, http.StatusBadRequest,
 			errors.NewBadRequestError("Invalid active parameter"))
 		return
 	}
@@ -207,7 +207,7 @@ func (h *PlayerHandler) GetPlayersByClub(c *gin.Context) {
 			utils.SendJSONResponse(c, apiErr.Code, apiErr)
 			return
 		}
-		utils.SendJSONResponse(c, http.StatusInternalServerError, 
+		utils.SendJSONResponse(c, http.StatusInternalServerError,
 			errors.NewInternalServerError("Failed to get club players"))
 		return
 	}

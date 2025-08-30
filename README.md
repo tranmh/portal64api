@@ -170,7 +170,7 @@ curl -H "Accept: text/csv" "http://localhost:8080/api/v1/players/C0101-1014"
 
 Most endpoints support these common parameters:
 - `query` - Search term
-- `limit` - Maximum results (default: 20, max: 100)
+- `limit` - Maximum results (default: 500, max: 500)
 - `offset` - Results to skip (default: 0)
 - `sort_by` - Field to sort by
 - `sort_order` - Sort direction (`asc`/`desc`)
@@ -454,9 +454,9 @@ All API responses follow a consistent format:
   "data": { ... },
   "meta": {
     "total": 150,
-    "limit": 20,
+    "limit": 500,
     "offset": 0,
-    "count": 20
+    "count": 500
   }
 }
 ```

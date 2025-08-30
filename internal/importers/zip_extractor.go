@@ -331,7 +331,7 @@ func (ze *ZIPExtractor) FindDatabaseDumps(extractDir string) (map[string]string,
 func (ze *ZIPExtractor) identifyDatabase(filename string) string {
 	filename = strings.ToLower(filename)
 	
-	if strings.Contains(filename, "mvdsb") {
+	if strings.Contains(filename, "mvdsb") || strings.Contains(filename, "mvdbs") {
 		return "mvdsb"
 	}
 	if strings.Contains(filename, "portal64_bdw") || strings.Contains(filename, "portal64bdw") {

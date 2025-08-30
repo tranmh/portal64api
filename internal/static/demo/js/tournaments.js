@@ -88,7 +88,7 @@ class TournamentManager {
             const form = document.getElementById('recent-tournaments-form');
             const formData = Utils.getFormData(form);
             const days = formData.days || 30;
-            const limit = formData.limit || 20;
+            const limit = formData.limit || 500;
             const format = formData.format || 'json';
             
             const result = await api.getRecentTournaments(days, limit, format);

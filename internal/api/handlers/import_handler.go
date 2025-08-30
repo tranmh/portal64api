@@ -96,7 +96,7 @@ func (ih *ImportHandler) StartManualImport(c *gin.Context) {
 // @Tags import
 // @Accept json
 // @Produce json
-// @Param limit query int false "Maximum number of log entries to return (default: 100)"
+// @Param limit query int false "Maximum number of log entries to return (default: 500)"
 // @Success 200 {object} models.ImportLogsResponse
 // @Router /api/v1/import/logs [get]
 func (ih *ImportHandler) GetImportLogs(c *gin.Context) {
@@ -176,12 +176,12 @@ func (ih *ImportHandler) GetImportHealth(c *gin.Context) {
 	}
 
 	status := ih.importService.GetStatus()
-	
+
 	health := gin.H{
-		"status":       "available",
-		"service":      "import",
+		"status":         "available",
+		"service":        "import",
 		"current_status": status.Status,
-		"last_success": status.LastSuccess,
+		"last_success":   status.LastSuccess,
 		"next_scheduled": status.NextScheduled,
 	}
 
@@ -209,10 +209,10 @@ func (ih *ImportHandler) GetImportHealth(c *gin.Context) {
 func (ih *ImportHandler) GetImportConfig(c *gin.Context) {
 	// This would typically be restricted to admin users
 	// For now, return basic configuration without sensitive data
-	
+
 	config := gin.H{
-		"enabled":    true, // This could be read from actual config
-		"schedule":   "0 2 * * *", // Daily at 2 AM
+		"enabled":  true,        // This could be read from actual config
+		"schedule": "0 2 * * *", // Daily at 2 AM
 		"components": gin.H{
 			"freshness_check": true,
 			"scp_download":    true,

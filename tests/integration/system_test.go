@@ -28,7 +28,7 @@ func (suite *SystemTestSuite) SetupSuite() {
 	suite.client = &http.Client{
 		Timeout: 30 * time.Second,
 	}
-	
+
 	// Test if the server is reachable
 	resp, err := suite.client.Get(suite.baseURL + "/health")
 	if err != nil {
@@ -36,7 +36,7 @@ func (suite *SystemTestSuite) SetupSuite() {
 		return
 	}
 	defer resp.Body.Close()
-	
+
 	if resp.StatusCode != http.StatusOK {
 		suite.T().Skipf("Skipping system tests: server health check failed with status %d", resp.StatusCode)
 	}
@@ -45,7 +45,7 @@ func (suite *SystemTestSuite) SetupSuite() {
 // makeRequest helper function to make HTTP requests
 func (suite *SystemTestSuite) makeRequest(method, path string, params map[string]string) (*http.Response, error) {
 	reqURL := suite.baseURL + path
-	
+
 	if len(params) > 0 {
 		values := url.Values{}
 		for k, v := range params {
@@ -53,12 +53,12 @@ func (suite *SystemTestSuite) makeRequest(method, path string, params map[string
 		}
 		reqURL += "?" + values.Encode()
 	}
-	
+
 	req, err := http.NewRequest(method, reqURL, nil)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	req.Header.Set("Accept", "application/json")
 	return suite.client.Do(req)
 }
@@ -67,11 +67,11 @@ func (suite *SystemTestSuite) makeRequest(method, path string, params map[string
 func (suite *SystemTestSuite) assertJSONResponse(resp *http.Response, expectedStatus int) *models.Response {
 	assert.Equal(suite.T(), expectedStatus, resp.StatusCode)
 	assert.Contains(suite.T(), resp.Header.Get("Content-Type"), "application/json")
-	
+
 	var response models.Response
 	err := json.NewDecoder(resp.Body).Decode(&response)
 	assert.NoError(suite.T(), err)
-	
+
 	return &response
 }
 
@@ -87,14 +87,15 @@ func (suite *SystemTestSuite) TestHealthEndpoint() {
 	resp, err := suite.makeRequest("GET", "/health", nil)
 	assert.NoError(suite.T(), err)
 	defer resp.Body.Close()
-	
+
 	assert.Equal(suite.T(), http.StatusOK, resp.StatusCode)
-	
+
 	var health map[string]interface{}
 	err = json.NewDecoder(resp.Body).Decode(&health)
 	assert.NoError(suite.T(), err)
 	assert.Equal(suite.T(), "healthy", health["status"])
 }
+
 // MARK: - Clubs Tests
 
 // TestClubsSearch tests the clubs search endpoint with various parameters
@@ -131,7 +132,7 @@ func (suite *SystemTestSuite) TestClubsSearch() {
 		},
 		{
 			name:   "max limit",
-			params: map[string]string{"limit": "100"},
+			params: map[string]string{"limit": "500"},
 			status: http.StatusOK,
 		},
 		{
@@ -145,18 +146,18 @@ func (suite *SystemTestSuite) TestClubsSearch() {
 			status: http.StatusBadRequest,
 		},
 	}
-	
+
 	for _, tc := range testCases {
 		suite.Run(tc.name, func() {
 			resp, err := suite.makeRequest("GET", "/api/v1/clubs", tc.params)
 			assert.NoError(suite.T(), err)
 			defer resp.Body.Close()
-			
+
 			if tc.status == http.StatusOK {
 				response := suite.assertJSONResponse(resp, tc.status)
 				assert.True(suite.T(), response.Success)
 				assert.NotNil(suite.T(), response.Data)
-				
+
 				// Verify meta information for paginated responses
 				if response.Meta != nil {
 					assert.GreaterOrEqual(suite.T(), response.Meta.Count, 0)
@@ -179,7 +180,7 @@ func (suite *SystemTestSuite) TestClubsCSVFormat() {
 	})
 	assert.NoError(suite.T(), err)
 	defer resp.Body.Close()
-	
+
 	suite.assertCSVResponse(resp, http.StatusOK)
 }
 
@@ -206,13 +207,13 @@ func (suite *SystemTestSuite) TestClubsAll() {
 			status: http.StatusOK,
 		},
 	}
-	
+
 	for _, tc := range testCases {
 		suite.Run(tc.name, func() {
 			resp, err := suite.makeRequest("GET", "/api/v1/clubs/all", tc.params)
 			assert.NoError(suite.T(), err)
 			defer resp.Body.Close()
-			
+
 			if strings.Contains(tc.params["format"], "csv") {
 				suite.assertCSVResponse(resp, tc.status)
 			} else {
@@ -257,14 +258,14 @@ func (suite *SystemTestSuite) TestClubByID() {
 			expected: http.StatusOK, // Routes to SearchClubs, not GetClub
 		},
 	}
-	
+
 	for _, tc := range testCases {
 		suite.Run(tc.name, func() {
 			path := fmt.Sprintf("/api/v1/clubs/%s", tc.clubID)
 			resp, err := suite.makeRequest("GET", path, tc.params)
 			assert.NoError(suite.T(), err)
 			defer resp.Body.Close()
-			
+
 			// For valid IDs, we accept both 200 (found) and 404 (not found)
 			if tc.expected == http.StatusOK && (resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusNotFound) {
 				if strings.Contains(tc.params["format"], "csv") && resp.StatusCode == http.StatusOK {
@@ -299,27 +300,27 @@ func (suite *SystemTestSuite) TestPlayersByClub() {
 		expected int
 	}{
 		{
-			name:   "valid club with players search",
-			clubID: "C0101",
-			params: map[string]string{"limit": "10"},
+			name:     "valid club with players search",
+			clubID:   "C0101",
+			params:   map[string]string{"limit": "10"},
 			expected: http.StatusOK, // May be 404 if club doesn't exist
 		},
 		{
-			name:   "players with query filter",
-			clubID: "C0101", 
-			params: map[string]string{"query": "Mueller", "limit": "5"},
+			name:     "players with query filter",
+			clubID:   "C0101",
+			params:   map[string]string{"query": "Mueller", "limit": "5"},
 			expected: http.StatusOK,
 		},
 		{
-			name:   "players CSV format",
-			clubID: "C0101",
-			params: map[string]string{"format": "csv", "limit": "5"},
+			name:     "players CSV format",
+			clubID:   "C0101",
+			params:   map[string]string{"format": "csv", "limit": "5"},
 			expected: http.StatusOK,
 		},
 		{
-			name:   "players with sorting",
-			clubID: "C0101",
-			params: map[string]string{"sort_by": "name", "sort_order": "desc", "limit": "5"},
+			name:     "players with sorting",
+			clubID:   "C0101",
+			params:   map[string]string{"sort_by": "name", "sort_order": "desc", "limit": "5"},
 			expected: http.StatusOK,
 		},
 		{
@@ -329,14 +330,14 @@ func (suite *SystemTestSuite) TestPlayersByClub() {
 			expected: http.StatusBadRequest,
 		},
 	}
-	
+
 	for _, tc := range testCases {
 		suite.Run(tc.name, func() {
 			path := fmt.Sprintf("/api/v1/clubs/%s/players", tc.clubID)
 			resp, err := suite.makeRequest("GET", path, tc.params)
 			assert.NoError(suite.T(), err)
 			defer resp.Body.Close()
-			
+
 			// For valid club IDs, accept both 200 and 404
 			if tc.expected == http.StatusOK && (resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusNotFound) {
 				if strings.Contains(tc.params["format"], "csv") && resp.StatusCode == http.StatusOK {
@@ -392,7 +393,7 @@ func (suite *SystemTestSuite) TestPlayersSearch() {
 		},
 		{
 			name:   "max limit players",
-			params: map[string]string{"limit": "100"},
+			params: map[string]string{"limit": "500"},
 			status: http.StatusOK,
 		},
 		{
@@ -401,13 +402,13 @@ func (suite *SystemTestSuite) TestPlayersSearch() {
 			status: http.StatusBadRequest,
 		},
 	}
-	
+
 	for _, tc := range testCases {
 		suite.Run(tc.name, func() {
 			resp, err := suite.makeRequest("GET", "/api/v1/players", tc.params)
 			assert.NoError(suite.T(), err)
 			defer resp.Body.Close()
-			
+
 			if tc.status == http.StatusOK {
 				if strings.Contains(tc.params["format"], "csv") {
 					suite.assertCSVResponse(resp, tc.status)
@@ -415,7 +416,7 @@ func (suite *SystemTestSuite) TestPlayersSearch() {
 					response := suite.assertJSONResponse(resp, tc.status)
 					assert.True(suite.T(), response.Success)
 					assert.NotNil(suite.T(), response.Data)
-					
+
 					if response.Meta != nil {
 						assert.GreaterOrEqual(suite.T(), response.Meta.Count, 0)
 						assert.GreaterOrEqual(suite.T(), response.Meta.Total, response.Meta.Count)
@@ -469,14 +470,14 @@ func (suite *SystemTestSuite) TestPlayerByID() {
 			expected: http.StatusBadRequest,
 		},
 	}
-	
+
 	for _, tc := range testCases {
 		suite.Run(tc.name, func() {
 			path := fmt.Sprintf("/api/v1/players/%s", tc.playerID)
 			resp, err := suite.makeRequest("GET", path, tc.params)
 			assert.NoError(suite.T(), err)
 			defer resp.Body.Close()
-			
+
 			// For valid IDs, accept both 200 and 404
 			if tc.expected == http.StatusOK && (resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusNotFound) {
 				if strings.Contains(tc.params["format"], "csv") && resp.StatusCode == http.StatusOK {
@@ -530,14 +531,14 @@ func (suite *SystemTestSuite) TestPlayerRatingHistory() {
 			expected: http.StatusBadRequest,
 		},
 	}
-	
+
 	for _, tc := range testCases {
 		suite.Run(tc.name, func() {
 			path := fmt.Sprintf("/api/v1/players/%s/rating-history", tc.playerID)
 			resp, err := suite.makeRequest("GET", path, tc.params)
 			assert.NoError(suite.T(), err)
 			defer resp.Body.Close()
-			
+
 			// For valid IDs, accept both 200 and 404
 			if tc.expected == http.StatusOK && (resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusNotFound) {
 				if strings.Contains(tc.params["format"], "csv") && resp.StatusCode == http.StatusOK {
@@ -600,7 +601,7 @@ func (suite *SystemTestSuite) TestTournamentsSearch() {
 		},
 		{
 			name:   "max limit tournaments",
-			params: map[string]string{"limit": "100"},
+			params: map[string]string{"limit": "500"},
 			status: http.StatusOK,
 		},
 		{
@@ -609,13 +610,13 @@ func (suite *SystemTestSuite) TestTournamentsSearch() {
 			status: http.StatusBadRequest,
 		},
 	}
-	
+
 	for _, tc := range testCases {
 		suite.Run(tc.name, func() {
 			resp, err := suite.makeRequest("GET", "/api/v1/tournaments", tc.params)
 			assert.NoError(suite.T(), err)
 			defer resp.Body.Close()
-			
+
 			if tc.status == http.StatusOK {
 				if strings.Contains(tc.params["format"], "csv") {
 					suite.assertCSVResponse(resp, tc.status)
@@ -623,7 +624,7 @@ func (suite *SystemTestSuite) TestTournamentsSearch() {
 					response := suite.assertJSONResponse(resp, tc.status)
 					assert.True(suite.T(), response.Success)
 					assert.NotNil(suite.T(), response.Data)
-					
+
 					if response.Meta != nil {
 						assert.GreaterOrEqual(suite.T(), response.Meta.Count, 0)
 						assert.GreaterOrEqual(suite.T(), response.Meta.Total, response.Meta.Count)
@@ -697,13 +698,13 @@ func (suite *SystemTestSuite) TestTournamentsByDateRange() {
 			status: http.StatusBadRequest,
 		},
 	}
-	
+
 	for _, tc := range testCases {
 		suite.Run(tc.name, func() {
 			resp, err := suite.makeRequest("GET", "/api/v1/tournaments/date-range", tc.params)
 			assert.NoError(suite.T(), err)
 			defer resp.Body.Close()
-			
+
 			if tc.status == http.StatusOK {
 				if strings.Contains(tc.params["format"], "csv") {
 					suite.assertCSVResponse(resp, tc.status)
@@ -749,13 +750,13 @@ func (suite *SystemTestSuite) TestTournamentsRecent() {
 			status: http.StatusOK,
 		},
 	}
-	
+
 	for _, tc := range testCases {
 		suite.Run(tc.name, func() {
 			resp, err := suite.makeRequest("GET", "/api/v1/tournaments/recent", tc.params)
 			assert.NoError(suite.T(), err)
 			defer resp.Body.Close()
-			
+
 			if strings.Contains(tc.params["format"], "csv") {
 				suite.assertCSVResponse(resp, tc.status)
 			} else {
@@ -806,14 +807,14 @@ func (suite *SystemTestSuite) TestTournamentByID() {
 			expected:     http.StatusBadRequest,
 		},
 	}
-	
+
 	for _, tc := range testCases {
 		suite.Run(tc.name, func() {
 			path := fmt.Sprintf("/api/v1/tournaments/%s", tc.tournamentID)
 			resp, err := suite.makeRequest("GET", path, tc.params)
 			assert.NoError(suite.T(), err)
 			defer resp.Body.Close()
-			
+
 			// For valid IDs, accept both 200 and 404
 			if tc.expected == http.StatusOK && (resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusNotFound) {
 				if strings.Contains(tc.params["format"], "csv") && resp.StatusCode == http.StatusOK {
@@ -845,13 +846,13 @@ func (suite *SystemTestSuite) TestInvalidEndpoints() {
 		"/api/v1/tournaments/invalid/route",
 		"/api/v2/players", // Wrong version
 	}
-	
+
 	for _, path := range invalidPaths {
 		suite.Run(fmt.Sprintf("invalid_path_%s", strings.ReplaceAll(path, "/", "_")), func() {
 			resp, err := suite.makeRequest("GET", path, nil)
 			assert.NoError(suite.T(), err)
 			defer resp.Body.Close()
-			
+
 			assert.Equal(suite.T(), http.StatusNotFound, resp.StatusCode)
 		})
 	}
@@ -864,18 +865,18 @@ func (suite *SystemTestSuite) TestUnsupportedMethods() {
 		"/api/v1/clubs",
 		"/api/v1/tournaments",
 	}
-	
+
 	methods := []string{"POST", "PUT", "DELETE", "PATCH"}
-	
+
 	for _, endpoint := range endpoints {
 		for _, method := range methods {
 			suite.Run(fmt.Sprintf("%s_%s", method, strings.ReplaceAll(endpoint, "/", "_")), func() {
 				resp, err := suite.makeRequest(method, endpoint, nil)
 				assert.NoError(suite.T(), err)
 				defer resp.Body.Close()
-				
+
 				// Should return 405 Method Not Allowed or 404
-				assert.True(suite.T(), resp.StatusCode == http.StatusMethodNotAllowed || 
+				assert.True(suite.T(), resp.StatusCode == http.StatusMethodNotAllowed ||
 					resp.StatusCode == http.StatusNotFound)
 			})
 		}
@@ -886,22 +887,22 @@ func (suite *SystemTestSuite) TestUnsupportedMethods() {
 func (suite *SystemTestSuite) TestCORSHeaders() {
 	testPaths := []string{
 		"/api/v1/players",
-		"/api/v1/clubs", 
+		"/api/v1/clubs",
 		"/api/v1/tournaments",
 	}
-	
+
 	for _, path := range testPaths {
 		suite.Run(fmt.Sprintf("cors_%s", strings.ReplaceAll(path, "/", "_")), func() {
 			req, err := http.NewRequest("OPTIONS", suite.baseURL+path, nil)
 			assert.NoError(suite.T(), err)
-			
+
 			req.Header.Set("Origin", "http://localhost:3000")
 			req.Header.Set("Access-Control-Request-Method", "GET")
-			
+
 			resp, err := suite.client.Do(req)
 			assert.NoError(suite.T(), err)
 			defer resp.Body.Close()
-			
+
 			// Check for CORS headers
 			origin := resp.Header.Get("Access-Control-Allow-Origin")
 			assert.True(suite.T(), origin == "*" || origin == "http://localhost:3000")
@@ -914,8 +915,8 @@ func (suite *SystemTestSuite) TestCORSHeaders() {
 // TestResponseTimes tests that API responses are within acceptable time limits
 func (suite *SystemTestSuite) TestResponseTimes() {
 	endpoints := []struct {
-		name string
-		path string
+		name   string
+		path   string
 		params map[string]string
 	}{
 		{"players_search", "/api/v1/players", map[string]string{"limit": "20"}},
@@ -924,20 +925,20 @@ func (suite *SystemTestSuite) TestResponseTimes() {
 		{"clubs_all", "/api/v1/clubs/all", map[string]string{}},
 		{"tournaments_recent", "/api/v1/tournaments/recent", map[string]string{"limit": "10"}},
 	}
-	
+
 	maxResponseTime := 5 * time.Second
-	
+
 	for _, endpoint := range endpoints {
 		suite.Run(endpoint.name, func() {
 			start := time.Now()
 			resp, err := suite.makeRequest("GET", endpoint.path, endpoint.params)
 			duration := time.Since(start)
-			
+
 			assert.NoError(suite.T(), err)
 			defer resp.Body.Close()
-			
+
 			assert.Equal(suite.T(), http.StatusOK, resp.StatusCode)
-			assert.True(suite.T(), duration < maxResponseTime, 
+			assert.True(suite.T(), duration < maxResponseTime,
 				"Response time %v exceeded maximum %v for %s", duration, maxResponseTime, endpoint.name)
 		})
 	}
@@ -948,14 +949,14 @@ func (suite *SystemTestSuite) TestConcurrentRequests() {
 	const numConcurrent = 10
 	const endpoint = "/api/v1/players"
 	params := map[string]string{"limit": "5"}
-	
+
 	type response struct {
 		statusCode int
 		err        error
 	}
-	
+
 	responses := make(chan response, numConcurrent)
-	
+
 	// Launch concurrent requests
 	for i := 0; i < numConcurrent; i++ {
 		go func() {
@@ -968,7 +969,7 @@ func (suite *SystemTestSuite) TestConcurrentRequests() {
 			}
 		}()
 	}
-	
+
 	// Collect results
 	successCount := 0
 	for i := 0; i < numConcurrent; i++ {
@@ -977,9 +978,9 @@ func (suite *SystemTestSuite) TestConcurrentRequests() {
 			successCount++
 		}
 	}
-	
+
 	// Expect most requests to succeed
-	assert.GreaterOrEqual(suite.T(), successCount, numConcurrent/2, 
+	assert.GreaterOrEqual(suite.T(), successCount, numConcurrent/2,
 		"Too many concurrent requests failed: %d/%d succeeded", successCount, numConcurrent)
 }
 
@@ -1022,13 +1023,13 @@ func (suite *SystemTestSuite) TestBoundaryValues() {
 			expected: http.StatusOK, // Should handle gracefully
 		},
 	}
-	
+
 	for _, tc := range testCases {
 		suite.Run(tc.name, func() {
 			resp, err := suite.makeRequest("GET", tc.endpoint, tc.params)
 			assert.NoError(suite.T(), err)
 			defer resp.Body.Close()
-			
+
 			if tc.expected == http.StatusOK {
 				assert.Equal(suite.T(), tc.expected, resp.StatusCode)
 			} else {
@@ -1043,10 +1044,10 @@ func (suite *SystemTestSuite) TestBoundaryValues() {
 func (suite *SystemTestSuite) TestSwaggerDocumentation() {
 	swaggerPaths := []string{
 		"/swagger/",
-		"/swagger/index.html", 
+		"/swagger/index.html",
 		"/swagger/doc.json",
 	}
-	
+
 	foundWorkingEndpoint := false
 	for _, path := range swaggerPaths {
 		resp, err := suite.makeRequest("GET", path, nil)
@@ -1054,13 +1055,13 @@ func (suite *SystemTestSuite) TestSwaggerDocumentation() {
 			continue
 		}
 		defer resp.Body.Close()
-		
+
 		if resp.StatusCode == http.StatusOK || (resp.StatusCode >= 300 && resp.StatusCode < 400) {
 			foundWorkingEndpoint = true
 			break
 		}
 	}
-	
+
 	assert.True(suite.T(), foundWorkingEndpoint, "No working Swagger documentation endpoint found")
 }
 

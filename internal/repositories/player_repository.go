@@ -69,7 +69,7 @@ func (r *PlayerRepository) SearchPlayers(req models.SearchRequest, showActive bo
 		// This matches the original PHP implementation: name >= 'query' AND name < 'queryzz'
 		upperBound := req.Query + "zz"
 		query = query.Where(
-			"(person.name >= ? AND person.name < ?) OR (person.vorname >= ? AND person.vorname < ?)", 
+			"(person.name >= ? AND person.name < ?) OR (person.vorname >= ? AND person.vorname < ?)",
 			req.Query, upperBound, req.Query, upperBound)
 	}
 
@@ -88,7 +88,7 @@ func (r *PlayerRepository) SearchPlayers(req models.SearchRequest, showActive bo
 
 	// Apply pagination and execute
 	err := query.Order(orderBy).Limit(req.Limit).Offset(req.Offset).Find(&players).Error
-	
+
 	return players, total, err
 }
 
@@ -109,52 +109,52 @@ func (r *PlayerRepository) GetPlayersByClub(vkz string, req models.SearchRequest
 		// Use EXISTS subquery instead of IN clause to avoid MySQL parameter limit
 		query := r.dbs.MVDSB.Model(&models.Person{}).
 			Where("status = 0 AND EXISTS (SELECT 1 FROM mitgliedschaft WHERE mitgliedschaft.person = person.id AND mitgliedschaft.organisation = ? AND mitgliedschaft.bis IS NULL AND mitgliedschaft.status = 0)", org.ID)
-		
+
 		// Add search filter
 		if req.Query != "" {
 			upperBound := req.Query + "zz"
 			query = query.Where(
-				"(name >= ? AND name < ?) OR (vorname >= ? AND vorname < ?)", 
+				"(name >= ? AND name < ?) OR (vorname >= ? AND vorname < ?)",
 				req.Query, upperBound, req.Query, upperBound)
 		}
-		
+
 		// Get total count
 		query.Count(&total)
-		
+
 		// Get all matching players (without pagination for sorting)
 		allPlayers := make([]models.Person, 0)
 		err := query.Find(&allPlayers).Error
 		if err != nil {
 			return nil, 0, err
 		}
-		
+
 		// FIXED: Batch fetch evaluations to avoid N+1 queries
 		// Extract all player IDs for batch query
 		allPersonIDs := make([]uint, len(allPlayers))
 		for i, player := range allPlayers {
 			allPersonIDs[i] = player.ID
 		}
-		
+
 		// Fetch latest evaluations in batches to avoid MySQL parameter limit
 		const batchSize = 1000
 		allEvaluations := make([]models.Evaluation, 0)
-		
+
 		for i := 0; i < len(allPersonIDs); i += batchSize {
 			end := i + batchSize
 			if end > len(allPersonIDs) {
 				end = len(allPersonIDs)
 			}
-			
+
 			var batchEvaluations []models.Evaluation
 			err = r.dbs.Portal64BDW.Where("idPerson IN ?", allPersonIDs[i:end]).
 				Order("idPerson, id DESC").Find(&batchEvaluations).Error
 			if err != nil {
 				return nil, 0, err
 			}
-			
+
 			allEvaluations = append(allEvaluations, batchEvaluations...)
 		}
-		
+
 		// Create a map of latest evaluations by person ID for fast lookup
 		latestEvaluations := make(map[uint]models.Evaluation)
 		for _, eval := range allEvaluations {
@@ -162,26 +162,26 @@ func (r *PlayerRepository) GetPlayersByClub(vkz string, req models.SearchRequest
 				latestEvaluations[eval.IDPerson] = eval
 			}
 		}
-		
+
 		// Get latest evaluations for all players and sort
 		type PlayerWithDWZ struct {
 			Player models.Person
 			DWZ    int
 		}
-		
+
 		playersWithDWZ := make([]PlayerWithDWZ, len(allPlayers))
 		for i, player := range allPlayers {
 			dwz := 0
 			if eval, exists := latestEvaluations[player.ID]; exists {
 				dwz = eval.DWZNew
 			}
-			
+
 			playersWithDWZ[i] = PlayerWithDWZ{
 				Player: player,
 				DWZ:    dwz,
 			}
 		}
-		
+
 		// Sort by DWZ
 		for i := 0; i < len(playersWithDWZ)-1; i++ {
 			for j := i + 1; j < len(playersWithDWZ); j++ {
@@ -196,7 +196,7 @@ func (r *PlayerRepository) GetPlayersByClub(vkz string, req models.SearchRequest
 				}
 			}
 		}
-		
+
 		// Apply pagination
 		start := req.Offset
 		end := req.Offset + req.Limit
@@ -206,41 +206,41 @@ func (r *PlayerRepository) GetPlayersByClub(vkz string, req models.SearchRequest
 		if end > len(playersWithDWZ) {
 			end = len(playersWithDWZ)
 		}
-		
+
 		// Extract paginated players
 		players = make([]models.Person, end-start)
 		for i := start; i < end; i++ {
 			players[i-start] = playersWithDWZ[i].Player
 		}
-		
+
 		return players, total, nil
-		
+
 	} else if req.SortBy == "birth_year" {
 		// For birth year sorting, use EXISTS subquery instead of IN clause
 		query := r.dbs.MVDSB.Model(&models.Person{}).
 			Where("status = 0 AND EXISTS (SELECT 1 FROM mitgliedschaft WHERE mitgliedschaft.person = person.id AND mitgliedschaft.organisation = ? AND mitgliedschaft.bis IS NULL AND mitgliedschaft.status = 0)", org.ID)
-		
+
 		// Add search filter
 		if req.Query != "" {
 			upperBound := req.Query + "zz"
 			query = query.Where(
-				"(name >= ? AND name < ?) OR (vorname >= ? AND vorname < ?)", 
+				"(name >= ? AND name < ?) OR (vorname >= ? AND vorname < ?)",
 				req.Query, upperBound, req.Query, upperBound)
 		}
-		
+
 		// Get total count
 		query.Count(&total)
-		
+
 		// Use SQL YEAR function for sorting by birth year
 		direction := "ASC"
 		if req.SortOrder == "desc" {
 			direction = "DESC"
 		}
 		orderBy := fmt.Sprintf("YEAR(geburtsdatum) %s", direction)
-		
+
 		err := query.Order(orderBy).Limit(req.Limit).Offset(req.Offset).Find(&players).Error
 		return players, total, err
-		
+
 	} else {
 		// Standard sorting for other fields - use EXISTS subquery instead of IN clause
 		query := r.dbs.MVDSB.Model(&models.Person{}).
@@ -251,7 +251,7 @@ func (r *PlayerRepository) GetPlayersByClub(vkz string, req models.SearchRequest
 			// Use range-based prefix matching for better performance and index usage
 			upperBound := req.Query + "zz"
 			query = query.Where(
-				"(name >= ? AND name < ?) OR (vorname >= ? AND vorname < ?)", 
+				"(name >= ? AND name < ?) OR (vorname >= ? AND vorname < ?)",
 				req.Query, upperBound, req.Query, upperBound)
 		}
 
@@ -277,8 +277,8 @@ func (r *PlayerRepository) GetPlayersByClub(vkz string, req models.SearchRequest
 // This eliminates N+1 queries by getting tournament name and date in a single query
 type EvaluationWithTournament struct {
 	models.Evaluation
-	TournamentName     string     `gorm:"column:tname"`
-	TournamentCode     string     `gorm:"column:tcode"`
+	TournamentName       string     `gorm:"column:tname"`
+	TournamentCode       string     `gorm:"column:tcode"`
 	TournamentFinishedOn *time.Time `gorm:"column:finishedOn"`
 	TournamentComputedOn *time.Time `gorm:"column:computedOn"`
 }
@@ -318,8 +318,8 @@ func (r *PlayerRepository) GetPlayerCurrentClub(personID uint) (*models.Organisa
 // GetPlayerCurrentMembership gets the current membership for a player including spielernummer
 func (r *PlayerRepository) GetPlayerCurrentMembership(personID uint) (*models.Mitgliedschaft, error) {
 	var membership models.Mitgliedschaft
-	err := r.dbs.MVDSB.Where("person = ? AND bis IS NULL AND status = 0", personID).
-		Order("von DESC").First(&membership).Error
+	err := r.dbs.MVDSB.Where("person = ? AND (bis IS NULL OR bis >= CURDATE())", personID).
+		Order("IFNULL(bis, '9999-12-31') DESC, status ASC").First(&membership).Error
 	return &membership, err
 }
 
@@ -331,7 +331,7 @@ func (r *PlayerRepository) FormatPlayerID(pkz, vkz string) string {
 	return "UNKNOWN"
 }
 
-// FormatGender formats gender code to string  
+// FormatGender formats gender code to string
 func (r *PlayerRepository) FormatGender(gender int) string {
 	switch gender {
 	case 1:
@@ -369,9 +369,11 @@ func (r *PlayerRepository) GetPlayerDWZIndex(personID uint) int {
 func (r *PlayerRepository) GetPlayerStatus(status uint) string {
 	switch status {
 	case 0:
-		return "active"
+		return "active" // Primary membership
 	case 1:
-		return "inactive"
+		return "active" // Approved membership (was incorrectly "inactive")
+	case 2:
+		return "inactive" // Passive membership
 	default:
 		return "unknown"
 	}

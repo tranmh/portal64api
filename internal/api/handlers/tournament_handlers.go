@@ -37,20 +37,20 @@ func NewTournamentHandler(tournamentService *services.TournamentService) *Tourna
 // @Router /api/v1/tournaments/{id} [get]
 func (h *TournamentHandler) GetTournament(c *gin.Context) {
 	tournamentID := c.Param("id")
-	
+
 	// Validate tournament ID format
 	if err := utils.ValidateTournamentID(tournamentID); err != nil {
 		utils.SendJSONResponse(c, http.StatusBadRequest, err)
 		return
 	}
-	
+
 	tournament, err := h.tournamentService.GetTournamentByID(tournamentID)
 	if err != nil {
 		if apiErr, ok := err.(errors.APIError); ok {
 			utils.SendJSONResponse(c, apiErr.Code, apiErr)
 			return
 		}
-		utils.SendJSONResponse(c, http.StatusInternalServerError, 
+		utils.SendJSONResponse(c, http.StatusInternalServerError,
 			errors.NewInternalServerError("Failed to get tournament"))
 		return
 	}
@@ -65,7 +65,7 @@ func (h *TournamentHandler) GetTournament(c *gin.Context) {
 // @Accept json
 // @Produce json,text/csv
 // @Param query query string false "Search query"
-// @Param limit query int false "Limit (max 100)" default(20)
+// @Param limit query int false "Limit (max 500)" default(20)
 // @Param offset query int false "Offset" default(0)
 // @Param sort_by query string false "Sort by field" default(finishedOn)
 // @Param sort_order query string false "Sort order (asc/desc)" default(desc)
@@ -92,7 +92,7 @@ func (h *TournamentHandler) SearchTournaments(c *gin.Context) {
 			utils.SendJSONResponse(c, apiErr.Code, apiErr)
 			return
 		}
-		utils.SendJSONResponse(c, http.StatusInternalServerError, 
+		utils.SendJSONResponse(c, http.StatusInternalServerError,
 			errors.NewInternalServerError("Failed to search tournaments"))
 		return
 	}
@@ -122,7 +122,7 @@ func (h *TournamentHandler) SearchTournaments(c *gin.Context) {
 // @Router /api/v1/tournaments/recent [get]
 func (h *TournamentHandler) GetRecentTournaments(c *gin.Context) {
 	daysStr := c.DefaultQuery("days", "30")
-	limitStr := c.DefaultQuery("limit", "20")
+	limitStr := c.DefaultQuery("limit", "500")
 
 	days, err := strconv.Atoi(daysStr)
 	if err != nil || days <= 0 {
@@ -130,7 +130,7 @@ func (h *TournamentHandler) GetRecentTournaments(c *gin.Context) {
 	}
 
 	limit, err := strconv.Atoi(limitStr)
-	if err != nil || limit > 100 {
+	if err != nil || limit > 500 {
 		limit = 20
 	}
 
@@ -140,7 +140,7 @@ func (h *TournamentHandler) GetRecentTournaments(c *gin.Context) {
 			utils.SendJSONResponse(c, apiErr.Code, apiErr)
 			return
 		}
-		utils.SendJSONResponse(c, http.StatusInternalServerError, 
+		utils.SendJSONResponse(c, http.StatusInternalServerError,
 			errors.NewInternalServerError("Failed to get recent tournaments"))
 		return
 	}
@@ -157,7 +157,7 @@ func (h *TournamentHandler) GetRecentTournaments(c *gin.Context) {
 // @Param start_date query string true "Start date (YYYY-MM-DD)"
 // @Param end_date query string true "End date (YYYY-MM-DD)"
 // @Param query query string false "Search query"
-// @Param limit query int false "Limit (max 100)" default(20)
+// @Param limit query int false "Limit (max 500)" default(20)
 // @Param offset query int false "Offset" default(0)
 // @Param sort_by query string false "Sort by field" default(finishedOn)
 // @Param sort_order query string false "Sort order (asc/desc)" default(desc)
@@ -170,21 +170,21 @@ func (h *TournamentHandler) GetTournamentsByDateRange(c *gin.Context) {
 	endDateStr := c.Query("end_date")
 
 	if startDateStr == "" || endDateStr == "" {
-		utils.SendJSONResponse(c, http.StatusBadRequest, 
+		utils.SendJSONResponse(c, http.StatusBadRequest,
 			errors.NewBadRequestError("start_date and end_date are required"))
 		return
 	}
 
 	startDate, err := time.Parse("2006-01-02", startDateStr)
 	if err != nil {
-		utils.SendJSONResponse(c, http.StatusBadRequest, 
+		utils.SendJSONResponse(c, http.StatusBadRequest,
 			errors.NewBadRequestError("Invalid start_date format (use YYYY-MM-DD)"))
 		return
 	}
 
 	endDate, err := time.Parse("2006-01-02", endDateStr)
 	if err != nil {
-		utils.SendJSONResponse(c, http.StatusBadRequest, 
+		utils.SendJSONResponse(c, http.StatusBadRequest,
 			errors.NewBadRequestError("Invalid end_date format (use YYYY-MM-DD)"))
 		return
 	}
@@ -205,7 +205,7 @@ func (h *TournamentHandler) GetTournamentsByDateRange(c *gin.Context) {
 			utils.SendJSONResponse(c, apiErr.Code, apiErr)
 			return
 		}
-		utils.SendJSONResponse(c, http.StatusInternalServerError, 
+		utils.SendJSONResponse(c, http.StatusInternalServerError,
 			errors.NewInternalServerError("Failed to get tournaments by date range"))
 		return
 	}

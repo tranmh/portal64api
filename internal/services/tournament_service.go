@@ -225,7 +225,7 @@ func (s *TournamentService) GetRecentTournaments(days, limit int) ([]models.Tour
 		days = 30 // Default to last 30 days
 	}
 	if limit == 0 {
-		limit = 20
+		limit = 500
 	}
 
 	tournaments, err := s.tournamentRepo.GetRecentTournaments(days, limit)

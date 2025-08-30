@@ -35,28 +35,28 @@ func NewClubHandler(clubService *services.ClubService) *ClubHandler {
 // @Router /api/v1/clubs/{id} [get]
 func (h *ClubHandler) GetClub(c *gin.Context) {
 	clubID := c.Param("id")
-	
+
 	// If clubID is empty, this should be a 404 (not found)
 	// This handles the case where someone requests /api/v1/clubs/ instead of /api/v1/clubs
 	if clubID == "" {
-		utils.SendJSONResponse(c, http.StatusNotFound, 
+		utils.SendJSONResponse(c, http.StatusNotFound,
 			errors.NewNotFoundError("Club not found"))
 		return
 	}
-	
+
 	// Validate club ID format
 	if err := utils.ValidateClubID(clubID); err != nil {
 		utils.SendJSONResponse(c, http.StatusBadRequest, err)
 		return
 	}
-	
+
 	club, err := h.clubService.GetClubByID(clubID)
 	if err != nil {
 		if apiErr, ok := err.(errors.APIError); ok {
 			utils.SendJSONResponse(c, apiErr.Code, apiErr)
 			return
 		}
-		utils.SendJSONResponse(c, http.StatusInternalServerError, 
+		utils.SendJSONResponse(c, http.StatusInternalServerError,
 			errors.NewInternalServerError("Failed to get club"))
 		return
 	}
@@ -71,7 +71,7 @@ func (h *ClubHandler) GetClub(c *gin.Context) {
 // @Accept json
 // @Produce json,text/csv
 // @Param query query string false "Search query"
-// @Param limit query int false "Limit (max 100)" default(20)
+// @Param limit query int false "Limit (max 500)" default(20)
 // @Param offset query int false "Offset" default(0)
 // @Param sort_by query string false "Sort by field" default(vkz)
 // @Param sort_order query string false "Sort order (asc/desc)" default(asc)
@@ -98,7 +98,7 @@ func (h *ClubHandler) SearchClubs(c *gin.Context) {
 			utils.SendJSONResponse(c, apiErr.Code, apiErr)
 			return
 		}
-		utils.SendJSONResponse(c, http.StatusInternalServerError, 
+		utils.SendJSONResponse(c, http.StatusInternalServerError,
 			errors.NewInternalServerError("Failed to search clubs"))
 		return
 	}
@@ -131,7 +131,7 @@ func (h *ClubHandler) GetAllClubs(c *gin.Context) {
 			utils.SendJSONResponse(c, apiErr.Code, apiErr)
 			return
 		}
-		utils.SendJSONResponse(c, http.StatusInternalServerError, 
+		utils.SendJSONResponse(c, http.StatusInternalServerError,
 			errors.NewInternalServerError("Failed to get all clubs"))
 		return
 	}
@@ -153,27 +153,27 @@ func (h *ClubHandler) GetAllClubs(c *gin.Context) {
 // @Router /api/v1/clubs/{id}/profile [get]
 func (h *ClubHandler) GetClubProfile(c *gin.Context) {
 	clubID := c.Param("id")
-	
+
 	// If clubID is empty, this should be a 404 (not found)
 	if clubID == "" {
-		utils.SendJSONResponse(c, http.StatusNotFound, 
+		utils.SendJSONResponse(c, http.StatusNotFound,
 			errors.NewNotFoundError("Club not found"))
 		return
 	}
-	
+
 	// Validate club ID format
 	if err := utils.ValidateClubID(clubID); err != nil {
 		utils.SendJSONResponse(c, http.StatusBadRequest, err)
 		return
 	}
-	
+
 	profile, err := h.clubService.GetClubProfile(clubID)
 	if err != nil {
 		if apiErr, ok := err.(errors.APIError); ok {
 			utils.SendJSONResponse(c, apiErr.Code, apiErr)
 			return
 		}
-		utils.SendJSONResponse(c, http.StatusInternalServerError, 
+		utils.SendJSONResponse(c, http.StatusInternalServerError,
 			errors.NewInternalServerError("Failed to get club profile"))
 		return
 	}
