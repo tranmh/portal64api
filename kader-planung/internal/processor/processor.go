@@ -32,14 +32,18 @@ func New(apiClient *api.Client, resumeManager *resume.Manager, concurrency int) 
 }
 // ProcessKaderPlanung runs the complete Kader-Planung data collection process
 func (p *Processor) ProcessKaderPlanung(checkpoint *resume.Checkpoint, clubPrefix string) ([]models.KaderPlanungRecord, error) {
+	overallStartTime := time.Now()
 	var allRecords []models.KaderPlanungRecord
 
 	// Phase 1: Club Discovery
 	p.logger.Info("Phase 1: Discovering clubs...")
+	clubStartTime := time.Now()
 	clubs, err := p.discoverClubs(checkpoint, clubPrefix)
 	if err != nil {
 		return nil, fmt.Errorf("club discovery failed: %w", err)
 	}
+	clubDiscoveryDuration := time.Since(clubStartTime)
+	p.logger.Infof("Club discovery completed in %v (%d clubs found)", clubDiscoveryDuration, len(clubs))
 
 	if len(clubs) == 0 {
 		p.logger.Warn("No clubs found matching criteria")
@@ -54,14 +58,52 @@ func (p *Processor) ProcessKaderPlanung(checkpoint *resume.Checkpoint, clubPrefi
 
 	// Phase 2: Player Data Collection and Processing
 	p.logger.Infof("Phase 2: Processing %d clubs with concurrency %d...", len(clubs), p.concurrency)
+	playerStartTime := time.Now()
 	records, err := p.processClubsConcurrently(checkpoint, clubs)
 	if err != nil {
 		return nil, fmt.Errorf("player processing failed: %w", err)
 	}
+	playerProcessingDuration := time.Since(playerStartTime)
+	p.logger.Infof("Player processing completed in %v (%d records generated)", playerProcessingDuration, len(records))
 
 	allRecords = append(allRecords, records...)
 
-	p.logger.Infof("Processing complete: %d total records generated", len(allRecords))
+	// Phase 3: Calculate rankings for all players in the export file (active players only)
+	p.logger.Info("Phase 3: Calculating list rankings...")
+	rankingStartTime := time.Now()
+	
+	// Extract players from records for ranking calculation
+	players := make([]models.Player, len(allRecords))
+	for i, record := range allRecords {
+		players[i] = models.Player{
+			ID:         record.PlayerID,
+			CurrentDWZ: record.CurrentDWZ,
+			Status:     "active", // Only include active players in ranking as requested
+			Active:     true,     // All players in export are considered active for ranking
+		}
+	}
+	
+	// Calculate rankings
+	rankings := models.CalculateListRanking(players)
+	
+	// Update records with rankings
+	for i := range allRecords {
+		allRecords[i].ListRanking = rankings[i]
+	}
+	
+	rankingDuration := time.Since(rankingStartTime)
+	p.logger.Infof("Ranking calculation completed in %v", rankingDuration)
+
+	overallDuration := time.Since(overallStartTime)
+	p.logger.Infof("Processing complete: %d total records generated in %v", len(allRecords), overallDuration)
+	
+	// Performance summary
+	p.logger.Infof("Performance Summary:")
+	p.logger.Infof("  Club Discovery: %v", clubDiscoveryDuration)
+	p.logger.Infof("  Player Processing: %v", playerProcessingDuration) 
+	p.logger.Infof("  Ranking Calculation: %v", rankingDuration)
+	p.logger.Infof("  Total Time: %v", overallDuration)
+	
 	return allRecords, nil
 }
 // discoverClubs fetches all clubs matching the criteria
@@ -273,6 +315,8 @@ func (p *Processor) processPlayer(checkpoint *resume.Checkpoint, club models.Clu
 
 // analyzeHistoricalData performs historical analysis on a player's rating history
 func (p *Processor) analyzeHistoricalData(history *models.RatingHistory) *models.HistoricalAnalysis {
+	startTime := time.Now()
+	
 	analysis := &models.HistoricalAnalysis{
 		DWZ12MonthsAgo:          models.DataNotAvailable,
 		GamesLast12Months:       0,
@@ -325,6 +369,10 @@ func (p *Processor) analyzeHistoricalData(history *models.RatingHistory) *models
 		analysis.SuccessRateLast12Months = successRate
 	}
 
+	duration := time.Since(startTime)
+	p.logger.Debugf("Historical analysis completed in %v for player %s (HasData: %t, Games: %d)", 
+		duration, "unknown", analysis.HasHistoricalData, analysis.GamesLast12Months)
+		
 	return analysis
 }
 // createKaderPlanungRecord creates a final record for export
@@ -345,13 +393,17 @@ func (p *Processor) createKaderPlanungRecord(club models.Club, player models.Pla
 		ClubName:                club.Name,
 		ClubID:                  club.ID,
 		PlayerID:                player.ID,
+		PKZ:                     player.PKZ,         // NEW: Player identification number
 		Lastname:                player.Name,        // API returns last name in "name" field
 		Firstname:               player.Firstname,
 		Birthyear:               birthyear,
+		Gender:                  player.Gender,      // NEW: 'm', 'w', 'd' for man/woman/divers
 		CurrentDWZ:              player.CurrentDWZ,
+		ListRanking:             0,                  // NEW: Will be calculated after all players are processed
 		DWZ12MonthsAgo:          models.DataNotAvailable,
 		GamesLast12Months:       models.DataNotAvailable,
 		SuccessRateLast12Months: models.DataNotAvailable,
+		DWZAgeRelation:          models.CalculateDWZAgeRelation(player.CurrentDWZ, birthyear, time.Now().Year()), // NEW: Calculate age relation
 	}
 
 	if analysis != nil && analysis.HasHistoricalData {

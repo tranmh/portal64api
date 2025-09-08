@@ -68,13 +68,17 @@ func (e *Exporter) exportCSV(records []models.KaderPlanungRecord, outputPath str
 		"club_name",
 		"club_id", 
 		"player_id",
+		"pkz",                         // NEW
 		"lastname",
 		"firstname",
 		"birthyear",
+		"gender",                      // NEW
 		"current_dwz",
+		"list_ranking",                // NEW
 		"dwz_12_months_ago",
 		"games_last_12_months",
 		"success_rate_last_12_months",
+		"dwz_age_relation",            // NEW
 	}
 
 	if err := writer.Write(header); err != nil {
@@ -90,13 +94,17 @@ func (e *Exporter) exportCSV(records []models.KaderPlanungRecord, outputPath str
 			record.ClubName,
 			record.ClubID,
 			record.PlayerID,
+			record.PKZ,                               // NEW
 			record.Lastname,
 			record.Firstname,
 			strconv.Itoa(record.Birthyear),
+			record.Gender,                            // NEW
 			strconv.Itoa(record.CurrentDWZ),
+			strconv.Itoa(record.ListRanking),         // NEW
 			record.DWZ12MonthsAgo,
 			record.GamesLast12Months,
 			record.SuccessRateLast12Months,
+			record.DWZAgeRelation,                    // NEW
 		}
 
 		if err := writer.Write(row); err != nil {
@@ -158,14 +166,18 @@ func (e *Exporter) exportExcel(records []models.KaderPlanungRecord, outputPath s
 		"C1": "Club ID Prefix3",
 		"D1": "Club Name",
 		"E1": "Club ID",
-		"F1": "Player ID", 
-		"G1": "Last Name",
-		"H1": "First Name",
-		"I1": "Birth Year",
-		"J1": "Current DWZ",
-		"K1": "DWZ 12 Months Ago",
-		"L1": "Games Last 12 Months",
-		"M1": "Success Rate Last 12 Months (%)",
+		"F1": "Player ID",
+		"G1": "PKZ",                              // NEW
+		"H1": "Last Name",
+		"I1": "First Name",
+		"J1": "Birth Year",
+		"K1": "Gender",                           // NEW
+		"L1": "Current DWZ",
+		"M1": "List Ranking",                     // NEW
+		"N1": "DWZ 12 Months Ago",
+		"O1": "Games Last 12 Months",
+		"P1": "Success Rate Last 12 Months (%)",
+		"Q1": "DWZ Age Relation",                 // NEW
 	}
 
 	// Write headers with formatting
@@ -207,17 +219,21 @@ func (e *Exporter) exportExcel(records []models.KaderPlanungRecord, outputPath s
 		file.SetCellValue(sheetName, fmt.Sprintf("D%d", row), record.ClubName)
 		file.SetCellValue(sheetName, fmt.Sprintf("E%d", row), record.ClubID)
 		file.SetCellValue(sheetName, fmt.Sprintf("F%d", row), record.PlayerID)
-		file.SetCellValue(sheetName, fmt.Sprintf("G%d", row), record.Lastname)
-		file.SetCellValue(sheetName, fmt.Sprintf("H%d", row), record.Firstname)
-		file.SetCellValue(sheetName, fmt.Sprintf("I%d", row), record.Birthyear)
-		file.SetCellValue(sheetName, fmt.Sprintf("J%d", row), record.CurrentDWZ)
-		file.SetCellValue(sheetName, fmt.Sprintf("K%d", row), record.DWZ12MonthsAgo)
-		file.SetCellValue(sheetName, fmt.Sprintf("L%d", row), record.GamesLast12Months)
-		file.SetCellValue(sheetName, fmt.Sprintf("M%d", row), record.SuccessRateLast12Months)
+		file.SetCellValue(sheetName, fmt.Sprintf("G%d", row), record.PKZ)                  // NEW
+		file.SetCellValue(sheetName, fmt.Sprintf("H%d", row), record.Lastname)
+		file.SetCellValue(sheetName, fmt.Sprintf("I%d", row), record.Firstname)
+		file.SetCellValue(sheetName, fmt.Sprintf("J%d", row), record.Birthyear)
+		file.SetCellValue(sheetName, fmt.Sprintf("K%d", row), record.Gender)              // NEW
+		file.SetCellValue(sheetName, fmt.Sprintf("L%d", row), record.CurrentDWZ)
+		file.SetCellValue(sheetName, fmt.Sprintf("M%d", row), record.ListRanking)         // NEW
+		file.SetCellValue(sheetName, fmt.Sprintf("N%d", row), record.DWZ12MonthsAgo)
+		file.SetCellValue(sheetName, fmt.Sprintf("O%d", row), record.GamesLast12Months)
+		file.SetCellValue(sheetName, fmt.Sprintf("P%d", row), record.SuccessRateLast12Months)
+		file.SetCellValue(sheetName, fmt.Sprintf("Q%d", row), record.DWZAgeRelation)      // NEW
 	}
 
 	// Auto-fit columns
-	cols := []string{"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M"}
+	cols := []string{"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q"}
 	for _, col := range cols {
 		file.SetColWidth(sheetName, col, col, 15)
 	}

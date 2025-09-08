@@ -171,12 +171,13 @@ func (Turnier) TableName() string {
 // PlayerResponse represents a player in API responses
 type PlayerResponse struct {
 	ID         string    `json:"id"`         // Format: C0101-123 (3-digit membership number)
+	PKZ        string    `json:"pkz"`        // NEW: Player identification number from Person.PKZ
 	Name       string    `json:"name"`
 	Firstname  string    `json:"firstname"`
 	Club       string    `json:"club"`
 	ClubID     string    `json:"club_id"`    // Format: C0101
 	BirthYear  *int      `json:"birth_year"` // GDPR compliant: only birth year, not full date
-	Gender     string    `json:"gender"`
+	Gender     string    `json:"gender"`     // NEW: 'm', 'w', or 'd' from Person.Geschlecht
 	Nation     string    `json:"nation"`
 	FideID     uint      `json:"fide_id"`
 	CurrentDWZ int       `json:"current_dwz"`

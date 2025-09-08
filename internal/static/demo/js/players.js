@@ -219,10 +219,12 @@ class PlayerManager {
                     <thead>
                         <tr>
                             <th>Spieler-ID</th>
+                            <th>PKZ</th>
                             <th>Name</th>
                             <th>Verein</th>
                             <th>DWZ Bewertung</th>
                             <th>Geburtsjahr</th>
+                            <th>Geschlecht</th>
                             <th>Aktionen</th>
                         </tr>
                     </thead>
@@ -232,16 +234,24 @@ class PlayerManager {
         players.forEach(player => {
             // Use birth year directly from API (GDPR compliant)
             const birthYear = Utils.formatBirthYear(player.birth_year);
+            
+            // Format gender for display
+            const genderDisplay = player.gender ? 
+                (player.gender === 'm' ? 'Männlich' : 
+                 player.gender === 'w' ? 'Weiblich' : 
+                 player.gender === 'd' ? 'Divers' : player.gender) : 'N/A';
 
             html += `
                 <tr>
                     <td><code>${Utils.sanitizeHTML(player.id || 'N/A')}</code></td>
+                    <td><code>${Utils.sanitizeHTML(player.pkz || 'N/A')}</code></td>
                     <td><strong>${Utils.sanitizeHTML(((player.firstname || '') + ' ' + (player.name || '')).trim() || 'N/A')}</strong></td>
                     <td>${Utils.sanitizeHTML(player.club || 'N/A')}</td>
                     <td>
                         ${player.current_dwz ? `<span class="badge badge-primary">${player.current_dwz}</span>` : 'N/A'}
                     </td>
                     <td>${birthYear}</td>
+                    <td>${genderDisplay}</td>
                     <td>
                         <button onclick="playerManager.viewPlayerDetail('${player.id}')" class="btn btn-small btn-secondary">
                             Details anzeigen

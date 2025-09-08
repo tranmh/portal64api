@@ -81,9 +81,11 @@ func (s *PlayerService) loadPlayerFromDB(playerID string) (*models.PlayerRespons
 	// Convert to response format
 	response := &models.PlayerResponse{
 		ID:        playerID,
+		PKZ:       person.PKZ,                                     // NEW: Add PKZ from Person table
 		Name:      person.Name,
 		Firstname: person.Vorname,
 		BirthYear: utils.ExtractBirthYear(person.Geburtsdatum), // GDPR compliant: only birth year
+		Gender:    utils.MapGeschlechtToGender(person.Geschlecht), // NEW: Use utils function for 'm', 'w', 'd' mapping
 		Nation:    person.Nation,
 		FideID:    person.IDFide,
 		Status:    getPlayerStatus(person.Status),
@@ -100,9 +102,6 @@ func (s *PlayerService) loadPlayerFromDB(playerID string) (*models.PlayerRespons
 		response.CurrentDWZ = evaluation.DWZNew
 		response.DWZIndex = evaluation.DWZNewIndex
 	}
-
-	// Set gender
-	response.Gender = getGenderString(person.Geschlecht)
 
 	return response, nil
 }
@@ -156,12 +155,13 @@ func (s *PlayerService) executePlayerSearch(req models.SearchRequest, showActive
 		}
 
 		response := models.PlayerResponse{
+			PKZ:       player.PKZ,                                     // NEW: Add PKZ from Person table
 			Name:      player.Name,
 			Firstname: player.Vorname,
 			BirthYear: utils.ExtractBirthYear(player.Geburtsdatum), // GDPR compliant: only birth year
 			Nation:    player.Nation,
 			FideID:    player.IDFide,
-			Gender:    getGenderString(player.Geschlecht),
+			Gender:    utils.MapGeschlechtToGender(player.Geschlecht), // NEW: Use utils function for 'm', 'w', 'd' mapping
 			Status:    getPlayerStatus(player.Status),
 		}
 
@@ -256,14 +256,15 @@ func (s *PlayerService) executeClubPlayersSearch(clubID string, req models.Searc
 		}
 
 		response := models.PlayerResponse{
+			PKZ:       player.PKZ,                                     // NEW: Add PKZ from Person table
 			Name:      player.Name,
 			Firstname: player.Vorname,
 			Club:      club.Name,
 			ClubID:    clubID,
 			BirthYear: utils.ExtractBirthYear(player.Geburtsdatum), // GDPR compliant: only birth year
+			Gender:    utils.MapGeschlechtToGender(player.Geschlecht), // NEW: Use utils function for 'm', 'w', 'd' mapping
 			Nation:    player.Nation,
 			FideID:    player.IDFide,
-			Gender:    getGenderString(player.Geschlecht),
 			Status:    getPlayerStatus(player.Status),
 		}
 

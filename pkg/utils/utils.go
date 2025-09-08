@@ -517,3 +517,18 @@ func ExtractBirthYear(birthDate *time.Time) *int {
 	year := birthDate.Year()
 	return &year
 }
+
+// MapGeschlechtToGender converts the Geschlecht integer value to gender string
+// 1 = man (m), 0 = woman (w), 2 = divers (d), default = man (most players are men)
+func MapGeschlechtToGender(geschlecht int) string {
+	switch geschlecht {
+	case 1:
+		return "m" // man
+	case 0:
+		return "w" // woman  
+	case 2:
+		return "d" // divers
+	default:
+		return "m" // default to man as most chess players are men
+	}
+}

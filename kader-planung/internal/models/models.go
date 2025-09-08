@@ -1,6 +1,8 @@
 package models
 
 import (
+	"fmt"
+	"sort"
 	"time"
 )
 
@@ -20,12 +22,13 @@ type Club struct {
 // Player represents a chess player
 type Player struct {
 	ID         string    `json:"id"`          // Format: C0101-123
+	PKZ        string    `json:"pkz"`         // NEW: Player identification number
 	Name       string    `json:"name"`        // Last name
 	Firstname  string    `json:"firstname"`   
 	Club       string    `json:"club"`        // Club name
 	ClubID     string    `json:"club_id"`     // Format: C0101
 	BirthYear  *int      `json:"birth_year"`  // GDPR compliant: only birth year
-	Gender     string    `json:"gender"`
+	Gender     string    `json:"gender"`      // NEW: 'm', 'w', 'd' for man/woman/divers
 	Nation     string    `json:"nation"`
 	FideID     uint      `json:"fide_id"`
 	CurrentDWZ int       `json:"current_dwz"`
@@ -82,13 +85,17 @@ type KaderPlanungRecord struct {
 	ClubName                   string `json:"club_name" csv:"club_name"`
 	ClubID                     string `json:"club_id" csv:"club_id"`
 	PlayerID                   string `json:"player_id" csv:"player_id"`
+	PKZ                        string `json:"pkz" csv:"pkz"`                                             // NEW
 	Lastname                   string `json:"lastname" csv:"lastname"`
 	Firstname                  string `json:"firstname" csv:"firstname"`
 	Birthyear                  int    `json:"birthyear" csv:"birthyear"`
+	Gender                     string `json:"gender" csv:"gender"`                                       // NEW
 	CurrentDWZ                 int    `json:"current_dwz" csv:"current_dwz"`
+	ListRanking                int    `json:"list_ranking" csv:"list_ranking"`                           // NEW
 	DWZ12MonthsAgo             string `json:"dwz_12_months_ago" csv:"dwz_12_months_ago"`
 	GamesLast12Months          string `json:"games_last_12_months" csv:"games_last_12_months"`
 	SuccessRateLast12Months    string `json:"success_rate_last_12_months" csv:"success_rate_last_12_months"`
+	DWZAgeRelation             string `json:"dwz_age_relation" csv:"dwz_age_relation"`                   // NEW
 }
 // APIResponse represents the wrapper response from Portal64 API
 type APIResponse struct {
@@ -195,4 +202,75 @@ func CalculateClubIDPrefixes(clubID string) (string, string, string) {
 	}
 	
 	return prefix1, prefix2, prefix3
+}
+
+// CalculateDWZAgeRelation calculates DWZ age relation as: current_dwz - ((current_year - birthyear)*100)
+func CalculateDWZAgeRelation(currentDWZ int, birthYear int, currentYear int) string {
+	if birthYear == 0 {
+		return DataNotAvailable
+	}
+	
+	ageRelation := currentDWZ - ((currentYear - birthYear) * 100)
+	return fmt.Sprintf("%d", ageRelation)
+}
+
+// CalculateListRanking calculates ranking within a list of players (active players only)
+// Returns ranking where 1 = highest DWZ, with ties getting same rank and next rank skipping appropriately
+func CalculateListRanking(players []Player) []int {
+	// Create slice of player indices and DWZ values for sorting
+	type playerRank struct {
+		index int
+		dwz   int
+		active bool
+	}
+	
+	playerRanks := make([]playerRank, len(players))
+	for i, player := range players {
+		// Only consider active players for ranking
+		isActive := player.Active || player.Status == "active"
+		playerRanks[i] = playerRank{
+			index: i,
+			dwz:   player.CurrentDWZ,
+			active: isActive,
+		}
+	}
+	
+	// Sort by DWZ descending (highest first), only for active players
+	sort.Slice(playerRanks, func(i, j int) bool {
+		// Inactive players go to end
+		if playerRanks[i].active != playerRanks[j].active {
+			return playerRanks[i].active
+		}
+		// For active players, sort by DWZ descending
+		if playerRanks[i].active {
+			return playerRanks[i].dwz > playerRanks[j].dwz
+		}
+		// For inactive players, maintain original order
+		return playerRanks[i].index < playerRanks[j].index
+	})
+	
+	// Assign rankings
+	rankings := make([]int, len(players))
+	currentRank := 1
+	
+	for i, pr := range playerRanks {
+		if !pr.active {
+			rankings[pr.index] = 0 // Inactive players get 0 ranking
+			continue
+		}
+		
+		// Check if this player has same DWZ as previous (tie)
+		if i > 0 && playerRanks[i-1].active && playerRanks[i-1].dwz == pr.dwz {
+			// Same DWZ as previous player - same ranking
+			rankings[pr.index] = rankings[playerRanks[i-1].index]
+		} else {
+			// New DWZ value - assign current rank
+			rankings[pr.index] = currentRank
+		}
+		
+		// Update current rank for next iteration (skip ahead for ties)
+		currentRank = i + 2 // Next rank is position + 1 (1-indexed) + 1 for next different DWZ
+	}
+	
+	return rankings
 }

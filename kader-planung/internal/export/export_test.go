@@ -96,13 +96,17 @@ func TestExportCSV(t *testing.T) {
 			ClubName:                "Test Chess Club",
 			ClubID:                  "C0327",
 			PlayerID:                "C0327-297",
+			PKZ:                     "PKZ123",               // NEW
 			Firstname:               "John",
 			Lastname:                "Doe",
 			Birthyear:               1990,
+			Gender:                  "m",                    // NEW
 			CurrentDWZ:              1600,
+			ListRanking:             1,                      // NEW
 			DWZ12MonthsAgo:          "1550",
 			GamesLast12Months:       "8",
 			SuccessRateLast12Months: "62.5",
+			DWZAgeRelation:          "1500",                // NEW
 		},
 		{
 			ClubIDPrefix1:           "C",
@@ -111,13 +115,17 @@ func TestExportCSV(t *testing.T) {
 			ClubName:                "Another Club",
 			ClubID:                  "C0401",
 			PlayerID:                "C0401-123",
+			PKZ:                     "PKZ456",               // NEW
 			Firstname:               "Jane",
 			Lastname:                "Smith",
 			Birthyear:               1985,
+			Gender:                  "w",                    // NEW
 			CurrentDWZ:              1750,
+			ListRanking:             2,                      // NEW
 			DWZ12MonthsAgo:          models.DataNotAvailable,
 			GamesLast12Months:       models.DataNotAvailable,
 			SuccessRateLast12Months: models.DataNotAvailable,
+			DWZAgeRelation:          models.DataNotAvailable, // NEW
 		},
 	}
 
@@ -144,14 +152,16 @@ func TestExportCSV(t *testing.T) {
 
 	contentStr := string(content)
 
-	// Check header - should start with the new prefix columns
-	if !strings.Contains(contentStr, "club_id_prefix1;club_id_prefix2;club_id_prefix3;club_name;club_id;player_id") {
-		t.Error("CSV header with prefix columns not found")
+	// Check header - should start with the new prefix columns and include all new fields
+	expectedHeader := "club_id_prefix1;club_id_prefix2;club_id_prefix3;club_name;club_id;player_id;pkz;lastname;firstname;birthyear;gender;current_dwz;list_ranking;dwz_12_months_ago;games_last_12_months;success_rate_last_12_months;dwz_age_relation"
+	if !strings.Contains(contentStr, expectedHeader) {
+		t.Errorf("CSV header with all new fields not found. Expected: %s", expectedHeader)
 	}
 
-	// Check data - should include the prefix values
-	if !strings.Contains(contentStr, "C;C0;C03;Test Chess Club;C0327;C0327-297") {
-		t.Error("First record with prefix columns not found in CSV")
+	// Check data - should include all field values
+	expectedDataRow := "C;C0;C03;Test Chess Club;C0327;C0327-297;PKZ123;Doe;John;1990;m;1600;1;"
+	if !strings.Contains(contentStr, expectedDataRow) {
+		t.Errorf("First record with all new fields not found in CSV. Looking for: %s", expectedDataRow)
 	}
 
 	if !strings.Contains(contentStr, "C;C0;C04;Another Club;C0401;C0401-123") {
@@ -175,13 +185,17 @@ func TestExportJSON(t *testing.T) {
 			ClubName:                "Test Chess Club",
 			ClubID:                  "C0327",
 			PlayerID:                "C0327-297",
+			PKZ:                     "PKZ123",               // NEW
 			Firstname:               "John",
 			Lastname:                "Doe",
 			Birthyear:               1990,
+			Gender:                  "m",                    // NEW
 			CurrentDWZ:              1600,
+			ListRanking:             1,                      // NEW
 			DWZ12MonthsAgo:          "1550",
 			GamesLast12Months:       "8",
 			SuccessRateLast12Months: "62.5",
+			DWZAgeRelation:          "1500",                // NEW
 		},
 	}
 
