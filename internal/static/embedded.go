@@ -80,7 +80,7 @@ func NewEmbeddedFileSystem(fsys embed.FS, root string) *EmbeddedFileSystem {
 // ServeDemoFile serves individual demo files from embedded filesystem
 func ServeDemoFile(c *gin.Context) {
 	requestedPath := c.Param("filepath")
-	
+
 	// Handle root path requests (/demo/ or /demo)
 	if requestedPath == "" || requestedPath == "/" {
 		requestedPath = "index.html"

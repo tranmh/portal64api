@@ -20,6 +20,7 @@ type Config struct {
 	Import        ImportConfig
 	Logging       LoggingConfig
 	KaderPlanung  KaderPlanungConfig
+	Somatogramm   SomatogrammConfig
 }
 
 // ServerConfig holds server-specific configuration
@@ -170,6 +171,20 @@ type KaderPlanungConfig struct {
 	Concurrency   int   // 0 = use runtime.NumCPU()
 	Verbose       bool
 	MaxVersions   int
+}
+
+// SomatogrammConfig holds configuration for integrated Somatogramm functionality
+type SomatogrammConfig struct {
+	Enabled         bool
+	BinaryPath      string
+	OutputDir       string
+	APIBaseURL      string
+	OutputFormat    string
+	MinSampleSize   int
+	Timeout         int
+	Concurrency     int   // 0 = use runtime.NumCPU()
+	Verbose         bool
+	MaxVersions     int
 }
 
 // Load loads configuration from environment variables and .env file
@@ -380,6 +395,18 @@ func loadConfig() *Config {
 			Concurrency:  getIntEnv("KADER_PLANUNG_CONCURRENCY", 0), // 0 = use runtime.NumCPU()
 			Verbose:      getBoolEnv("KADER_PLANUNG_VERBOSE", false),
 			MaxVersions:  getIntEnv("KADER_PLANUNG_MAX_VERSIONS", 7),
+		},
+		Somatogramm: SomatogrammConfig{
+			Enabled:       getBoolEnv("SOMATOGRAMM_ENABLED", true),
+			BinaryPath:    getStringEnv("SOMATOGRAMM_BINARY_PATH", "somatogramm/bin/somatogramm.exe"),
+			OutputDir:     getStringEnv("SOMATOGRAMM_OUTPUT_DIR", "internal/static/demo/somatogramm"),
+			APIBaseURL:    getStringEnv("SOMATOGRAMM_API_BASE_URL", "http://localhost:8080"),
+			OutputFormat:  getStringEnv("SOMATOGRAMM_OUTPUT_FORMAT", "csv"),
+			MinSampleSize: getIntEnv("SOMATOGRAMM_MIN_SAMPLE_SIZE", 100),
+			Timeout:       getIntEnv("SOMATOGRAMM_TIMEOUT", 30),
+			Concurrency:   getIntEnv("SOMATOGRAMM_CONCURRENCY", 0), // 0 = use runtime.NumCPU()
+			Verbose:       getBoolEnv("SOMATOGRAMM_VERBOSE", false),
+			MaxVersions:   getIntEnv("SOMATOGRAMM_MAX_VERSIONS", 7),
 		},
 	}
 }

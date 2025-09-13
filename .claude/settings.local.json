@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)",
+      "Bash(build.bat)",
+      "Bash(cmd /c:*)",
+      "Bash(go build:*)",
+      "Bash(./bin/somatogramm.exe:*)",
+      "Bash(go test:*)",
+      "Bash(./somatogramm.exe --help)",
+      "Bash(./somatogramm.exe --output-format xml)",
+      "Bash(go tool cover:*)",
+      "Bash(.binportal64api.exe)",
+      "Bash(./bin/portal64api.exe)",
+      "Bash(curl:*)",
+      "Bash(pkill:*)",
+      "Bash(taskkill:*)",
+      "Bash(tasklist:*)",
+      "Bash(./server.exe --help)",
+      "Bash(PORT=8081 ./bin/portal64api.exe)",
+      "Bash(SERVER_PORT=8081 ./bin/portal64api.exe)",
+      "Bash(.binsomatogramm.exe -concurrency 8)",
+      "Bash(timeout:*)",
+      "Bash(.bin/somatogramm.exe:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
