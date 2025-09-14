@@ -26,9 +26,9 @@ func (r *PlayerRepository) GetPlayerByID(vkz string, spielernummer uint) (*model
 		return nil, nil, nil, err
 	}
 
-	// Get the membership by organization and spielernummer
+	// Get the membership by organization and spielernummer - PHP-style: include future-ending memberships
 	var membership models.Mitgliedschaft
-	err := r.dbs.MVDSB.Where("organisation = ? AND spielernummer = ? AND bis IS NULL AND status = 0", org.ID, spielernummer).
+	err := r.dbs.MVDSB.Where("organisation = ? AND spielernummer = ? AND (bis IS NULL OR bis > CURDATE())", org.ID, spielernummer).
 		First(&membership).Error
 	if err != nil {
 		return nil, nil, nil, err
@@ -60,7 +60,8 @@ func (r *PlayerRepository) SearchPlayers(req models.SearchRequest, showActive bo
 	if showActive {
 		// Use EXISTS subquery to avoid MySQL prepared statement placeholder limit
 		// This is more efficient than a large IN clause and avoids the 65K placeholder limit
-		query = query.Where("EXISTS (SELECT 1 FROM mitgliedschaft WHERE mitgliedschaft.person = person.id AND mitgliedschaft.bis IS NULL AND mitgliedschaft.status = 0)")
+		// PHP-style: include future-ending memberships
+		query = query.Where("EXISTS (SELECT 1 FROM mitgliedschaft WHERE mitgliedschaft.person = person.id AND (mitgliedschaft.bis IS NULL OR mitgliedschaft.bis > CURDATE()))")
 	}
 
 	// Add search filter with efficient prefix matching (like the old PHP code)
@@ -107,8 +108,9 @@ func (r *PlayerRepository) GetPlayersByClub(vkz string, req models.SearchRequest
 	if req.SortBy == "current_dwz" {
 		// For DWZ sorting, we need to join with evaluations from Portal64_BDW database
 		// Use EXISTS subquery instead of IN clause to avoid MySQL parameter limit
+		// PHP-style: include future-ending memberships
 		query := r.dbs.MVDSB.Model(&models.Person{}).
-			Where("status = 0 AND EXISTS (SELECT 1 FROM mitgliedschaft WHERE mitgliedschaft.person = person.id AND mitgliedschaft.organisation = ? AND mitgliedschaft.bis IS NULL AND mitgliedschaft.status = 0)", org.ID)
+			Where("status = 0 AND EXISTS (SELECT 1 FROM mitgliedschaft WHERE mitgliedschaft.person = person.id AND mitgliedschaft.organisation = ? AND (mitgliedschaft.bis IS NULL OR mitgliedschaft.bis > CURDATE()))", org.ID)
 
 		// Add search filter
 		if req.Query != "" {
@@ -217,8 +219,9 @@ func (r *PlayerRepository) GetPlayersByClub(vkz string, req models.SearchRequest
 
 	} else if req.SortBy == "birth_year" {
 		// For birth year sorting, use EXISTS subquery instead of IN clause
+		// PHP-style: include future-ending memberships
 		query := r.dbs.MVDSB.Model(&models.Person{}).
-			Where("status = 0 AND EXISTS (SELECT 1 FROM mitgliedschaft WHERE mitgliedschaft.person = person.id AND mitgliedschaft.organisation = ? AND mitgliedschaft.bis IS NULL AND mitgliedschaft.status = 0)", org.ID)
+			Where("status = 0 AND EXISTS (SELECT 1 FROM mitgliedschaft WHERE mitgliedschaft.person = person.id AND mitgliedschaft.organisation = ? AND (mitgliedschaft.bis IS NULL OR mitgliedschaft.bis > CURDATE()))", org.ID)
 
 		// Add search filter
 		if req.Query != "" {
@@ -243,8 +246,9 @@ func (r *PlayerRepository) GetPlayersByClub(vkz string, req models.SearchRequest
 
 	} else {
 		// Standard sorting for other fields - use EXISTS subquery instead of IN clause
+		// PHP-style: include future-ending memberships
 		query := r.dbs.MVDSB.Model(&models.Person{}).
-			Where("status = 0 AND EXISTS (SELECT 1 FROM mitgliedschaft WHERE mitgliedschaft.person = person.id AND mitgliedschaft.organisation = ? AND mitgliedschaft.bis IS NULL AND mitgliedschaft.status = 0)", org.ID)
+			Where("status = 0 AND EXISTS (SELECT 1 FROM mitgliedschaft WHERE mitgliedschaft.person = person.id AND mitgliedschaft.organisation = ? AND (mitgliedschaft.bis IS NULL OR mitgliedschaft.bis > CURDATE()))", org.ID)
 
 		// Add search filter
 		if req.Query != "" {
@@ -297,10 +301,10 @@ func (r *PlayerRepository) GetPlayerRatingHistory(personID uint) ([]EvaluationWi
 
 // GetPlayerCurrentClub gets the current club for a player
 func (r *PlayerRepository) GetPlayerCurrentClub(personID uint) (*models.Organisation, error) {
-	// Get current club membership
+	// Get current club membership - PHP-style: include future-ending memberships
 	var membership models.Mitgliedschaft
-	err := r.dbs.MVDSB.Where("person = ? AND bis IS NULL AND status = 0", personID).
-		Order("von DESC").First(&membership).Error
+	err := r.dbs.MVDSB.Where("person = ? AND (bis IS NULL OR bis > CURDATE())", personID).
+		Order("CASE WHEN bis IS NULL THEN '9999-12-31' ELSE bis END DESC").First(&membership).Error
 	if err != nil {
 		return nil, err
 	}

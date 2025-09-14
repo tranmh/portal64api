@@ -102,7 +102,13 @@ func (e *Exporter) exportCSV(genderName string, data models.SomatogrammData, tim
 	}
 	defer file.Close()
 
+	// Write UTF-8 BOM to ensure proper encoding for German umlauts
+	if _, err := file.Write([]byte("\xEF\xBB\xBF")); err != nil {
+		return fmt.Errorf("failed to write UTF-8 BOM: %w", err)
+	}
+
 	writer := csv.NewWriter(file)
+	writer.Comma = ';' // Use semicolon separator for German Excel compatibility
 	defer writer.Flush()
 
 	headers := []string{"age", "sample_size", "avg_dwz", "median_dwz"}

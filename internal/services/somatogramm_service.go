@@ -19,6 +19,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// DEPRECATED: SomatogrammService is deprecated and will be removed in a future version.
+// Use the unified Enhanced Kader-Planung service with statistical mode instead.
+// See MIGRATION_PHASE4_DEPRECATION_NOTICE.md for migration instructions.
+//
 // SomatogrammService manages the integrated somatogramm functionality
 // It implements ImportCompleteCallback to execute after successful imports
 type SomatogrammService struct {

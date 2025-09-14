@@ -161,10 +161,33 @@ func SetupRoutes(dbs *database.Databases, cacheService cache.CacheService, impor
 		if kaderPlanungHandler != nil {
 			kaderPlanungRoutes := v1.Group("/kader-planung")
 			{
+				// Legacy routes (unchanged for backward compatibility)
 				kaderPlanungRoutes.GET("/status", kaderPlanungHandler.GetKaderPlanungStatus)
 				kaderPlanungRoutes.POST("/start", kaderPlanungHandler.StartKaderPlanungExecution)
 				kaderPlanungRoutes.GET("/files", kaderPlanungHandler.ListKaderPlanungFiles)
 				kaderPlanungRoutes.GET("/download/:filename", kaderPlanungHandler.DownloadKaderPlanungFile)
+
+				// New unified analysis endpoints
+				kaderPlanungRoutes.POST("/statistical", kaderPlanungHandler.ExecuteStatisticalAnalysis)
+				kaderPlanungRoutes.POST("/hybrid", kaderPlanungHandler.ExecuteHybridAnalysis)
+				kaderPlanungRoutes.GET("/statistical/files", kaderPlanungHandler.GetStatisticalResults)
+				kaderPlanungRoutes.GET("/capabilities", kaderPlanungHandler.GetAnalysisCapabilities)
+			}
+		}
+
+		// Deprecated Somatogramm compatibility routes (if Kader-Planung service is available)
+		// These routes provide backward compatibility for existing Somatogramm API calls
+		// by redirecting them to the unified Kader-Planung service in statistical mode
+		if kaderPlanungHandler != nil {
+			// Create compatibility adapter handler
+			somatogrammCompatibilityHandler := handlers.NewSomatogrammCompatibilityHandler(kaderPlanungService)
+
+			somatogrammRoutes := v1.Group("/somatogramm")
+			{
+				somatogrammRoutes.GET("/status", somatogrammCompatibilityHandler.GetSomatogrammStatus)
+				somatogrammRoutes.POST("/start", somatogrammCompatibilityHandler.StartSomatogrammExecution)
+				somatogrammRoutes.GET("/files", somatogrammCompatibilityHandler.ListSomatogrammFiles)
+				somatogrammRoutes.GET("/download/:filename", somatogrammCompatibilityHandler.DownloadSomatogrammFile)
 			}
 		}
 	}

@@ -1,16 +1,17 @@
 # Kader-Planung Application
 
-A standalone Golang application that generates comprehensive player roster reports by consuming the Portal64 REST API. The application produces detailed CSV/JSON/Excel reports with historical player data for club management purposes.
+A standalone Golang application that generates comprehensive player roster reports with somatogram percentiles by consuming the Portal64 REST API. The application produces detailed CSV reports with historical player data and Germany-wide percentile rankings for chess club management.
 
 ## Features
 
-- **Multi-format Export**: Generate reports in CSV, JSON, or Excel format
+- **Somatogram Integration**: Includes Germany-wide percentile rankings by age and gender
+- **Historical Analysis**: DWZ ratings from 12 months ago, recent game statistics, and success rates
 - **Club Filtering**: Filter clubs by ID prefix (e.g., `C0*` for all clubs starting with C0)
 - **Concurrent Processing**: Configurable worker pool for efficient data collection
 - **Resume Functionality**: Automatically resume interrupted runs using checkpoint files
-- **Historical Analysis**: Calculate DWZ ratings from 12 months ago, recent game statistics, and success rates
 - **Progress Tracking**: Real-time progress bars and detailed logging
 - **Error Resilience**: Continue processing when individual items fail
+- **German Excel Compatible**: CSV output with semicolon separators for direct Excel import
 
 ## Installation
 
@@ -41,33 +42,37 @@ The compiled binary will be available at `.\bin\kader-planung.exe`.
 
 ## Usage
 
+## Usage
+
 ### Basic Usage
 
 ```bash
 # Generate report for all clubs starting with C0
 .\bin\kader-planung.exe --club-prefix="C0"
 
-# Generate Excel report for all clubs
-.\bin\kader-planung.exe --output-format=excel
+# Generate report for all German chess clubs (with somatogram percentiles)
+.\bin\kader-planung.exe
 
-# Use higher concurrency for faster processing
-.\bin\kader-planung.exe --club-prefix="C03" --concurrency=5
+# Specify custom output directory
+.\bin\kader-planung.exe --output-dir="./reports" --club-prefix="C03"
+
+# Resume from previous interrupted run
+.\bin\kader-planung.exe --resume --club-prefix="C0"
 ```
 
-### Command-Line Options
+### Available Parameters
 
-| Option | Description | Default |
-|--------|-------------|---------|
-| `--club-prefix` | Filter clubs by ID prefix | All clubs |
-| `--output-format` | Output format (csv\|json\|excel) | csv |
-| `--output-dir` | Output directory | Current directory |
-| `--concurrency` | Number of concurrent API requests | 1 |
-| `--resume` | Resume from previous run | false |
-| `--checkpoint-file` | Custom checkpoint file path | Auto-generated |
-| `--api-base-url` | Portal64 API base URL | http://localhost:8080 |
-| `--timeout` | API request timeout (seconds) | 30 |
-| `--verbose` | Enable detailed logging | false |
-
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `--club-prefix` | `""` | Filter clubs by ID prefix (e.g., `C0` for C0327, C0401, etc.) |
+| `--output-dir` | `"."` | Output directory for generated files |
+| `--concurrency` | `CPU cores` | Number of concurrent API requests |
+| `--resume` | `false` | Resume from previous run using checkpoint file |
+| `--checkpoint-file` | `""` | Custom checkpoint file path |
+| `--api-base-url` | `"http://localhost:8080"` | Base URL for Portal64 API |
+| `--timeout` | `30` | API request timeout in seconds |
+| `--min-sample-size` | `10` | Minimum sample size for somatogram percentile accuracy |
+| `--verbose` | `false` | Enable detailed logging |
 ### Resume Functionality
 
 If a run is interrupted, you can resume it:
@@ -76,8 +81,8 @@ If a run is interrupted, you can resume it:
 # Resume with same parameters
 .\bin\kader-planung.exe --resume
 
-# Resume with different output format
-.\bin\kader-planung.exe --resume --output-format=excel
+# Resume with custom checkpoint file
+.\bin\kader-planung.exe --resume --checkpoint-file="custom-checkpoint.json"
 ```
 
 ### Examples
@@ -86,42 +91,50 @@ If a run is interrupted, you can resume it:
 # Generate CSV report for all clubs starting with C0
 .\bin\kader-planung.exe --club-prefix="C0" --verbose
 
-# Generate Excel report with higher concurrency
-.\bin\kader-planung.exe --output-format=excel --concurrency=10 --output-dir="./reports"
+# Generate report with higher concurrency and custom output directory
+.\bin\kader-planung.exe --concurrency=10 --output-dir="./reports"
 
-# Resume interrupted run and change to JSON format
-.\bin\kader-planung.exe --resume --output-format=json
+# Resume interrupted run
+.\bin\kader-planung.exe --resume
 
-# Process specific club prefix with custom API URL
-.\bin\kader-planung.exe --club-prefix="C0327" --api-base-url="https://api.example.com" --timeout=60
+# Process specific club prefix with custom API URL and higher sample size threshold
+.\bin\kader-planung.exe --club-prefix="C0327" --api-base-url="https://api.example.com" --timeout=60 --min-sample-size=50
 ```
 
 ## Output Format
 
-The application generates reports with the following columns:
+The application generates CSV reports with the following columns:
 
 | Column | Description | Source |
 |--------|-------------|--------|
+| club_id_prefix1 | First character of club ID (e.g., "C") | Club filtering |
+| club_id_prefix2 | First 2 characters of club ID (e.g., "C0") | Club filtering |
+| club_id_prefix3 | First 3 characters of club ID (e.g., "C03") | Club filtering |
 | club_name | Full club name | Club profile |
 | club_id | Club ID (e.g., C0327) | Club profile |
 | player_id | Player ID (e.g., C0327-297) | Player profile |
+| pkz | Player code number | Player profile |
 | lastname | Player's last name | Player profile |
 | firstname | Player's first name | Player profile |
 | birthyear | Player's birth year | Player profile |
+| gender | Player's gender (m/f) | Player profile |
 | current_dwz | Current DWZ rating | Player profile |
+| list_ranking | Current ranking in club | Player profile |
 | dwz_12_months_ago | DWZ rating ~12 months ago | Rating history analysis |
 | games_last_12_months | Number of games played | Rating history analysis |
-| success_rate_last_12_months | Win percentage (0-100) | Rating history analysis |
+| success_rate_last_12_months | Success rate percentage (0-100) | Rating history analysis |
+| somatogram_percentile | Germany-wide percentile by age/gender | Somatogram analysis |
+| dwz_age_relation | DWZ relative to age group | Somatogram analysis |
 
 ### Output Files
 
 Files are named using the pattern:
-`kader-planung-{prefix}-{timestamp}.{extension}`
+`kader-planung-{prefix}-{timestamp}.csv`
 
 Examples:
 - `kader-planung-C0-20240811-143022.csv`
-- `kader-planung-all-20240811-143022.xlsx`
-- `kader-planung-C03-20240811-143022.json`
+- `kader-planung-all-20240811-143022.csv`
+- `kader-planung-C03-20240811-143022.csv`
 
 ## Data Analysis
 
@@ -134,6 +147,42 @@ The application finds the DWZ rating closest to (but before) 12 months ago from 
 - **Games Count**: Total number of rated games played in the last 12 months
 - **Success Rate**: Calculated as `(Wins + 0.5 × Draws) / Total Games × 100`
 - Missing data is marked as `DATA_NOT_AVAILABLE`
+
+### Somatogram Percentile Calculation
+
+The `somatogram_percentile` column provides Germany-wide percentile rankings:
+
+#### **Data Collection Scope**
+- **Always processes ALL German players** (~50,000+ players from ~4,300 clubs)
+- **Germany-wide percentiles** regardless of `--club-prefix` filter
+- **Complete dataset** ensures meaningful and accurate percentile comparisons
+
+#### **Percentile Calculation Method**
+- **Age-Gender Grouping**: Players grouped by birth year and gender (m/f)
+- **DWZ-based Ranking**: Percentiles calculated from DWZ ratings within each group
+- **Statistical Interpolation**: Uses precise interpolation for accurate percentile values
+- **Sample Size Threshold**: Groups with fewer than `--min-sample-size` (default: 10) players show `DATA_NOT_AVAILABLE`
+
+#### **Output Format**
+- **Floating-point values**: Percentiles displayed with one decimal place (e.g., `96.4`, `67.2`, `89.0`)
+- **Range**: Valid percentiles are 0.0-100.0
+- **Missing data**: Shows `DATA_NOT_AVAILABLE` for insufficient sample sizes or missing birth year
+
+#### **Example Interpretation**
+- `somatogram_percentile: 96.4` → Player's DWZ is higher than 96.4% of German players in their age/gender group
+- `somatogram_percentile: 23.1` → Player's DWZ is higher than 23.1% of German players in their age/gender group
+- `somatogram_percentile: DATA_NOT_AVAILABLE` → Fewer than 10 players in this age/gender group for reliable calculation
+
+#### **Sample Size Considerations**
+- **Default threshold (10)**: Balances accuracy with data availability for most age groups
+- **Lower thresholds (5-9)**: Include more age groups but may have less statistical reliability
+- **Higher thresholds (20-50)**: More statistically reliable but exclude smaller age groups
+- **Very high thresholds (100+)**: Only include age groups with substantial player populations
+
+#### **Performance Impact**
+- **Additional processing time**: ~30-60 seconds for complete German dataset collection
+- **Memory usage**: ~200-300MB for full player dataset
+- **API calls**: ~500-800 API requests to collect all German club data
 
 ## Logging and Monitoring
 

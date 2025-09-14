@@ -95,6 +95,7 @@ type KaderPlanungRecord struct {
 	DWZ12MonthsAgo             string `json:"dwz_12_months_ago" csv:"dwz_12_months_ago"`
 	GamesLast12Months          string `json:"games_last_12_months" csv:"games_last_12_months"`
 	SuccessRateLast12Months    string `json:"success_rate_last_12_months" csv:"success_rate_last_12_months"`
+	SomatogramPercentile       string `json:"somatogram_percentile" csv:"somatogram_percentile"`         // NEW: Somatogram percentile (Phase 2)
 	DWZAgeRelation             string `json:"dwz_age_relation" csv:"dwz_age_relation"`                   // NEW
 }
 // APIResponse represents the wrapper response from Portal64 API
@@ -273,4 +274,12 @@ func CalculateListRanking(players []Player) []int {
 	}
 	
 	return rankings
+}
+
+// AgeGenderGroup represents a group of players by age and gender for percentile calculation
+type AgeGenderGroup struct {
+	Age        int           `json:"age"`
+	Gender     string        `json:"gender"`
+	SampleSize int           `json:"sample_size"`
+	Players    []Player      `json:"players"`
 }

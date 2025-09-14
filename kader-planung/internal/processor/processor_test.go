@@ -12,7 +12,7 @@ func TestAnalyzeHistoricalData(t *testing.T) {
 
 	// Test case 1: No history data
 	t.Run("No history data", func(t *testing.T) {
-		analysis := processor.analyzeHistoricalData(nil)
+		analysis := processor.AnalyzeHistoricalData(nil)
 
 		if analysis.HasHistoricalData {
 			t.Error("Expected HasHistoricalData to be false")
@@ -29,7 +29,7 @@ func TestAnalyzeHistoricalData(t *testing.T) {
 			Points:   []models.RatingPoint{},
 		}
 
-		analysis := processor.analyzeHistoricalData(history)
+		analysis := processor.AnalyzeHistoricalData(history)
 
 		if analysis.HasHistoricalData {
 			t.Error("Expected HasHistoricalData to be false for empty history")
@@ -47,33 +47,30 @@ func TestAnalyzeHistoricalData(t *testing.T) {
 			PlayerID: "C0327-297",
 			Points: []models.RatingPoint{
 				{
-					Date:   twoYearsAgo,
-					DWZ:    1500,
-					Games:  5,
-					Wins:   3,
-					Draws:  1,
-					Losses: 1,
+					Date:       twoYearsAgo,
+					DWZ:        1500,
+					Games:      5,
+					Points:     3.5,
+					Tournament: "Test Tournament 1",
 				},
 				{
-					Date:   oneYearAgo,
-					DWZ:    1520,
-					Games:  3,
-					Wins:   2,
-					Draws:  0,
-					Losses: 1,
+					Date:       oneYearAgo,
+					DWZ:        1520,
+					Games:      3,
+					Points:     2.0,
+					Tournament: "Test Tournament 2",
 				},
 				{
-					Date:   sixMonthsAgo,
-					DWZ:    1540,
-					Games:  4,
-					Wins:   2,
-					Draws:  2,
-					Losses: 0,
+					Date:       sixMonthsAgo,
+					DWZ:        1540,
+					Games:      4,
+					Points:     3.0,
+					Tournament: "Test Tournament 3",
 				},
 			},
 		}
 
-		analysis := processor.analyzeHistoricalData(history)
+		analysis := processor.AnalyzeHistoricalData(history)
 
 		if !analysis.HasHistoricalData {
 			t.Error("Expected HasHistoricalData to be true")
@@ -105,11 +102,12 @@ func TestCreateKaderPlanungRecord(t *testing.T) {
 		Name: "Test Chess Club",
 	}
 
+	birthyear := 1990
 	player := models.Player{
 		ID:         "C0327-297",
 		Firstname:  "John",
-		Lastname:   "Doe",
-		Birthyear:  1990,
+		Name:       "Doe",
+		BirthYear:  &birthyear,
 		CurrentDWZ: 1600,
 	}
 
@@ -135,11 +133,11 @@ func TestCreateKaderPlanungRecord(t *testing.T) {
 	if record.Firstname != player.Firstname {
 		t.Errorf("Expected firstname %s, got %s", player.Firstname, record.Firstname)
 	}
-	if record.Lastname != player.Lastname {
-		t.Errorf("Expected lastname %s, got %s", player.Lastname, record.Lastname)
+	if record.Lastname != player.Name {
+		t.Errorf("Expected lastname %s, got %s", player.Name, record.Lastname)
 	}
-	if record.Birthyear != player.Birthyear {
-		t.Errorf("Expected birthyear %d, got %d", player.Birthyear, record.Birthyear)
+	if record.Birthyear != *player.BirthYear {
+		t.Errorf("Expected birthyear %d, got %d", *player.BirthYear, record.Birthyear)
 	}
 	if record.CurrentDWZ != player.CurrentDWZ {
 		t.Errorf("Expected current DWZ %d, got %d", player.CurrentDWZ, record.CurrentDWZ)
@@ -152,7 +150,7 @@ func TestCreateKaderPlanungRecord(t *testing.T) {
 	if record.GamesLast12Months != "8" {
 		t.Errorf("Expected games last 12 months to be 8, got %s", record.GamesLast12Months)
 	}
-	if record.SuccessRateLast12Months != "62.5" {
+	if record.SuccessRateLast12Months != "62,5" {
 		t.Errorf("Expected success rate to be 62.5, got %s", record.SuccessRateLast12Months)
 	}
 }
@@ -165,11 +163,12 @@ func TestCreateKaderPlanungRecordNoData(t *testing.T) {
 		Name: "Test Chess Club",
 	}
 
+	birthyear := 1990
 	player := models.Player{
 		ID:         "C0327-297",
 		Firstname:  "John",
-		Lastname:   "Doe",
-		Birthyear:  1990,
+		Name:       "Doe",
+		BirthYear:  &birthyear,
 		CurrentDWZ: 1600,
 	}
 

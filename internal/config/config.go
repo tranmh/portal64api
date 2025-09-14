@@ -14,13 +14,14 @@ import (
 
 // Config holds all configuration for the application
 type Config struct {
-	Server        ServerConfig
-	Database      DatabaseConfig
-	Cache         CacheConfig
-	Import        ImportConfig
-	Logging       LoggingConfig
-	KaderPlanung  KaderPlanungConfig
-	Somatogramm   SomatogrammConfig
+	Server              ServerConfig
+	Database            DatabaseConfig
+	Cache               CacheConfig
+	Import              ImportConfig
+	Logging             LoggingConfig
+	KaderPlanung        KaderPlanungConfig        // Legacy config for backward compatibility
+	Somatogramm         SomatogrammConfig         // Legacy config for backward compatibility
+	UnifiedKaderPlanung UnifiedKaderPlanungConfig // New unified config
 }
 
 // ServerConfig holds server-specific configuration
@@ -166,13 +167,17 @@ type KaderPlanungConfig struct {
 	OutputDir     string
 	APIBaseURL    string
 	ClubPrefix    string
-	OutputFormat  string
 	Timeout       int
 	Concurrency   int   // 0 = use runtime.NumCPU()
+	MinSampleSize int   // Minimum sample size for somatogram percentile accuracy
 	Verbose       bool
 	MaxVersions   int
 }
 
+// DEPRECATED: SomatogrammConfig is deprecated and will be removed in a future version.
+// Use UnifiedKaderPlanungConfig with ProcessingMode="statistical" instead.
+// See MIGRATION_PHASE4_DEPRECATION_NOTICE.md for migration instructions.
+//
 // SomatogrammConfig holds configuration for integrated Somatogramm functionality
 type SomatogrammConfig struct {
 	Enabled         bool
@@ -185,6 +190,33 @@ type SomatogrammConfig struct {
 	Concurrency     int   // 0 = use runtime.NumCPU()
 	Verbose         bool
 	MaxVersions     int
+}
+
+// UnifiedKaderPlanungConfig holds the enhanced unified configuration
+// combining both Kader-Planung and Somatogramm functionality
+type UnifiedKaderPlanungConfig struct {
+	// Existing Kader-Planung fields
+	Enabled       bool
+	BinaryPath    string
+	OutputDir     string
+	APIBaseURL    string
+	ClubPrefix    string
+	OutputFormat  string
+	Timeout       int
+	Concurrency   int
+	Verbose       bool
+	MaxVersions   int
+
+	// New fields from Somatogramm integration
+	ProcessingMode    string   // "detailed" | "statistical" | "hybrid" | "efficient"
+	MinSampleSize     int      // From Somatogramm
+	EnableStatistics  bool     // Enable statistical output
+	StatisticsFormats []string // ["csv", "json"]
+
+	// New performance settings
+	EnableCheckpoints bool // Optional fault tolerance
+	WorkerPoolSize   int  // API client concurrency
+	RateLimitRPS     int  // API rate limiting
 }
 
 // Load loads configuration from environment variables and .env file
@@ -385,16 +417,16 @@ func loadConfig() *Config {
 			Compress:      getBoolEnv("LOG_COMPRESS", true),
 		},
 		KaderPlanung: KaderPlanungConfig{
-			Enabled:      getBoolEnv("KADER_PLANUNG_ENABLED", true),
-			BinaryPath:   getStringEnv("KADER_PLANUNG_BINARY_PATH", "kader-planung/bin/kader-planung.exe"),
-			OutputDir:    getStringEnv("KADER_PLANUNG_OUTPUT_DIR", "internal/static/demo/kader-planung"),
-			APIBaseURL:   getStringEnv("KADER_PLANUNG_API_BASE_URL", "http://localhost:8080"),
-			ClubPrefix:   getStringEnv("KADER_PLANUNG_CLUB_PREFIX", ""),
-			OutputFormat: getStringEnv("KADER_PLANUNG_OUTPUT_FORMAT", "csv"),
-			Timeout:      getIntEnv("KADER_PLANUNG_TIMEOUT", 30),
-			Concurrency:  getIntEnv("KADER_PLANUNG_CONCURRENCY", 0), // 0 = use runtime.NumCPU()
-			Verbose:      getBoolEnv("KADER_PLANUNG_VERBOSE", false),
-			MaxVersions:  getIntEnv("KADER_PLANUNG_MAX_VERSIONS", 7),
+			Enabled:       getBoolEnv("KADER_PLANUNG_ENABLED", true),
+			BinaryPath:    getStringEnv("KADER_PLANUNG_BINARY_PATH", "kader-planung/bin/kader-planung.exe"),
+			OutputDir:     getStringEnv("KADER_PLANUNG_OUTPUT_DIR", "internal/static/demo/kader-planung"),
+			APIBaseURL:    getStringEnv("KADER_PLANUNG_API_BASE_URL", "http://localhost:8080"),
+			ClubPrefix:    getStringEnv("KADER_PLANUNG_CLUB_PREFIX", ""),
+			Timeout:       getIntEnv("KADER_PLANUNG_TIMEOUT", 30),
+			Concurrency:   getIntEnv("KADER_PLANUNG_CONCURRENCY", 0), // 0 = use runtime.NumCPU()
+			MinSampleSize: getIntEnv("KADER_PLANUNG_MIN_SAMPLE_SIZE", 100),
+			Verbose:       getBoolEnv("KADER_PLANUNG_VERBOSE", false),
+			MaxVersions:   getIntEnv("KADER_PLANUNG_MAX_VERSIONS", 7),
 		},
 		Somatogramm: SomatogrammConfig{
 			Enabled:       getBoolEnv("SOMATOGRAMM_ENABLED", true),
@@ -407,6 +439,30 @@ func loadConfig() *Config {
 			Concurrency:   getIntEnv("SOMATOGRAMM_CONCURRENCY", 0), // 0 = use runtime.NumCPU()
 			Verbose:       getBoolEnv("SOMATOGRAMM_VERBOSE", false),
 			MaxVersions:   getIntEnv("SOMATOGRAMM_MAX_VERSIONS", 7),
+		},
+		UnifiedKaderPlanung: UnifiedKaderPlanungConfig{
+			// Legacy Kader-Planung fields (with fallback to old env vars for backward compatibility)
+			Enabled:      getBoolEnv("UNIFIED_KADER_PLANUNG_ENABLED", getBoolEnv("KADER_PLANUNG_ENABLED", true)),
+			BinaryPath:   getStringEnv("UNIFIED_KADER_PLANUNG_BINARY_PATH", getStringEnv("KADER_PLANUNG_BINARY_PATH", "kader-planung/bin/kader-planung.exe")),
+			OutputDir:    getStringEnv("UNIFIED_KADER_PLANUNG_OUTPUT_DIR", getStringEnv("KADER_PLANUNG_OUTPUT_DIR", "internal/static/demo/kader-planung")),
+			APIBaseURL:   getStringEnv("UNIFIED_KADER_PLANUNG_API_BASE_URL", getStringEnv("KADER_PLANUNG_API_BASE_URL", "http://localhost:8080")),
+			ClubPrefix:   getStringEnv("UNIFIED_KADER_PLANUNG_CLUB_PREFIX", getStringEnv("KADER_PLANUNG_CLUB_PREFIX", "")),
+			OutputFormat: getStringEnv("UNIFIED_KADER_PLANUNG_OUTPUT_FORMAT", getStringEnv("KADER_PLANUNG_OUTPUT_FORMAT", "csv")),
+			Timeout:      getIntEnv("UNIFIED_KADER_PLANUNG_TIMEOUT", getIntEnv("KADER_PLANUNG_TIMEOUT", 30)),
+			Concurrency:  getIntEnv("UNIFIED_KADER_PLANUNG_CONCURRENCY", getIntEnv("KADER_PLANUNG_CONCURRENCY", 0)),
+			Verbose:      getBoolEnv("UNIFIED_KADER_PLANUNG_VERBOSE", getBoolEnv("KADER_PLANUNG_VERBOSE", false)),
+			MaxVersions:  getIntEnv("UNIFIED_KADER_PLANUNG_MAX_VERSIONS", getIntEnv("KADER_PLANUNG_MAX_VERSIONS", 7)),
+
+			// New unified configuration fields
+			ProcessingMode:    getStringEnv("UNIFIED_KADER_PLANUNG_PROCESSING_MODE", "detailed"),
+			MinSampleSize:     getIntEnv("UNIFIED_KADER_PLANUNG_MIN_SAMPLE_SIZE", getIntEnv("SOMATOGRAMM_MIN_SAMPLE_SIZE", 100)),
+			EnableStatistics:  getBoolEnv("UNIFIED_KADER_PLANUNG_ENABLE_STATISTICS", false),
+			StatisticsFormats: getStringSliceEnv("UNIFIED_KADER_PLANUNG_STATISTICS_FORMATS", []string{"csv"}),
+
+			// Performance settings
+			EnableCheckpoints: getBoolEnv("UNIFIED_KADER_PLANUNG_ENABLE_CHECKPOINTS", true),
+			WorkerPoolSize:   getIntEnv("UNIFIED_KADER_PLANUNG_WORKER_POOL_SIZE", 0), // 0 = use runtime.NumCPU()
+			RateLimitRPS:     getIntEnv("UNIFIED_KADER_PLANUNG_RATE_LIMIT_RPS", 10),
 		},
 	}
 }

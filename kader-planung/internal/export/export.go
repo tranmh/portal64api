@@ -56,6 +56,11 @@ func (e *Exporter) exportCSV(records []models.KaderPlanungRecord, outputPath str
 	}
 	defer file.Close()
 
+	// Write UTF-8 BOM to ensure proper encoding for German umlauts
+	if _, err := file.Write([]byte("\xEF\xBB\xBF")); err != nil {
+		return fmt.Errorf("failed to write UTF-8 BOM: %w", err)
+	}
+
 	writer := csv.NewWriter(file)
 	writer.Comma = ';' // Use semicolon separator for German Excel compatibility
 	defer writer.Flush()
@@ -78,6 +83,7 @@ func (e *Exporter) exportCSV(records []models.KaderPlanungRecord, outputPath str
 		"dwz_12_months_ago",
 		"games_last_12_months",
 		"success_rate_last_12_months",
+		"somatogram_percentile",       // NEW: Somatogram percentile (Phase 2)
 		"dwz_age_relation",            // NEW
 	}
 
@@ -104,6 +110,7 @@ func (e *Exporter) exportCSV(records []models.KaderPlanungRecord, outputPath str
 			record.DWZ12MonthsAgo,
 			record.GamesLast12Months,
 			record.SuccessRateLast12Months,
+			record.SomatogramPercentile,              // NEW: Somatogram percentile (Phase 2)
 			record.DWZAgeRelation,                    // NEW
 		}
 
@@ -177,7 +184,8 @@ func (e *Exporter) exportExcel(records []models.KaderPlanungRecord, outputPath s
 		"N1": "DWZ 12 Months Ago",
 		"O1": "Games Last 12 Months",
 		"P1": "Success Rate Last 12 Months (%)",
-		"Q1": "DWZ Age Relation",                 // NEW
+		"Q1": "Somatogram Percentile",            // NEW: Somatogram percentile (Phase 2)
+		"R1": "DWZ Age Relation",                 // NEW
 	}
 
 	// Write headers with formatting
@@ -229,11 +237,12 @@ func (e *Exporter) exportExcel(records []models.KaderPlanungRecord, outputPath s
 		file.SetCellValue(sheetName, fmt.Sprintf("N%d", row), record.DWZ12MonthsAgo)
 		file.SetCellValue(sheetName, fmt.Sprintf("O%d", row), record.GamesLast12Months)
 		file.SetCellValue(sheetName, fmt.Sprintf("P%d", row), record.SuccessRateLast12Months)
-		file.SetCellValue(sheetName, fmt.Sprintf("Q%d", row), record.DWZAgeRelation)      // NEW
+		file.SetCellValue(sheetName, fmt.Sprintf("Q%d", row), record.SomatogramPercentile)   // NEW: Somatogram percentile (Phase 2)
+		file.SetCellValue(sheetName, fmt.Sprintf("R%d", row), record.DWZAgeRelation)        // NEW (moved from Q to R)
 	}
 
 	// Auto-fit columns
-	cols := []string{"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q"}
+	cols := []string{"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R"}
 	for _, col := range cols {
 		file.SetColWidth(sheetName, col, col, 15)
 	}

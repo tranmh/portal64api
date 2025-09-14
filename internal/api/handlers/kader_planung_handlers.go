@@ -196,3 +196,181 @@ type KaderPlanungRequest struct {
 	Concurrency  int    `json:"concurrency,omitempty" example:"4"`
 	Verbose      *bool  `json:"verbose,omitempty" example:"false"`
 }
+
+// StatisticalAnalysisRequest represents the request body for statistical analysis
+type StatisticalAnalysisRequest struct {
+	MinSampleSize int      `json:"min_sample_size,omitempty" example:"100"`
+	Timeout       int      `json:"timeout,omitempty" example:"30"`
+	Concurrency   int      `json:"concurrency,omitempty" example:"4"`
+	Verbose       *bool    `json:"verbose,omitempty" example:"false"`
+	Formats       []string `json:"formats,omitempty" example:"csv,json"`
+}
+
+// HybridAnalysisRequest represents the request body for hybrid analysis
+type HybridAnalysisRequest struct {
+	ClubPrefix    string   `json:"club_prefix,omitempty" example:"C0"`
+	OutputFormat  string   `json:"output_format,omitempty" example:"csv"`
+	MinSampleSize int      `json:"min_sample_size,omitempty" example:"100"`
+	Timeout       int      `json:"timeout,omitempty" example:"30"`
+	Concurrency   int      `json:"concurrency,omitempty" example:"4"`
+	Verbose       *bool    `json:"verbose,omitempty" example:"false"`
+	Formats       []string `json:"formats,omitempty" example:"csv,json"`
+}
+
+// ExecuteStatisticalAnalysis starts statistical analysis execution
+// @Summary Start statistical analysis execution
+// @Description Starts statistical analysis execution (Somatogramm-style) with optimized API calls
+// @Tags kader-planung
+// @Accept json
+// @Produce json
+// @Param request body StatisticalAnalysisRequest false "Statistical analysis parameters"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} errors.APIError
+// @Failure 409 {object} errors.APIError "Already running"
+// @Failure 500 {object} errors.APIError
+// @Router /api/v1/kader-planung/statistical [post]
+func (h *KaderPlanungHandler) ExecuteStatisticalAnalysis(c *gin.Context) {
+	var request StatisticalAnalysisRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		utils.SendJSONResponse(c, http.StatusBadRequest,
+			errors.NewBadRequestError("Invalid request format"))
+		return
+	}
+
+	// Convert request to parameters map
+	params := map[string]interface{}{}
+	if request.MinSampleSize > 0 {
+		params["min_sample_size"] = request.MinSampleSize
+	}
+	if request.Timeout > 0 {
+		params["timeout"] = request.Timeout
+	}
+	if request.Concurrency > 0 {
+		params["concurrency"] = request.Concurrency
+	}
+	if request.Verbose != nil {
+		params["verbose"] = *request.Verbose
+	}
+	if len(request.Formats) > 0 {
+		params["formats"] = request.Formats
+	}
+
+	if err := h.service.ExecuteStatisticalAnalysis(params); err != nil {
+		if strings.Contains(err.Error(), "already running") {
+			utils.SendJSONResponse(c, http.StatusConflict,
+				errors.NewAPIError(409, "EXECUTION_ALREADY_RUNNING", "Statistical analysis already in progress"))
+			return
+		}
+
+		utils.SendJSONResponse(c, http.StatusInternalServerError,
+			errors.NewInternalServerError("Failed to start statistical analysis"))
+		return
+	}
+
+	utils.SendJSONResponse(c, http.StatusOK, map[string]string{
+		"message": "Statistical analysis started",
+	})
+}
+
+// ExecuteHybridAnalysis starts hybrid analysis execution
+// @Summary Start hybrid analysis execution
+// @Description Starts hybrid analysis execution (both detailed and statistical analysis)
+// @Tags kader-planung
+// @Accept json
+// @Produce json
+// @Param request body HybridAnalysisRequest false "Hybrid analysis parameters"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} errors.APIError
+// @Failure 409 {object} errors.APIError "Already running"
+// @Failure 500 {object} errors.APIError
+// @Router /api/v1/kader-planung/hybrid [post]
+func (h *KaderPlanungHandler) ExecuteHybridAnalysis(c *gin.Context) {
+	var request HybridAnalysisRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		utils.SendJSONResponse(c, http.StatusBadRequest,
+			errors.NewBadRequestError("Invalid request format"))
+		return
+	}
+
+	// Convert request to parameters map
+	params := map[string]interface{}{}
+	if request.ClubPrefix != "" {
+		params["club_prefix"] = request.ClubPrefix
+	}
+	if request.OutputFormat != "" {
+		params["output_format"] = request.OutputFormat
+	}
+	if request.MinSampleSize > 0 {
+		params["min_sample_size"] = request.MinSampleSize
+	}
+	if request.Timeout > 0 {
+		params["timeout"] = request.Timeout
+	}
+	if request.Concurrency > 0 {
+		params["concurrency"] = request.Concurrency
+	}
+	if request.Verbose != nil {
+		params["verbose"] = *request.Verbose
+	}
+	if len(request.Formats) > 0 {
+		params["formats"] = request.Formats
+	}
+
+	if err := h.service.ExecuteHybridAnalysis(params); err != nil {
+		if strings.Contains(err.Error(), "already running") {
+			utils.SendJSONResponse(c, http.StatusConflict,
+				errors.NewAPIError(409, "EXECUTION_ALREADY_RUNNING", "Hybrid analysis already in progress"))
+			return
+		}
+
+		utils.SendJSONResponse(c, http.StatusInternalServerError,
+			errors.NewInternalServerError("Failed to start hybrid analysis"))
+		return
+	}
+
+	utils.SendJSONResponse(c, http.StatusOK, map[string]string{
+		"message": "Hybrid analysis started",
+	})
+}
+
+// GetStatisticalResults returns results from statistical analysis
+// @Summary Get statistical analysis results
+// @Description Returns available statistical analysis result files
+// @Tags kader-planung
+// @Accept json
+// @Produce json
+// @Success 200 {array} services.FileInfo
+// @Failure 500 {object} errors.APIError
+// @Router /api/v1/kader-planung/statistical/files [get]
+func (h *KaderPlanungHandler) GetStatisticalResults(c *gin.Context) {
+	files, err := h.service.ListAvailableFiles()
+	if err != nil {
+		utils.SendJSONResponse(c, http.StatusInternalServerError,
+			errors.NewInternalServerError("Failed to list statistical results"))
+		return
+	}
+
+	// Filter for statistical files
+	statisticalFiles := []services.FileInfo{}
+	for _, file := range files {
+		if strings.Contains(file.Name, "statistical") || strings.Contains(file.Name, "male") || strings.Contains(file.Name, "female") {
+			statisticalFiles = append(statisticalFiles, file)
+		}
+	}
+
+	utils.SendJSONResponse(c, http.StatusOK, statisticalFiles)
+}
+
+// GetAnalysisCapabilities returns supported analysis modes and formats
+// @Summary Get analysis capabilities
+// @Description Returns supported processing modes, output formats, and features
+// @Tags kader-planung
+// @Accept json
+// @Produce json
+// @Success 200 {object} map[string]interface{}
+// @Failure 500 {object} errors.APIError
+// @Router /api/v1/kader-planung/capabilities [get]
+func (h *KaderPlanungHandler) GetAnalysisCapabilities(c *gin.Context) {
+	capabilities := h.service.GetAnalysisCapabilities()
+	utils.SendJSONResponse(c, http.StatusOK, capabilities)
+}

@@ -106,6 +106,7 @@ func convertToCSV(data interface{}) (string, error) {
 	// Convert records to CSV string
 	var csvBuilder strings.Builder
 	csvWriter := csv.NewWriter(&csvBuilder)
+	csvWriter.Comma = ';' // Use semicolon separator for German Excel compatibility
 	
 	for _, record := range records {
 		if err := csvWriter.Write(record); err != nil {

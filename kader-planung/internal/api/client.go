@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/portal64/kader-planung/internal/models"
@@ -16,24 +17,34 @@ import (
 
 // Client represents the Portal64 API client
 type Client struct {
-	baseURL    string
-	httpClient *http.Client
-	logger     *logrus.Logger
+	baseURL     string
+	httpClient  *http.Client
+	logger      *logrus.Logger
+	concurrency int // Number of concurrent workers for efficient bulk operations
 }
 
 // NewClient creates a new API client
 func NewClient(baseURL string, timeout time.Duration) *Client {
 	return &Client{
 		baseURL: baseURL,
-		httpClient: &http.Client{			Timeout: timeout,
+		httpClient: &http.Client{
+			Timeout: timeout,
 			Transport: &http.Transport{
 				MaxIdleConns:        10,
 				MaxIdleConnsPerHost: 10,
 				IdleConnTimeout:     60 * time.Second,
 			},
 		},
-		logger: logrus.StandardLogger(),
+		logger:      logrus.StandardLogger(),
+		concurrency: 8, // Default concurrency level
 	}
+}
+
+// NewClientWithConcurrency creates a new API client with specified concurrency
+func NewClientWithConcurrency(baseURL string, timeout time.Duration, concurrency int) *Client {
+	client := NewClient(baseURL, timeout)
+	client.concurrency = concurrency
+	return client
 }
 
 // SearchClubs retrieves all clubs, optionally filtered by prefix
@@ -117,12 +128,16 @@ func (c *Client) GetPlayerRatingHistory(playerID string) (*models.RatingHistory,
 	
 	var response models.RatingHistoryResponse
 	if err := c.makeRequest("GET", endpoint, nil, &response); err != nil {
+		c.logger.Debugf("API request failed for player %s: %v", playerID, err)
 		return nil, fmt.Errorf("failed to get rating history for %s: %w", playerID, err)
 	}
 
 	if !response.Success {
+		c.logger.Debugf("API returned unsuccessful response for player %s", playerID)
 		return nil, fmt.Errorf("API returned unsuccessful response for player %s", playerID)
 	}
+	
+	c.logger.Debugf("API returned %d tournament results for player %s", len(response.Data), playerID)
 
 	// Convert the API response to the expected format
 	history := &models.RatingHistory{
@@ -406,4 +421,149 @@ func (c *Client) estimateTournamentDate(tournamentID string) time.Time {
 
 	c.logger.Debugf("Could not parse tournament date from ID: %s, using fallback", tournamentID)
 	return fallbackDate
+}
+
+// ========================================
+// ENHANCED EFFICIENT BULK OPERATIONS
+// Inspired by Somatogramm's concurrent approach
+// ========================================
+
+// FetchAllPlayersEfficient retrieves all players via concurrent club processing
+// This is the high-performance method that reduces API calls from 1+N+2NP to just 1+N
+func (c *Client) FetchAllPlayersEfficient(clubPrefix string) ([]models.Player, error) {
+	c.logger.Debug("Starting efficient bulk player fetch...")
+
+	// First, fetch all clubs (same as before, but we'll use all data efficiently)
+	clubs, err := c.GetAllClubs(clubPrefix)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch clubs: %w", err)
+	}
+
+	c.logger.Debugf("Found %d clubs, fetching players concurrently with %d workers...", len(clubs), c.concurrency)
+
+	// Create channels and worker pool for concurrent processing
+	clubChan := make(chan models.Club, len(clubs))
+	resultChan := make(chan []models.Player, len(clubs))
+	errorChan := make(chan error, len(clubs))
+
+	var wg sync.WaitGroup
+
+	// Start worker goroutines
+	for i := 0; i < c.concurrency; i++ {
+		wg.Add(1)
+		go func(workerID int) {
+			defer wg.Done()
+			for club := range clubChan {
+				c.logger.Debugf("Worker %d: Fetching players for club %s (%s)", workerID, club.ID, club.Name)
+
+				clubPlayers, err := c.GetAllClubPlayers(club.ID, false) // Include all players
+				if err != nil {
+					c.logger.Warnf("Worker %d: failed to fetch players for club %s: %v", workerID, club.ID, err)
+					errorChan <- err
+					resultChan <- nil
+					continue
+				}
+
+				c.logger.Debugf("Worker %d: Found %d players for club %s", workerID, len(clubPlayers), club.ID)
+
+				// Set club information for each player (like Somatogramm does)
+				for i := range clubPlayers {
+					clubPlayers[i].ClubID = club.ID
+					clubPlayers[i].Club = club.Name
+				}
+
+				resultChan <- clubPlayers
+			}
+		}(i)
+	}
+
+	// Send clubs to workers
+	for _, club := range clubs {
+		clubChan <- club
+	}
+	close(clubChan)
+
+	// Wait for all workers to finish
+	go func() {
+		wg.Wait()
+		close(resultChan)
+		close(errorChan)
+	}()
+
+	// Collect results
+	var allPlayers []models.Player
+	processedClubs := 0
+	errors := 0
+
+	for result := range resultChan {
+		processedClubs++
+		if result != nil {
+			allPlayers = append(allPlayers, result...)
+		} else {
+			errors++
+		}
+	}
+
+	// Log any errors that occurred
+	for err := range errorChan {
+		if err != nil {
+			c.logger.Debugf("Error occurred during bulk fetch: %v", err)
+		}
+	}
+
+	c.logger.Infof("Efficient bulk fetch completed: %d total players from %d clubs (%d successful, %d errors)",
+		len(allPlayers), len(clubs), processedClubs-errors, errors)
+
+	return allPlayers, nil
+}
+
+// FilterValidPlayersForStatistics filters players for statistical analysis (like Somatogramm)
+func (c *Client) FilterValidPlayersForStatistics(players []models.Player) []models.Player {
+	var validPlayers []models.Player
+	currentYear := time.Now().Year()
+
+	for _, player := range players {
+		// Skip players with invalid DWZ
+		if player.CurrentDWZ <= 0 {
+			continue
+		}
+
+		// Skip players without birth year
+		if player.BirthYear == nil {
+			continue
+		}
+
+		// Skip players with unrealistic ages
+		age := currentYear - *player.BirthYear
+		if age < 4 || age > 100 {
+			continue
+		}
+
+		// Normalize gender field (like Somatogramm does)
+		player.Gender = c.mapGenderToString(player.Gender)
+		validPlayers = append(validPlayers, player)
+	}
+
+	c.logger.Debugf("Filtered %d valid players from %d total for statistical analysis", len(validPlayers), len(players))
+	return validPlayers
+}
+
+// mapGenderToString normalizes gender values (from Somatogramm)
+func (c *Client) mapGenderToString(gender string) string {
+	switch strings.ToLower(gender) {
+	case "1", "m", "male":
+		return "m"
+	case "0", "w", "female":
+		return "w"
+	case "2", "d", "divers":
+		return "d"
+	default:
+		return "m" // Default to male if unknown
+	}
+}
+
+// SetConcurrency updates the concurrency level for bulk operations
+func (c *Client) SetConcurrency(concurrency int) {
+	c.concurrency = concurrency
+	c.logger.Debugf("Updated API client concurrency to %d", concurrency)
 }

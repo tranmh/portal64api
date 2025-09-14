@@ -105,7 +105,8 @@ func TestExportCSV(t *testing.T) {
 			ListRanking:             1,                      // NEW
 			DWZ12MonthsAgo:          "1550",
 			GamesLast12Months:       "8",
-			SuccessRateLast12Months: "62.5",
+			SuccessRateLast12Months: "62,5",
+			SomatogramPercentile:    "67,2",                // NEW: Somatogram percentile (Phase 2)
 			DWZAgeRelation:          "1500",                // NEW
 		},
 		{
@@ -125,6 +126,7 @@ func TestExportCSV(t *testing.T) {
 			DWZ12MonthsAgo:          models.DataNotAvailable,
 			GamesLast12Months:       models.DataNotAvailable,
 			SuccessRateLast12Months: models.DataNotAvailable,
+			SomatogramPercentile:    models.DataNotAvailable, // NEW: Somatogram percentile (Phase 2)
 			DWZAgeRelation:          models.DataNotAvailable, // NEW
 		},
 	}
@@ -153,7 +155,7 @@ func TestExportCSV(t *testing.T) {
 	contentStr := string(content)
 
 	// Check header - should start with the new prefix columns and include all new fields
-	expectedHeader := "club_id_prefix1;club_id_prefix2;club_id_prefix3;club_name;club_id;player_id;pkz;lastname;firstname;birthyear;gender;current_dwz;list_ranking;dwz_12_months_ago;games_last_12_months;success_rate_last_12_months;dwz_age_relation"
+	expectedHeader := "club_id_prefix1;club_id_prefix2;club_id_prefix3;club_name;club_id;player_id;pkz;lastname;firstname;birthyear;gender;current_dwz;list_ranking;dwz_12_months_ago;games_last_12_months;success_rate_last_12_months;somatogram_percentile;dwz_age_relation"
 	if !strings.Contains(contentStr, expectedHeader) {
 		t.Errorf("CSV header with all new fields not found. Expected: %s", expectedHeader)
 	}
@@ -194,7 +196,8 @@ func TestExportJSON(t *testing.T) {
 			ListRanking:             1,                      // NEW
 			DWZ12MonthsAgo:          "1550",
 			GamesLast12Months:       "8",
-			SuccessRateLast12Months: "62.5",
+			SuccessRateLast12Months: "62,5",
+			SomatogramPercentile:    "67,2",                // NEW: Somatogram percentile (Phase 2)
 			DWZAgeRelation:          "1500",                // NEW
 		},
 	}

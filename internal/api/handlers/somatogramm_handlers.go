@@ -12,6 +12,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// DEPRECATED: SomatogrammHandler is deprecated and will be removed in a future version.
+// Use SomatogrammCompatibilityHandler or migrate to unified Kader-Planung endpoints.
+// See MIGRATION_PHASE4_DEPRECATION_NOTICE.md for migration instructions.
+//
 // SomatogrammHandler handles Somatogramm related requests
 type SomatogrammHandler struct {
 	service *services.SomatogrammService

@@ -12,6 +12,26 @@ async function getKaderPlanungFiles() {
     return api.request('/api/v1/kader-planung/files');
 }
 
+async function getAnalysisCapabilities() {
+    return api.request('/api/v1/kader-planung/capabilities');
+}
+
+async function startDetailedAnalysis(params) {
+    return api.request('/api/v1/kader-planung/start', 'POST', params);
+}
+
+async function startStatisticalAnalysis(params) {
+    return api.request('/api/v1/kader-planung/statistical', 'POST', params);
+}
+
+async function startHybridAnalysis(params) {
+    return api.request('/api/v1/kader-planung/hybrid', 'POST', params);
+}
+
+async function getStatisticalResults() {
+    return api.request('/api/v1/kader-planung/statistical/files');
+}
+
 // Status display functions
 async function refreshStatus() {
     try {
@@ -267,6 +287,238 @@ function formatFileSize(bytes) {
     
     const i = Math.floor(Math.log(bytes) / Math.log(1024));
     return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
+}
+
+// UI functionality for new analysis modes
+function initializeModeSelector() {
+    const modeSelector = document.getElementById('processing-mode');
+    if (modeSelector) {
+        modeSelector.addEventListener('change', function() {
+            toggleModeOptions(this.value);
+        });
+
+        // Initialize with default mode
+        toggleModeOptions('detailed');
+    }
+}
+
+function toggleModeOptions(mode) {
+    const statisticalOptions = document.getElementById('statistical-options');
+    const detailedOptions = document.getElementById('detailed-options');
+
+    if (!statisticalOptions || !detailedOptions) return;
+
+    // Show/hide options based on selected mode
+    switch (mode) {
+        case 'statistical':
+            statisticalOptions.style.display = 'block';
+            detailedOptions.style.display = 'none';
+            break;
+        case 'hybrid':
+            statisticalOptions.style.display = 'block';
+            detailedOptions.style.display = 'block';
+            break;
+        case 'detailed':
+        case 'efficient':
+        default:
+            statisticalOptions.style.display = 'none';
+            detailedOptions.style.display = 'block';
+            break;
+    }
+}
+
+async function loadAnalysisCapabilities() {
+    try {
+        const response = await getAnalysisCapabilities();
+        if (response.success && response.data) {
+            console.log('Analysis capabilities:', response.data);
+            // Could update UI based on capabilities
+        }
+    } catch (error) {
+        console.warn('Failed to load analysis capabilities:', error);
+    }
+}
+
+async function startExecution() {
+    const startBtn = document.getElementById('start-btn');
+    if (!startBtn) return;
+
+    // Disable button during execution
+    startBtn.disabled = true;
+    startBtn.textContent = '⏳ Starte...';
+
+    try {
+        const mode = document.getElementById('processing-mode')?.value || 'detailed';
+        const params = collectExecutionParams(mode);
+
+        let response;
+        switch (mode) {
+            case 'statistical':
+                response = await startStatisticalAnalysis(params);
+                break;
+            case 'hybrid':
+                response = await startHybridAnalysis(params);
+                break;
+            case 'detailed':
+            case 'efficient':
+            default:
+                response = await startDetailedAnalysis(params);
+                break;
+        }
+
+        if (response.success) {
+            Utils.showSuccess('status-result', `${getModeDisplayName(mode)} wurde erfolgreich gestartet!`, 5000);
+            // Refresh status to show running state
+            setTimeout(() => refreshStatus(), 1000);
+        } else {
+            throw new Error(response.error || response.message || 'Unbekannter Fehler');
+        }
+    } catch (error) {
+        console.error('Execution failed:', error);
+        Utils.showError('status-result', `Start fehlgeschlagen: ${error.message}`);
+    } finally {
+        // Re-enable button
+        startBtn.disabled = false;
+        startBtn.textContent = '🚀 Analyse starten';
+    }
+}
+
+function collectExecutionParams(mode) {
+    const params = {};
+
+    // Basic parameters for all modes
+    const clubPrefix = document.getElementById('club-prefix')?.value;
+    if (clubPrefix) params.club_prefix = clubPrefix;
+
+    const timeout = parseInt(document.getElementById('timeout')?.value) || 30;
+    params.timeout = timeout;
+
+    const concurrency = parseInt(document.getElementById('concurrency')?.value) || 4;
+    params.concurrency = concurrency;
+
+    const verbose = document.getElementById('verbose')?.checked;
+    if (verbose) params.verbose = verbose;
+
+    // Mode-specific parameters
+    if (mode === 'statistical' || mode === 'hybrid') {
+        const minSampleSize = parseInt(document.getElementById('min-sample-size')?.value) || 100;
+        params.min_sample_size = minSampleSize;
+
+        // Collect statistical formats
+        const formats = [];
+        if (document.getElementById('csv-stats')?.checked) formats.push('csv');
+        if (document.getElementById('json-stats')?.checked) formats.push('json');
+        if (formats.length > 0) params.formats = formats;
+    }
+
+    if (mode === 'detailed' || mode === 'hybrid' || mode === 'efficient') {
+        const outputFormat = document.getElementById('output-format')?.value || 'csv';
+        params.output_format = outputFormat;
+    }
+
+    return params;
+}
+
+function getModeDisplayName(mode) {
+    switch (mode) {
+        case 'statistical': return 'Statistische Analyse';
+        case 'hybrid': return 'Hybrid-Analyse';
+        case 'efficient': return 'Effizienter Modus';
+        case 'detailed':
+        default: return 'Detailierte Analyse';
+    }
+}
+
+// Enhanced status display with processing mode information
+function displayStatusEnhanced(response) {
+    const statusContainer = document.getElementById('status-result');
+    const status = response.status;
+
+    // Determine status indicator and text
+    let statusIndicator, statusText, statusClass;
+
+    if (status.running || status.Running) {
+        statusIndicator = '🔄';
+        statusText = 'Läuft gerade...';
+        statusClass = 'status-running';
+    } else {
+        statusIndicator = '✅';
+        statusText = 'Abgeschlossen';
+        statusClass = 'status-completed';
+    }
+
+    // Processing mode info
+    const processingMode = status.processing_mode || status.ProcessingMode || 0;
+    let modeText = 'Detailierte Analyse';
+    switch (processingMode) {
+        case 1: modeText = 'Statistische Analyse'; break;
+        case 2: modeText = 'Hybrid-Analyse'; break;
+        case 3: modeText = 'Effizienter Modus'; break;
+    }
+
+    // Format dates
+    const lastExecution = (status.last_execution || status.LastExecution) ?
+        formatDateTime(status.last_execution || status.LastExecution) : 'Noch nie ausgeführt';
+    const nextScheduled = 'Täglich nach Datenbankimport';
+    const startTime = (status.start_time || status.StartTime) ?
+        formatDateTime(status.start_time || status.StartTime) : null;
+    const lastSuccess = (status.last_success || status.LastSuccess) ?
+        formatDateTime(status.last_success || status.LastSuccess) : null;
+    const lastError = status.last_error || status.LastError;
+
+    statusContainer.innerHTML = `
+        <div class="status-info">
+            <div class="status-row ${statusClass}">
+                <span class="status-indicator">${statusIndicator}</span>
+                <strong>Status:</strong> ${statusText}
+            </div>
+            <div class="status-row">
+                <span class="status-indicator">⚙️</span>
+                <strong>Modus:</strong> ${modeText}
+            </div>
+            <div class="status-row">
+                <span class="status-indicator">📅</span>
+                <strong>Letzte Ausführung:</strong> ${lastExecution}
+            </div>
+            <div class="status-row">
+                <span class="status-indicator">⏰</span>
+                <strong>Nächste Ausführung:</strong> ${nextScheduled}
+            </div>
+            ${(status.running || status.Running) && startTime ? `
+                <div class="status-row">
+                    <span class="status-indicator">⏱️</span>
+                    <strong>Gestartet:</strong> ${startTime}
+                </div>
+            ` : ''}
+            ${lastSuccess ? `
+                <div class="status-row">
+                    <span class="status-indicator">✅</span>
+                    <strong>Letzter Erfolg:</strong> ${lastSuccess}
+                </div>
+            ` : ''}
+            ${lastError ? `
+                <div class="status-row">
+                    <span class="status-indicator">⚠️</span>
+                    <strong>Letzter Fehler:</strong> ${lastError}
+                </div>
+            ` : ''}
+            <div class="status-row">
+                <span class="status-indicator">📊</span>
+                <strong>Verfügbare Dateien:</strong> ${response.available_files ? response.available_files.length : 0}
+            </div>
+            ${status.output_files && status.output_files.length > 0 ? `
+                <div class="status-row">
+                    <span class="status-indicator">📁</span>
+                    <strong>Letzte Ausgabedateien:</strong> ${status.output_files.slice(0, 3).join(', ')}${status.output_files.length > 3 ? '...' : ''}
+                </div>
+            ` : ''}
+        </div>
+    `;
+}
+
+// Update existing displayStatus function to use enhanced version
+function displayStatus(response) {
+    displayStatusEnhanced(response);
 }
 
 // Cleanup on page unload

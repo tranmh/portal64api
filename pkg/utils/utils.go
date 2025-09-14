@@ -256,6 +256,7 @@ func SendCSVResponse(c *gin.Context, filename string, data interface{}) {
 	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
 
 	writer := csv.NewWriter(c.Writer)
+	writer.Comma = ';' // Use semicolon separator for German Excel compatibility
 	defer writer.Flush()
 
 	// Convert data to CSV

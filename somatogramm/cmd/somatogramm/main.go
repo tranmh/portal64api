@@ -84,7 +84,7 @@ func parseFlags() *models.Config {
 
 	flag.StringVar(&config.OutputFormat, "output-format", "csv", "Output format (csv|json)")
 	flag.StringVar(&config.OutputDir, "output-dir", ".", "Output directory")
-	flag.IntVar(&config.Concurrency, "concurrency", runtime.NumCPU(), "Number of concurrent API requests")
+	flag.IntVar(&config.Concurrency, "concurrency", runtime.NumCPU(), "Number of concurrent API requests (default: number of CPU cores)")
 	flag.StringVar(&config.APIBaseURL, "api-base-url", "http://localhost:8080", "Base URL for Portal64 API")
 	flag.IntVar(&config.Timeout, "timeout", 30, "API request timeout in seconds")
 	flag.BoolVar(&config.Verbose, "verbose", false, "Enable detailed logging")
@@ -242,7 +242,13 @@ func exportDebugCSV(records []models.DebugPlayerRecord, outputPath string, verbo
 	}
 	defer file.Close()
 
+	// Write UTF-8 BOM to ensure proper encoding for German umlauts
+	if _, err := file.Write([]byte("\xEF\xBB\xBF")); err != nil {
+		return fmt.Errorf("failed to write UTF-8 BOM: %w", err)
+	}
+
 	writer := csv.NewWriter(file)
+	writer.Comma = ';' // Use semicolon separator for German Excel compatibility
 	defer writer.Flush()
 
 	// Write header
