@@ -25,11 +25,8 @@ func main() {
 		fmt.Printf("Starting somatogramm with config: %+v\n", config)
 	}
 
-	if config.Concurrency <= 0 {
-		config.Concurrency = runtime.NumCPU()
-	}
 
-	client := api.NewClient(config.APIBaseURL, time.Duration(config.Timeout)*time.Second, config.Verbose)
+	client := api.NewClient(config.APIBaseURL, time.Duration(config.Timeout)*time.Second, config.Verbose, config.Concurrency)
 
 	// Check if debug mode is enabled
 	debugMode := config.DebugAge > 0 && config.DebugGender != ""
@@ -87,11 +84,11 @@ func parseFlags() *models.Config {
 
 	flag.StringVar(&config.OutputFormat, "output-format", "csv", "Output format (csv|json)")
 	flag.StringVar(&config.OutputDir, "output-dir", ".", "Output directory")
-	flag.IntVar(&config.Concurrency, "concurrency", 0, "Number of concurrent API requests (0 = CPU cores)")
+	flag.IntVar(&config.Concurrency, "concurrency", runtime.NumCPU(), "Number of concurrent API requests")
 	flag.StringVar(&config.APIBaseURL, "api-base-url", "http://localhost:8080", "Base URL for Portal64 API")
 	flag.IntVar(&config.Timeout, "timeout", 30, "API request timeout in seconds")
 	flag.BoolVar(&config.Verbose, "verbose", false, "Enable detailed logging")
-	flag.IntVar(&config.MinSampleSize, "min-sample-size", 100, "Minimum players per age/gender group")
+	flag.IntVar(&config.MinSampleSize, "min-sample-size", 10, "Minimum players per age/gender group")
 
 	// Debug mode flags
 	flag.IntVar(&config.DebugAge, "debug-age", 0, "Debug mode: filter players by exact age (disables normal processing)")

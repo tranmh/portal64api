@@ -78,7 +78,7 @@ func TestSomatogrammWorkflow(t *testing.T) {
 	// Test the workflow components
 
 	// Create API client
-	client := api.NewClient(server.URL, 30*time.Second, false)
+	client := api.NewClient(server.URL, 30*time.Second, false, 4)
 
 	// Fetch players
 	players, err := client.FetchAllPlayers()

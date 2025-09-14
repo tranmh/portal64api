@@ -29,8 +29,9 @@ func TestParseFlagsDefaults(t *testing.T) {
 		t.Errorf("expected default output dir '.', got %s", config.OutputDir)
 	}
 
-	if config.Concurrency != 0 {
-		t.Errorf("expected default concurrency 0, got %d", config.Concurrency)
+	expectedConcurrency := runtime.NumCPU()
+	if config.Concurrency != expectedConcurrency {
+		t.Errorf("expected default concurrency %d, got %d", expectedConcurrency, config.Concurrency)
 	}
 
 	if config.APIBaseURL != "http://localhost:8080" {
@@ -45,8 +46,8 @@ func TestParseFlagsDefaults(t *testing.T) {
 		t.Errorf("expected default verbose false, got %t", config.Verbose)
 	}
 
-	if config.MinSampleSize != 100 {
-		t.Errorf("expected default min sample size 100, got %d", config.MinSampleSize)
+	if config.MinSampleSize != 10 {
+		t.Errorf("expected default min sample size 10, got %d", config.MinSampleSize)
 	}
 }
 

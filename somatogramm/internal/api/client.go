@@ -6,24 +6,27 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"somatogramm/internal/models"
 )
 
 type Client struct {
-	BaseURL    string
-	HTTPClient *http.Client
-	Verbose    bool
+	BaseURL     string
+	HTTPClient  *http.Client
+	Verbose     bool
+	Concurrency int
 }
 
-func NewClient(baseURL string, timeout time.Duration, verbose bool) *Client {
+func NewClient(baseURL string, timeout time.Duration, verbose bool, concurrency int) *Client {
 	return &Client{
 		BaseURL: strings.TrimSuffix(baseURL, "/"),
 		HTTPClient: &http.Client{
 			Timeout: timeout,
 		},
-		Verbose: verbose,
+		Verbose:     verbose,
+		Concurrency: concurrency,
 	}
 }
 
@@ -57,24 +60,74 @@ func (c *Client) FetchAllPlayers() ([]models.Player, error) {
 		return nil, fmt.Errorf("failed to fetch clubs: %w", err)
 	}
 
-	c.log(fmt.Sprintf("Found %d clubs, fetching players for each club...", len(clubs)))
+	c.log(fmt.Sprintf("Found %d clubs, fetching players concurrently with %d workers...", len(clubs), c.Concurrency))
 
-	var allPlayers []models.Player
-	for _, club := range clubs {
-		c.log(fmt.Sprintf("Fetching players for club %s (%s)", club.ID, club.Name))
+	// Create channels and worker pool
+	clubChan := make(chan Club, len(clubs))
+	resultChan := make(chan []models.Player, len(clubs))
+	errorChan := make(chan error, len(clubs))
 
-		clubPlayers, err := c.fetchClubPlayers(club)
-		if err != nil {
-			c.log(fmt.Sprintf("Warning: failed to fetch players for club %s: %v", club.ID, err))
-			continue
-		}
+	var wg sync.WaitGroup
 
-		c.log(fmt.Sprintf("Found %d players for club %s", len(clubPlayers), club.ID))
-		validPlayers := c.filterValidPlayers(clubPlayers)
-		allPlayers = append(allPlayers, validPlayers...)
+	// Start worker goroutines
+	for i := 0; i < c.Concurrency; i++ {
+		wg.Add(1)
+		go func(workerID int) {
+			defer wg.Done()
+			for club := range clubChan {
+				c.log(fmt.Sprintf("Worker %d: Fetching players for club %s (%s)", workerID, club.ID, club.Name))
+
+				clubPlayers, err := c.fetchClubPlayers(club)
+				if err != nil {
+					c.log(fmt.Sprintf("Worker %d: Warning: failed to fetch players for club %s: %v", workerID, club.ID, err))
+					errorChan <- err
+					resultChan <- nil
+					continue
+				}
+
+				c.log(fmt.Sprintf("Worker %d: Found %d players for club %s", workerID, len(clubPlayers), club.ID))
+				validPlayers := c.filterValidPlayers(clubPlayers)
+				resultChan <- validPlayers
+			}
+		}(i)
 	}
 
-	c.log(fmt.Sprintf("Fetched %d total valid players from %d clubs", len(allPlayers), len(clubs)))
+	// Send clubs to workers
+	for _, club := range clubs {
+		clubChan <- club
+	}
+	close(clubChan)
+
+	// Wait for all workers to finish
+	go func() {
+		wg.Wait()
+		close(resultChan)
+		close(errorChan)
+	}()
+
+	// Collect results
+	var allPlayers []models.Player
+	processedClubs := 0
+	errors := 0
+
+	for result := range resultChan {
+		processedClubs++
+		if result != nil {
+			allPlayers = append(allPlayers, result...)
+		} else {
+			errors++
+		}
+	}
+
+	// Log any errors that occurred
+	for err := range errorChan {
+		if err != nil {
+			c.log(fmt.Sprintf("Error occurred: %v", err))
+		}
+	}
+
+	c.log(fmt.Sprintf("Fetched %d total valid players from %d clubs (%d successful, %d errors)",
+		len(allPlayers), len(clubs), processedClubs-errors, errors))
 	return allPlayers, nil
 }
 

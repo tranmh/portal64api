@@ -12,7 +12,7 @@ import (
 )
 
 func TestNewClient(t *testing.T) {
-	client := NewClient("http://localhost:8080", 30*time.Second, true)
+	client := NewClient("http://localhost:8080", 30*time.Second, true, 4)
 
 	if client.BaseURL != "http://localhost:8080" {
 		t.Errorf("expected BaseURL 'http://localhost:8080', got %s", client.BaseURL)
@@ -28,7 +28,7 @@ func TestNewClient(t *testing.T) {
 }
 
 func TestNewClientTrimsSlash(t *testing.T) {
-	client := NewClient("http://localhost:8080/", 30*time.Second, false)
+	client := NewClient("http://localhost:8080/", 30*time.Second, false, 4)
 
 	if client.BaseURL != "http://localhost:8080" {
 		t.Errorf("expected BaseURL without trailing slash, got %s", client.BaseURL)
@@ -36,7 +36,7 @@ func TestNewClientTrimsSlash(t *testing.T) {
 }
 
 func TestFilterValidPlayers(t *testing.T) {
-	client := NewClient("http://localhost:8080", 30*time.Second, false)
+	client := NewClient("http://localhost:8080", 30*time.Second, false, 4)
 
 	birthYear1990 := 1990
 	birthYear2022 := 2022  // Too young (age < 4)
@@ -88,7 +88,7 @@ func TestFilterValidPlayers(t *testing.T) {
 }
 
 func TestMapGenderToString(t *testing.T) {
-	client := NewClient("http://localhost:8080", 30*time.Second, false)
+	client := NewClient("http://localhost:8080", 30*time.Second, false, 4)
 
 	tests := []struct {
 		input    string
@@ -117,7 +117,7 @@ func TestMapGenderToString(t *testing.T) {
 }
 
 func TestGetPlayerAge(t *testing.T) {
-	client := NewClient("http://localhost:8080", 30*time.Second, false)
+	client := NewClient("http://localhost:8080", 30*time.Second, false, 4)
 
 	currentYear := time.Now().Year()
 	birthYear := 1990
@@ -158,7 +158,7 @@ func TestFetchAllPlayersHTTPError(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL, 5*time.Second, false)
+	client := NewClient(server.URL, 5*time.Second, false, 4)
 	players, err := client.FetchAllPlayers()
 
 	if err == nil {
@@ -219,7 +219,7 @@ func TestFetchAllPlayersSuccess(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL, 5*time.Second, false)
+	client := NewClient(server.URL, 5*time.Second, false, 4)
 	players, err := client.FetchAllPlayers()
 
 	if err != nil {
@@ -249,7 +249,7 @@ func TestFetchAllPlayersAPIError(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL, 5*time.Second, false)
+	client := NewClient(server.URL, 5*time.Second, false, 4)
 	players, err := client.FetchAllPlayers()
 
 	if err == nil {
@@ -272,7 +272,7 @@ func TestFetchAllPlayersInvalidJSON(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL, 5*time.Second, false)
+	client := NewClient(server.URL, 5*time.Second, false, 4)
 	players, err := client.FetchAllPlayers()
 
 	if err == nil {
@@ -293,7 +293,7 @@ func TestFetchAllPlayersTimeout(t *testing.T) {
 	defer server.Close()
 
 	// Create client with very short timeout
-	client := NewClient(server.URL, 10*time.Millisecond, false)
+	client := NewClient(server.URL, 10*time.Millisecond, false, 4)
 	players, err := client.FetchAllPlayers()
 
 	if err == nil {
@@ -306,7 +306,7 @@ func TestFetchAllPlayersTimeout(t *testing.T) {
 }
 
 func TestVerboseLogging(t *testing.T) {
-	client := NewClient("http://localhost:8080", 30*time.Second, true)
+	client := NewClient("http://localhost:8080", 30*time.Second, true, 4)
 
 	// Test that verbose logging doesn't panic
 	// The actual log output would go to stdout and is difficult to capture
@@ -318,7 +318,7 @@ func TestVerboseLogging(t *testing.T) {
 }
 
 func TestNonVerboseLogging(t *testing.T) {
-	client := NewClient("http://localhost:8080", 30*time.Second, false)
+	client := NewClient("http://localhost:8080", 30*time.Second, false, 4)
 
 	// Test that non-verbose logging doesn't panic
 	client.log("test message")
@@ -402,7 +402,7 @@ func TestFetchAllPlayersWithMultipleClubs(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL, 5*time.Second, true) // verbose = true
+	client := NewClient(server.URL, 5*time.Second, true, 4) // verbose = true
 	players, err := client.FetchAllPlayers()
 
 	if err != nil {
@@ -435,7 +435,7 @@ func TestFetchAllPlayersEmptyResponse(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(server.URL, 5*time.Second, false)
+	client := NewClient(server.URL, 5*time.Second, false, 4)
 	players, err := client.FetchAllPlayers()
 
 	if err != nil {

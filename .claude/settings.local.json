@@ -21,7 +21,8 @@
       "Bash(SERVER_PORT=8081 ./bin/portal64api.exe)",
       "Bash(.binsomatogramm.exe -concurrency 8)",
       "Bash(timeout:*)",
-      "Bash(.bin/somatogramm.exe:*)"
+      "Bash(.bin/somatogramm.exe:*)",
+      "Bash(./somatogramm --help)"
     ],
     "deny": [],
     "ask": []
