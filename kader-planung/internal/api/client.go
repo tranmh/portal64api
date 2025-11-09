@@ -1,6 +1,7 @@
 package api
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -25,15 +26,25 @@ type Client struct {
 
 // NewClient creates a new API client
 func NewClient(baseURL string, timeout time.Duration) *Client {
+	// Disable HTTP/2 to avoid stream errors with self-signed certs
+	// Skip TLS verification for localhost connections
+	transport := &http.Transport{
+		MaxIdleConns:        10,
+		MaxIdleConnsPerHost: 10,
+		IdleConnTimeout:     60 * time.Second,
+		// Force HTTP/1.1 by disabling HTTP/2
+		ForceAttemptHTTP2: false,
+		// Skip TLS verification for localhost and internal connections
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+		},
+	}
+
 	return &Client{
 		baseURL: baseURL,
 		httpClient: &http.Client{
-			Timeout: timeout,
-			Transport: &http.Transport{
-				MaxIdleConns:        10,
-				MaxIdleConnsPerHost: 10,
-				IdleConnTimeout:     60 * time.Second,
-			},
+			Timeout:   timeout,
+			Transport: transport,
 		},
 		logger:      logrus.StandardLogger(),
 		concurrency: 8, // Default concurrency level

@@ -17,15 +17,24 @@ async function getAnalysisCapabilities() {
 }
 
 async function startDetailedAnalysis(params) {
-    return api.request('/api/v1/kader-planung/start', 'POST', params);
+    return api.request('/api/v1/kader-planung/start', {
+        method: 'POST',
+        body: JSON.stringify(params)
+    });
 }
 
 async function startStatisticalAnalysis(params) {
-    return api.request('/api/v1/kader-planung/statistical', 'POST', params);
+    return api.request('/api/v1/kader-planung/statistical', {
+        method: 'POST',
+        body: JSON.stringify(params)
+    });
 }
 
 async function startHybridAnalysis(params) {
-    return api.request('/api/v1/kader-planung/hybrid', 'POST', params);
+    return api.request('/api/v1/kader-planung/hybrid', {
+        method: 'POST',
+        body: JSON.stringify(params)
+    });
 }
 
 async function getStatisticalResults() {
