@@ -1,14 +1,26 @@
 {
   "permissions": {
     "allow": [
-      "Bash(\"C:\\xampp\\mysql\\bin\\mysql.exe\" -u root -h localhost -P 3306 mvdsb -e \"\n-- Check sample of players with empty PKZ\nSELECT p.id, p.pkz, p.name, p.vorname, p.geburtsdatum, p.status, p.beatimestamp\nFROM person p\nWHERE p.status = 1 AND (p.pkz IS NULL OR p.pkz = '''')\nORDER BY p.beatimestamp DESC\nLIMIT 10;\")",
-      "Bash(\"C:\\xampp\\mysql\\bin\\mysql.exe\":*)",
-      "Read(//c/Users/tranm/work/svw.info/dwz/php_dwz/**)",
-      "Bash(grep:*)",
-      "Bash(netstat:*)",
-      "Bash(sort:*)"
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git branch:*)",
+      "Bash(git checkout:*)",
+      "Bash",
+      "Read",
+      "Write",
+      "Edit",
+      "Glob",
+      "Grep",
+      "WebSearch",
+      "Bash(wsl --:*)",
+      "WebFetch(domain:*)"
     ],
-    "deny": [],
-    "ask": []
+    "deny": [
+      "Bash(git push:*)"
+    ],
+    "ask": [
+      "Bash(git commit:*)"
+    ]
   }
 }
