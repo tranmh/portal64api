@@ -175,13 +175,27 @@ func (e *UnifiedExporter) exportCSVDetailed(records []models.KaderPlanungRecord,
 	writer.Comma = ';' // Use semicolon separator for German Excel compatibility
 	defer writer.Flush()
 
-	// Write header
+	// Get current year for dynamic column headers
+	currentYear := time.Now().Year()
+
+	// Build header with static columns first
 	header := []string{
 		"club_id_prefix_1", "club_id_prefix_2", "club_id_prefix_3", "club_name", "club_id",
 		"player_id", "pkz", "lastname", "firstname", "birthyear", "gender",
 		"current_dwz", "list_ranking", "dwz_12_months_ago", "games_last_12_months",
-		"success_rate_last_12_months", "somatogram_percentile", "dwz_age_relation",
+		"success_rate_last_12_months",
 	}
+
+	// Add dynamic historical DWZ columns (6 columns: Jan 1 & June 30 for 3 years)
+	historicalHeaders := models.GetHistoricalDWZColumnHeaders(currentYear)
+	header = append(header, historicalHeaders...)
+
+	// Add dynamic min/max columns for current year
+	minMaxHeaders := models.GetMinMaxColumnHeaders(currentYear)
+	header = append(header, minMaxHeaders...)
+
+	// Add remaining static columns
+	header = append(header, "somatogram_percentile", "dwz_age_relation")
 
 	if err := writer.Write(header); err != nil {
 		return nil, fmt.Errorf("failed to write CSV header: %w", err)
@@ -206,9 +220,33 @@ func (e *UnifiedExporter) exportCSVDetailed(records []models.KaderPlanungRecord,
 			record.DWZ12MonthsAgo,
 			record.GamesLast12Months,
 			record.SuccessRateLast12Months,
-			record.SomatogramPercentile,
-			record.DWZAgeRelation,
 		}
+
+		// Add historical DWZ values in the correct order
+		for yearOffset := -2; yearOffset <= 0; yearOffset++ {
+			year := currentYear + yearOffset
+			jan1Key := fmt.Sprintf("%d_01_01", year)
+			jun30Key := fmt.Sprintf("%d_06_30", year)
+
+			// Get value from map or use DATA_NOT_AVAILABLE
+			jan1Value := models.DataNotAvailable
+			jun30Value := models.DataNotAvailable
+			if record.HistoricalDWZ != nil {
+				if v, ok := record.HistoricalDWZ[jan1Key]; ok {
+					jan1Value = v
+				}
+				if v, ok := record.HistoricalDWZ[jun30Key]; ok {
+					jun30Value = v
+				}
+			}
+			row = append(row, jan1Value, jun30Value)
+		}
+
+		// Add min/max values for current year
+		row = append(row, record.DWZMinCurrentYear, record.DWZMaxCurrentYear)
+
+		// Add remaining static fields
+		row = append(row, record.SomatogramPercentile, record.DWZAgeRelation)
 
 		if err := writer.Write(row); err != nil {
 			return nil, fmt.Errorf("failed to write CSV row: %w", err)

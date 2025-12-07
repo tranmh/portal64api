@@ -5,10 +5,13 @@ import (
 	"time"
 
 	"github.com/portal64/kader-planung/internal/models"
+	"github.com/sirupsen/logrus"
 )
 
 func TestAnalyzeHistoricalData(t *testing.T) {
-	processor := &Processor{}
+	logger := logrus.New()
+	logger.SetLevel(logrus.WarnLevel) // Suppress debug logs during tests
+	processor := &Processor{logger: logger}
 
 	// Test case 1: No history data
 	t.Run("No history data", func(t *testing.T) {
@@ -95,7 +98,9 @@ func TestAnalyzeHistoricalData(t *testing.T) {
 }
 
 func TestCreateKaderPlanungRecord(t *testing.T) {
-	processor := &Processor{}
+	logger := logrus.New()
+	logger.SetLevel(logrus.WarnLevel)
+	processor := &Processor{logger: logger}
 
 	club := models.Club{
 		ID:   "C0327",
@@ -156,7 +161,9 @@ func TestCreateKaderPlanungRecord(t *testing.T) {
 }
 
 func TestCreateKaderPlanungRecordNoData(t *testing.T) {
-	processor := &Processor{}
+	logger := logrus.New()
+	logger.SetLevel(logrus.WarnLevel)
+	processor := &Processor{logger: logger}
 
 	club := models.Club{
 		ID:   "C0327",

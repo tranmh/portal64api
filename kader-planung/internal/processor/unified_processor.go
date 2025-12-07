@@ -313,6 +313,8 @@ func (p *UnifiedProcessor) processHybridMode(checkpoint *resume.Checkpoint) (*Pr
 // convertPlayersToRecords converts Player objects to KaderPlanungRecord objects
 func (p *UnifiedProcessor) convertPlayersToRecords(players []models.Player, includeHistoricalAnalysis bool) []models.KaderPlanungRecord {
 	var records []models.KaderPlanungRecord
+	currentYear := time.Now().Year()
+	targetDates := models.GenerateTargetDates()
 
 	for _, player := range players {
 		// Handle birthyear safely
@@ -347,6 +349,9 @@ func (p *UnifiedProcessor) convertPlayersToRecords(players []models.Player, incl
 			DWZ12MonthsAgo:          models.DataNotAvailable,
 			GamesLast12Months:       models.DataNotAvailable,
 			SuccessRateLast12Months: models.DataNotAvailable,
+			HistoricalDWZ:           make(map[string]string), // Initialize the map
+			DWZMinCurrentYear:       models.DataNotAvailable,
+			DWZMaxCurrentYear:       models.DataNotAvailable,
 			SomatogramPercentile:    models.DataNotAvailable, // Will be populated by Germany-wide percentile data
 			DWZAgeRelation:          models.CalculateDWZAgeRelation(player.CurrentDWZ, birthyear, time.Now().Year()),
 		}
@@ -360,12 +365,22 @@ func (p *UnifiedProcessor) convertPlayersToRecords(players []models.Player, incl
 				record.GamesLast12Months = "0"
 				record.SuccessRateLast12Months = "0,0"
 				// DWZ12MonthsAgo remains DATA_NOT_AVAILABLE
+				// Initialize historical DWZ with DATA_NOT_AVAILABLE for all dates
+				for _, date := range targetDates {
+					key := fmt.Sprintf("%d_%02d_%02d", date.Year(), date.Month(), date.Day())
+					record.HistoricalDWZ[key] = models.DataNotAvailable
+				}
 			} else if history == nil {
 				p.logger.Warnf("Rating history is nil for player %s", player.ID)
 				// Still set games and success rate to 0 when history is nil
 				record.GamesLast12Months = "0"
 				record.SuccessRateLast12Months = "0,0"
 				// DWZ12MonthsAgo remains DATA_NOT_AVAILABLE
+				// Initialize historical DWZ with DATA_NOT_AVAILABLE for all dates
+				for _, date := range targetDates {
+					key := fmt.Sprintf("%d_%02d_%02d", date.Year(), date.Month(), date.Day())
+					record.HistoricalDWZ[key] = models.DataNotAvailable
+				}
 			} else {
 				// Use the legacy processor's analyzeHistoricalData method
 				analysis := p.legacyProcessor.AnalyzeHistoricalData(history)
@@ -395,6 +410,19 @@ func (p *UnifiedProcessor) convertPlayersToRecords(players []models.Player, incl
 					record.SuccessRateLast12Months = "0,0"
 					// DWZ12MonthsAgo remains DATA_NOT_AVAILABLE
 				}
+
+				// NEW: Extended historical analysis - semi-annual DWZ values
+				record.HistoricalDWZ = models.AnalyzeExtendedHistoricalData(history.Points, targetDates)
+
+				// NEW: Calculate yearly min/max for current year
+				record.DWZMinCurrentYear, record.DWZMaxCurrentYear = models.CalculateYearlyMinMax(
+					history.Points, player.CurrentDWZ, currentYear)
+			}
+		} else {
+			// Initialize historical DWZ with DATA_NOT_AVAILABLE for all dates when not doing analysis
+			for _, date := range targetDates {
+				key := fmt.Sprintf("%d_%02d_%02d", date.Year(), date.Month(), date.Day())
+				record.HistoricalDWZ[key] = models.DataNotAvailable
 			}
 		}
 

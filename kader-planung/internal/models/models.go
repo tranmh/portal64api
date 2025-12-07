@@ -95,6 +95,11 @@ type KaderPlanungRecord struct {
 	DWZ12MonthsAgo             string `json:"dwz_12_months_ago" csv:"dwz_12_months_ago"`
 	GamesLast12Months          string `json:"games_last_12_months" csv:"games_last_12_months"`
 	SuccessRateLast12Months    string `json:"success_rate_last_12_months" csv:"success_rate_last_12_months"`
+	// Semi-annual historical DWZ (dynamic keys based on execution year)
+	HistoricalDWZ              map[string]string `json:"historical_dwz,omitempty"`                       // key: "YYYY_MM_DD", value: DWZ or DATA_NOT_AVAILABLE
+	// Yearly min/max DWZ for current year
+	DWZMinCurrentYear          string `json:"dwz_min_current_year" csv:"dwz_min_current_year"`
+	DWZMaxCurrentYear          string `json:"dwz_max_current_year" csv:"dwz_max_current_year"`
 	SomatogramPercentile       string `json:"somatogram_percentile" csv:"somatogram_percentile"`         // NEW: Somatogram percentile (Phase 2)
 	DWZAgeRelation             string `json:"dwz_age_relation" csv:"dwz_age_relation"`                   // NEW
 }
@@ -282,4 +287,138 @@ type AgeGenderGroup struct {
 	Gender     string        `json:"gender"`
 	SampleSize int           `json:"sample_size"`
 	Players    []Player      `json:"players"`
+}
+
+// HistoricalAnalysisConfig holds configuration for extended historical analysis
+type HistoricalAnalysisConfig struct {
+	TargetDates   []time.Time // Jan 1 and June 30 for past 2 years + current year
+	CurrentYear   int
+	IncludeMinMax bool
+}
+
+// GenerateTargetDates generates the 6 target dates for semi-annual historical analysis
+// Returns dates for Jan 1 and June 30 for current year and 2 prior years
+func GenerateTargetDates() []time.Time {
+	now := time.Now()
+	currentYear := now.Year()
+
+	dates := make([]time.Time, 0, 6)
+
+	// Generate for current year and 2 prior years (oldest first)
+	for yearOffset := -2; yearOffset <= 0; yearOffset++ {
+		year := currentYear + yearOffset
+
+		// January 1st
+		jan1 := time.Date(year, 1, 1, 0, 0, 0, 0, time.UTC)
+		dates = append(dates, jan1)
+
+		// June 30th
+		jun30 := time.Date(year, 6, 30, 0, 0, 0, 0, time.UTC)
+		dates = append(dates, jun30)
+	}
+
+	return dates
+}
+
+// FindDWZAtDate finds the DWZ rating closest to but not after the target date
+// Returns the DWZ value as a string, or DATA_NOT_AVAILABLE if not found
+func FindDWZAtDate(history []RatingPoint, targetDate time.Time) string {
+	if len(history) == 0 {
+		return DataNotAvailable
+	}
+
+	// Find the most recent evaluation on or before targetDate
+	var closestPoint *RatingPoint
+	var closestDate time.Time
+
+	for i := range history {
+		pointDate := history[i].Date
+		if !pointDate.After(targetDate) {
+			if closestPoint == nil || pointDate.After(closestDate) {
+				closestPoint = &history[i]
+				closestDate = pointDate
+			}
+		}
+	}
+
+	if closestPoint == nil {
+		return DataNotAvailable
+	}
+	return fmt.Sprintf("%d", closestPoint.DWZ)
+}
+
+// CalculateYearlyMinMax calculates the minimum and maximum DWZ for a given year
+// Includes current DWZ in the calculation as per user requirement
+func CalculateYearlyMinMax(history []RatingPoint, currentDWZ int, year int) (minDWZ, maxDWZ string) {
+	// Start with current DWZ as both min and max (per user requirement)
+	if currentDWZ <= 0 {
+		return DataNotAvailable, DataNotAvailable
+	}
+
+	min := currentDWZ
+	max := currentDWZ
+
+	yearStart := time.Date(year, 1, 1, 0, 0, 0, 0, time.UTC)
+	yearEnd := time.Date(year, 12, 31, 23, 59, 59, 0, time.UTC)
+
+	for _, point := range history {
+		pointDate := point.Date
+		if (pointDate.After(yearStart) || pointDate.Equal(yearStart)) &&
+		   (pointDate.Before(yearEnd) || pointDate.Equal(yearEnd)) {
+			if point.DWZ > max {
+				max = point.DWZ
+			}
+			if point.DWZ < min && point.DWZ > 0 {
+				min = point.DWZ
+			}
+		}
+	}
+
+	return fmt.Sprintf("%d", min), fmt.Sprintf("%d", max)
+}
+
+// AnalyzeExtendedHistoricalData performs extended historical analysis
+// Returns a map of date keys to DWZ values
+func AnalyzeExtendedHistoricalData(history []RatingPoint, targetDates []time.Time) map[string]string {
+	results := make(map[string]string)
+
+	now := time.Now()
+
+	for _, targetDate := range targetDates {
+		// Skip future dates
+		if targetDate.After(now) {
+			key := fmt.Sprintf("%d_%02d_%02d", targetDate.Year(), targetDate.Month(), targetDate.Day())
+			results[key] = DataNotAvailable
+			continue
+		}
+
+		// Find DWZ at this date
+		key := fmt.Sprintf("%d_%02d_%02d", targetDate.Year(), targetDate.Month(), targetDate.Day())
+		results[key] = FindDWZAtDate(history, targetDate)
+	}
+
+	return results
+}
+
+// GetHistoricalDWZColumnHeaders returns the dynamic column headers for historical DWZ
+// based on the current year
+func GetHistoricalDWZColumnHeaders(currentYear int) []string {
+	headers := make([]string, 0, 6)
+
+	for yearOffset := -2; yearOffset <= 0; yearOffset++ {
+		year := currentYear + yearOffset
+		headers = append(headers, fmt.Sprintf("dwz_%d_01_01", year))
+		headers = append(headers, fmt.Sprintf("dwz_%d_06_30", year))
+	}
+
+	return headers
+}
+
+// GetMinMaxColumnHeaders returns the dynamic column headers for min/max DWZ
+// based on the current year
+func GetMinMaxColumnHeaders(currentYear int) []string {
+	return []string{
+		fmt.Sprintf("dwz_min_%d", currentYear),
+		fmt.Sprintf("dwz_max_%d", currentYear),
+	}
 }

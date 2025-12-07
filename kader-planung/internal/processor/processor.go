@@ -394,7 +394,7 @@ func (p *Processor) generateRecordWithPercentile(checkpoint *resume.Checkpoint, 
 
 	// Check if we have partial data for this player
 	partialData := p.resumeManager.GetPartialData(checkpoint, player.ID)
-	
+
 	var history *models.RatingHistory
 	var err error
 
@@ -428,7 +428,7 @@ func (p *Processor) generateRecordWithPercentile(checkpoint *resume.Checkpoint, 
 		analysis = partialData.Analysis
 	} else {
 		analysis = p.AnalyzeHistoricalData(history)
-		
+
 		// Update partial data with analysis
 		if partialData == nil {
 			partialData = &resume.PartialPlayerData{
@@ -444,12 +444,25 @@ func (p *Processor) generateRecordWithPercentile(checkpoint *resume.Checkpoint, 
 
 	// Create record with percentile data
 	record := p.createKaderPlanungRecord(club, player, analysis)
-	
+
 	// Add somatogram percentile from Germany-wide calculation
 	if percentile, exists := percentileMap[player.ID]; exists {
 		record.SomatogramPercentile = strings.Replace(fmt.Sprintf("%.1f", percentile), ".", ",", 1)
 	} else {
 		record.SomatogramPercentile = models.DataNotAvailable
+	}
+
+	// NEW: Add extended historical analysis if history is available
+	if history != nil && len(history.Points) > 0 {
+		targetDates := models.GenerateTargetDates()
+		currentYear := time.Now().Year()
+
+		// Calculate semi-annual historical DWZ values
+		record.HistoricalDWZ = models.AnalyzeExtendedHistoricalData(history.Points, targetDates)
+
+		// Calculate yearly min/max for current year
+		record.DWZMinCurrentYear, record.DWZMaxCurrentYear = models.CalculateYearlyMinMax(
+			history.Points, player.CurrentDWZ, currentYear)
 	}
 
 	return record, nil
@@ -780,10 +793,18 @@ func (p *Processor) createKaderPlanungRecord(club models.Club, player models.Pla
 	if player.BirthYear != nil {
 		birthyear = *player.BirthYear
 	}
-	
+
 	// Calculate club_id prefixes
 	prefix1, prefix2, prefix3 := models.CalculateClubIDPrefixes(club.ID)
-	
+
+	// Initialize historical DWZ map with DATA_NOT_AVAILABLE for all target dates
+	targetDates := models.GenerateTargetDates()
+	historicalDWZ := make(map[string]string)
+	for _, date := range targetDates {
+		key := fmt.Sprintf("%d_%02d_%02d", date.Year(), date.Month(), date.Day())
+		historicalDWZ[key] = models.DataNotAvailable
+	}
+
 	record := &models.KaderPlanungRecord{
 		ClubIDPrefix1:           prefix1,
 		ClubIDPrefix2:           prefix2,
@@ -801,6 +822,9 @@ func (p *Processor) createKaderPlanungRecord(club models.Club, player models.Pla
 		DWZ12MonthsAgo:          models.DataNotAvailable,
 		GamesLast12Months:       models.DataNotAvailable,
 		SuccessRateLast12Months: models.DataNotAvailable,
+		HistoricalDWZ:           historicalDWZ,       // NEW: Semi-annual historical DWZ
+		DWZMinCurrentYear:       models.DataNotAvailable,  // NEW: Min DWZ current year
+		DWZMaxCurrentYear:       models.DataNotAvailable,  // NEW: Max DWZ current year
 		SomatogramPercentile:    models.DataNotAvailable,  // NEW: Somatogram percentile (Phase 2 - placeholder)
 		DWZAgeRelation:          models.CalculateDWZAgeRelation(player.CurrentDWZ, birthyear, time.Now().Year()), // NEW: Calculate age relation
 	}
