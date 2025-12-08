@@ -1,10 +1,11 @@
 // Youth Statistics Tool for Portal64 API
-// Queries active youth player counts (U08-U18) by Verband, Bezirk, age class, and gender
+// Queries active youth player counts (U08-U18) by Verband, Unterverband, Bezirk, age class, and gender
 // for a specified reference year (default: 2026)
 //
 // Hierarchy based on club VKZ (e.g., C0310):
-//   - Verband: First character (C)
-//   - Bezirk:  First 2 characters (C0)
+//   - Verband:      First character (C)
+//   - Unterverband: First 2 characters (C0)
+//   - Bezirk:       First 3 characters (C01)
 package main
 
 import (
@@ -83,7 +84,7 @@ type DistrictStats struct {
 	Total      *GenderStats            `json:"total"`
 }
 
-// BezirkStats aggregates statistics for a Bezirk (first 2 chars of VKZ, e.g., "C0")
+// BezirkStats aggregates statistics for a Bezirk (first 3 chars of VKZ, e.g., "C01")
 type BezirkStats struct {
 	Bezirk     string                  `json:"bezirk"`
 	ByAgeGroup map[string]*GenderStats `json:"by_age_group"`
@@ -91,13 +92,22 @@ type BezirkStats struct {
 	Total      *GenderStats            `json:"total"`
 }
 
+// UnterverbandStats aggregates statistics for an Unterverband (first 2 chars of VKZ, e.g., "C0")
+type UnterverbandStats struct {
+	Unterverband string                  `json:"unterverband"`
+	Bezirke      map[string]*BezirkStats `json:"bezirke"`
+	ByAgeGroup   map[string]*GenderStats `json:"by_age_group"`
+	ByYear       map[int]*GenderStats    `json:"by_year"`
+	Total        *GenderStats            `json:"total"`
+}
+
 // VerbandStats aggregates statistics for a Verband (first char of VKZ, e.g., "C")
 type VerbandStats struct {
-	Verband    string                  `json:"verband"`
-	Bezirke    map[string]*BezirkStats `json:"bezirke"`
-	ByAgeGroup map[string]*GenderStats `json:"by_age_group"`
-	ByYear     map[int]*GenderStats    `json:"by_year"`
-	Total      *GenderStats            `json:"total"`
+	Verband       string                        `json:"verband"`
+	Unterverbaende map[string]*UnterverbandStats `json:"unterverbaende"`
+	ByAgeGroup    map[string]*GenderStats       `json:"by_age_group"`
+	ByYear        map[int]*GenderStats          `json:"by_year"`
+	Total         *GenderStats                  `json:"total"`
 }
 
 type YouthStatistics struct {
@@ -234,8 +244,9 @@ func main() {
 
 			youthPlayers++
 
-			// Extract Verband and Bezirk from club ID (VKZ)
+			// Extract Verband, Unterverband, and Bezirk from club ID (VKZ)
 			verband := extractVerband(result.Club.ID)
+			unterverband := extractUnterverband(result.Club.ID)
 			bezirk := extractBezirk(result.Club.ID)
 
 			// Get or create district stats (for backward compatibility)
@@ -245,9 +256,10 @@ func main() {
 			}
 			districtStats := getOrCreateDistrictStats(stats.Districts, district)
 
-			// Get or create Verband and Bezirk stats
+			// Get or create Verband, Unterverband, and Bezirk stats
 			verbandStats := getOrCreateVerbandStats(stats.Verbaende, verband)
-			bezirkStats := getOrCreateBezirkStats(verbandStats.Bezirke, bezirk)
+			unterverbandStats := getOrCreateUnterverbandStats(verbandStats.Unterverbaende, unterverband)
+			bezirkStats := getOrCreateBezirkStats(unterverbandStats.Bezirke, bezirk)
 
 			// Determine gender
 			gender := normalizeGender(player.Gender)
@@ -255,6 +267,7 @@ func main() {
 			// Update statistics at all levels
 			updateStats(districtStats, ageGroup, birthYear, gender)
 			updateBezirkStats(bezirkStats, ageGroup, birthYear, gender)
+			updateUnterverbandStats(unterverbandStats, ageGroup, birthYear, gender)
 			updateVerbandStats(verbandStats, ageGroup, birthYear, gender)
 			updateStats(stats.Total, ageGroup, birthYear, gender)
 		}
@@ -394,13 +407,22 @@ func extractVerband(clubID string) string {
 	return string(clubID[0])
 }
 
-// extractBezirk returns the Bezirk code (first 2 characters of VKZ)
+// extractUnterverband returns the Unterverband code (first 2 characters of VKZ)
 // e.g., "C0310" -> "C0"
-func extractBezirk(clubID string) string {
+func extractUnterverband(clubID string) string {
 	if len(clubID) < 2 {
 		return extractVerband(clubID) + "?"
 	}
 	return clubID[:2]
+}
+
+// extractBezirk returns the Bezirk code (first 3 characters of VKZ)
+// e.g., "C0310" -> "C03"
+func extractBezirk(clubID string) string {
+	if len(clubID) < 3 {
+		return extractUnterverband(clubID) + "?"
+	}
+	return clubID[:3]
 }
 
 func newDistrictStats(name string) *DistrictStats {
@@ -421,13 +443,23 @@ func newBezirkStats(name string) *BezirkStats {
 	}
 }
 
+func newUnterverbandStats(name string) *UnterverbandStats {
+	return &UnterverbandStats{
+		Unterverband: name,
+		Bezirke:      make(map[string]*BezirkStats),
+		ByAgeGroup:   make(map[string]*GenderStats),
+		ByYear:       make(map[int]*GenderStats),
+		Total:        &GenderStats{},
+	}
+}
+
 func newVerbandStats(name string) *VerbandStats {
 	return &VerbandStats{
-		Verband:    name,
-		Bezirke:    make(map[string]*BezirkStats),
-		ByAgeGroup: make(map[string]*GenderStats),
-		ByYear:     make(map[int]*GenderStats),
-		Total:      &GenderStats{},
+		Verband:        name,
+		Unterverbaende: make(map[string]*UnterverbandStats),
+		ByAgeGroup:     make(map[string]*GenderStats),
+		ByYear:         make(map[int]*GenderStats),
+		Total:          &GenderStats{},
 	}
 }
 
@@ -437,6 +469,15 @@ func getOrCreateDistrictStats(districts map[string]*DistrictStats, name string) 
 	}
 	stats := newDistrictStats(name)
 	districts[name] = stats
+	return stats
+}
+
+func getOrCreateUnterverbandStats(unterverbaende map[string]*UnterverbandStats, name string) *UnterverbandStats {
+	if stats, ok := unterverbaende[name]; ok {
+		return stats
+	}
+	stats := newUnterverbandStats(name)
+	unterverbaende[name] = stats
 	return stats
 }
 
@@ -502,6 +543,19 @@ func updateBezirkStats(bs *BezirkStats, ageGroup string, birthYear int, gender s
 	updateGenderStats(bs.Total, gender)
 }
 
+func updateUnterverbandStats(us *UnterverbandStats, ageGroup string, birthYear int, gender string) {
+	// Update by age group
+	ags := getOrCreateGenderStats(us.ByAgeGroup, ageGroup)
+	updateGenderStats(ags, gender)
+
+	// Update by birth year
+	bys := getOrCreateGenderStatsByYear(us.ByYear, birthYear)
+	updateGenderStats(bys, gender)
+
+	// Update total
+	updateGenderStats(us.Total, gender)
+}
+
 func updateVerbandStats(vs *VerbandStats, ageGroup string, birthYear int, gender string) {
 	// Update by age group
 	ags := getOrCreateGenderStats(vs.ByAgeGroup, ageGroup)
@@ -543,85 +597,115 @@ func outputCSV(stats *YouthStatistics, byYear bool) {
 
 	if byYear {
 		// Header
-		fmt.Print("Verband;Bezirk;Geschlecht")
+		fmt.Print("Verband;Unterverband;Bezirk;Geschlecht")
 		for _, year := range stats.BirthYears {
 			fmt.Printf(";%d", year)
 		}
 		fmt.Println(";Gesamt")
 
-		// Data rows grouped by Verband → Bezirk
+		// Data rows grouped by Verband → Unterverband → Bezirk
 		for _, verband := range verbaende {
 			vs := stats.Verbaende[verband]
 
 			// Verband total
-			outputCSVRowByYearHierarchical(verband, "", "m", vs.ByYear, stats.BirthYears)
-			outputCSVRowByYearHierarchical(verband, "", "w", vs.ByYear, stats.BirthYears)
-			outputCSVRowByYearHierarchical(verband, "", "Gesamt", vs.ByYear, stats.BirthYears)
+			outputCSVRowByYearHierarchical3(verband, "", "", "m", vs.ByYear, stats.BirthYears)
+			outputCSVRowByYearHierarchical3(verband, "", "", "w", vs.ByYear, stats.BirthYears)
+			outputCSVRowByYearHierarchical3(verband, "", "", "Gesamt", vs.ByYear, stats.BirthYears)
 
-			// Sort Bezirke
-			var bezirke []string
-			for b := range vs.Bezirke {
-				bezirke = append(bezirke, b)
+			// Sort Unterverbaende
+			var unterverbaende []string
+			for u := range vs.Unterverbaende {
+				unterverbaende = append(unterverbaende, u)
 			}
-			sort.Strings(bezirke)
+			sort.Strings(unterverbaende)
 
-			// Bezirk rows
-			for _, bezirk := range bezirke {
-				bs := vs.Bezirke[bezirk]
-				outputCSVRowByYearHierarchical(verband, bezirk, "m", bs.ByYear, stats.BirthYears)
-				outputCSVRowByYearHierarchical(verband, bezirk, "w", bs.ByYear, stats.BirthYears)
-				outputCSVRowByYearHierarchical(verband, bezirk, "Gesamt", bs.ByYear, stats.BirthYears)
+			// Unterverband rows
+			for _, unterverband := range unterverbaende {
+				us := vs.Unterverbaende[unterverband]
+				outputCSVRowByYearHierarchical3(verband, unterverband, "", "m", us.ByYear, stats.BirthYears)
+				outputCSVRowByYearHierarchical3(verband, unterverband, "", "w", us.ByYear, stats.BirthYears)
+				outputCSVRowByYearHierarchical3(verband, unterverband, "", "Gesamt", us.ByYear, stats.BirthYears)
+
+				// Sort Bezirke within Unterverband
+				var bezirke []string
+				for b := range us.Bezirke {
+					bezirke = append(bezirke, b)
+				}
+				sort.Strings(bezirke)
+
+				// Bezirk rows
+				for _, bezirk := range bezirke {
+					bs := us.Bezirke[bezirk]
+					outputCSVRowByYearHierarchical3(verband, unterverband, bezirk, "m", bs.ByYear, stats.BirthYears)
+					outputCSVRowByYearHierarchical3(verband, unterverband, bezirk, "w", bs.ByYear, stats.BirthYears)
+					outputCSVRowByYearHierarchical3(verband, unterverband, bezirk, "Gesamt", bs.ByYear, stats.BirthYears)
+				}
 			}
 		}
 
 		// Total row
 		fmt.Println()
-		outputCSVRowByYearHierarchical("GESAMT", "", "m", stats.Total.ByYear, stats.BirthYears)
-		outputCSVRowByYearHierarchical("GESAMT", "", "w", stats.Total.ByYear, stats.BirthYears)
-		outputCSVRowByYearHierarchical("GESAMT", "", "Gesamt", stats.Total.ByYear, stats.BirthYears)
+		outputCSVRowByYearHierarchical3("GESAMT", "", "", "m", stats.Total.ByYear, stats.BirthYears)
+		outputCSVRowByYearHierarchical3("GESAMT", "", "", "w", stats.Total.ByYear, stats.BirthYears)
+		outputCSVRowByYearHierarchical3("GESAMT", "", "", "Gesamt", stats.Total.ByYear, stats.BirthYears)
 	} else {
 		// Header
-		fmt.Print("Verband;Bezirk;Geschlecht")
+		fmt.Print("Verband;Unterverband;Bezirk;Geschlecht")
 		for _, ag := range stats.AgeGroups {
 			fmt.Printf(";%s", ag)
 		}
 		fmt.Println(";Gesamt")
 
-		// Data rows grouped by Verband → Bezirk
+		// Data rows grouped by Verband → Unterverband → Bezirk
 		for _, verband := range verbaende {
 			vs := stats.Verbaende[verband]
 
 			// Verband total
-			outputCSVRowByAgeGroupHierarchical(verband, "", "m", vs.ByAgeGroup, stats.AgeGroups)
-			outputCSVRowByAgeGroupHierarchical(verband, "", "w", vs.ByAgeGroup, stats.AgeGroups)
-			outputCSVRowByAgeGroupHierarchical(verband, "", "Gesamt", vs.ByAgeGroup, stats.AgeGroups)
+			outputCSVRowByAgeGroupHierarchical3(verband, "", "", "m", vs.ByAgeGroup, stats.AgeGroups)
+			outputCSVRowByAgeGroupHierarchical3(verband, "", "", "w", vs.ByAgeGroup, stats.AgeGroups)
+			outputCSVRowByAgeGroupHierarchical3(verband, "", "", "Gesamt", vs.ByAgeGroup, stats.AgeGroups)
 
-			// Sort Bezirke
-			var bezirke []string
-			for b := range vs.Bezirke {
-				bezirke = append(bezirke, b)
+			// Sort Unterverbaende
+			var unterverbaende []string
+			for u := range vs.Unterverbaende {
+				unterverbaende = append(unterverbaende, u)
 			}
-			sort.Strings(bezirke)
+			sort.Strings(unterverbaende)
 
-			// Bezirk rows
-			for _, bezirk := range bezirke {
-				bs := vs.Bezirke[bezirk]
-				outputCSVRowByAgeGroupHierarchical(verband, bezirk, "m", bs.ByAgeGroup, stats.AgeGroups)
-				outputCSVRowByAgeGroupHierarchical(verband, bezirk, "w", bs.ByAgeGroup, stats.AgeGroups)
-				outputCSVRowByAgeGroupHierarchical(verband, bezirk, "Gesamt", bs.ByAgeGroup, stats.AgeGroups)
+			// Unterverband rows
+			for _, unterverband := range unterverbaende {
+				us := vs.Unterverbaende[unterverband]
+				outputCSVRowByAgeGroupHierarchical3(verband, unterverband, "", "m", us.ByAgeGroup, stats.AgeGroups)
+				outputCSVRowByAgeGroupHierarchical3(verband, unterverband, "", "w", us.ByAgeGroup, stats.AgeGroups)
+				outputCSVRowByAgeGroupHierarchical3(verband, unterverband, "", "Gesamt", us.ByAgeGroup, stats.AgeGroups)
+
+				// Sort Bezirke within Unterverband
+				var bezirke []string
+				for b := range us.Bezirke {
+					bezirke = append(bezirke, b)
+				}
+				sort.Strings(bezirke)
+
+				// Bezirk rows
+				for _, bezirk := range bezirke {
+					bs := us.Bezirke[bezirk]
+					outputCSVRowByAgeGroupHierarchical3(verband, unterverband, bezirk, "m", bs.ByAgeGroup, stats.AgeGroups)
+					outputCSVRowByAgeGroupHierarchical3(verband, unterverband, bezirk, "w", bs.ByAgeGroup, stats.AgeGroups)
+					outputCSVRowByAgeGroupHierarchical3(verband, unterverband, bezirk, "Gesamt", bs.ByAgeGroup, stats.AgeGroups)
+				}
 			}
 		}
 
 		// Total row
 		fmt.Println()
-		outputCSVRowByAgeGroupHierarchical("GESAMT", "", "m", stats.Total.ByAgeGroup, stats.AgeGroups)
-		outputCSVRowByAgeGroupHierarchical("GESAMT", "", "w", stats.Total.ByAgeGroup, stats.AgeGroups)
-		outputCSVRowByAgeGroupHierarchical("GESAMT", "", "Gesamt", stats.Total.ByAgeGroup, stats.AgeGroups)
+		outputCSVRowByAgeGroupHierarchical3("GESAMT", "", "", "m", stats.Total.ByAgeGroup, stats.AgeGroups)
+		outputCSVRowByAgeGroupHierarchical3("GESAMT", "", "", "w", stats.Total.ByAgeGroup, stats.AgeGroups)
+		outputCSVRowByAgeGroupHierarchical3("GESAMT", "", "", "Gesamt", stats.Total.ByAgeGroup, stats.AgeGroups)
 	}
 }
 
-func outputCSVRowByAgeGroupHierarchical(verband, bezirk, gender string, byAgeGroup map[string]*GenderStats, ageGroups []string) {
-	fmt.Printf("%s;%s;%s", verband, bezirk, gender)
+func outputCSVRowByAgeGroupHierarchical3(verband, unterverband, bezirk, gender string, byAgeGroup map[string]*GenderStats, ageGroups []string) {
+	fmt.Printf("%s;%s;%s;%s", verband, unterverband, bezirk, gender)
 	var total int
 	for _, ag := range ageGroups {
 		count := 0
@@ -641,8 +725,8 @@ func outputCSVRowByAgeGroupHierarchical(verband, bezirk, gender string, byAgeGro
 	fmt.Printf(";%d\n", total)
 }
 
-func outputCSVRowByYearHierarchical(verband, bezirk, gender string, byYear map[int]*GenderStats, years []int) {
-	fmt.Printf("%s;%s;%s", verband, bezirk, gender)
+func outputCSVRowByYearHierarchical3(verband, unterverband, bezirk, gender string, byYear map[int]*GenderStats, years []int) {
+	fmt.Printf("%s;%s;%s;%s", verband, unterverband, bezirk, gender)
 	var total int
 	for _, year := range years {
 		count := 0
@@ -853,25 +937,25 @@ func printTableRowByYear(district, gender string, ds *DistrictStats, years []int
 	fmt.Printf("  %7d\n", total)
 }
 
-// Hierarchical output functions for Verband → Bezirk structure
+// Hierarchical output functions for Verband → Unterverband → Bezirk structure
 
 func outputTableByAgeGroupHierarchical(stats *YouthStatistics, verbaende []string) {
 	// Header
-	fmt.Printf("%-12s  %-7s", "Verband/Bez", "Gender")
+	fmt.Printf("%-16s  %-7s", "Verband/UV/Bez", "Gender")
 	for _, ag := range stats.AgeGroups {
 		fmt.Printf("  %6s", ag)
 	}
 	fmt.Printf("  %7s\n", "Gesamt")
 
 	// Separator
-	fmt.Print(strings.Repeat("-", 14))
+	fmt.Print(strings.Repeat("-", 18))
 	fmt.Print(strings.Repeat("-", 9))
 	for range stats.AgeGroups {
 		fmt.Print(strings.Repeat("-", 8))
 	}
 	fmt.Println(strings.Repeat("-", 9))
 
-	// Data rows grouped by Verband → Bezirk
+	// Data rows grouped by Verband → Unterverband → Bezirk
 	for _, verband := range verbaende {
 		vs := stats.Verbaende[verband]
 
@@ -880,25 +964,40 @@ func outputTableByAgeGroupHierarchical(stats *YouthStatistics, verbaende []strin
 		printHierarchicalRowByAgeGroup("", "w", vs.ByAgeGroup, vs.Total, stats.AgeGroups)
 		printHierarchicalRowByAgeGroup("", "Total", vs.ByAgeGroup, vs.Total, stats.AgeGroups)
 
-		// Sort Bezirke within Verband
-		var bezirke []string
-		for b := range vs.Bezirke {
-			bezirke = append(bezirke, b)
+		// Sort Unterverbaende within Verband
+		var unterverbaende []string
+		for u := range vs.Unterverbaende {
+			unterverbaende = append(unterverbaende, u)
 		}
-		sort.Strings(bezirke)
+		sort.Strings(unterverbaende)
 
-		// Bezirk rows (indented)
-		for _, bezirk := range bezirke {
-			bs := vs.Bezirke[bezirk]
-			printHierarchicalRowByAgeGroup("  "+bezirk, "m", bs.ByAgeGroup, bs.Total, stats.AgeGroups)
-			printHierarchicalRowByAgeGroup("", "w", bs.ByAgeGroup, bs.Total, stats.AgeGroups)
-			printHierarchicalRowByAgeGroup("", "Total", bs.ByAgeGroup, bs.Total, stats.AgeGroups)
+		// Unterverband rows (indented once)
+		for _, unterverband := range unterverbaende {
+			us := vs.Unterverbaende[unterverband]
+			printHierarchicalRowByAgeGroup("  "+unterverband, "m", us.ByAgeGroup, us.Total, stats.AgeGroups)
+			printHierarchicalRowByAgeGroup("", "w", us.ByAgeGroup, us.Total, stats.AgeGroups)
+			printHierarchicalRowByAgeGroup("", "Total", us.ByAgeGroup, us.Total, stats.AgeGroups)
+
+			// Sort Bezirke within Unterverband
+			var bezirke []string
+			for b := range us.Bezirke {
+				bezirke = append(bezirke, b)
+			}
+			sort.Strings(bezirke)
+
+			// Bezirk rows (indented twice)
+			for _, bezirk := range bezirke {
+				bs := us.Bezirke[bezirk]
+				printHierarchicalRowByAgeGroup("    "+bezirk, "m", bs.ByAgeGroup, bs.Total, stats.AgeGroups)
+				printHierarchicalRowByAgeGroup("", "w", bs.ByAgeGroup, bs.Total, stats.AgeGroups)
+				printHierarchicalRowByAgeGroup("", "Total", bs.ByAgeGroup, bs.Total, stats.AgeGroups)
+			}
 		}
 		fmt.Println()
 	}
 
 	// Grand total
-	fmt.Print(strings.Repeat("=", 14))
+	fmt.Print(strings.Repeat("=", 18))
 	fmt.Print(strings.Repeat("=", 9))
 	for range stats.AgeGroups {
 		fmt.Print(strings.Repeat("=", 8))
@@ -911,7 +1010,7 @@ func outputTableByAgeGroupHierarchical(stats *YouthStatistics, verbaende []strin
 }
 
 func printHierarchicalRowByAgeGroup(label, gender string, byAgeGroup map[string]*GenderStats, total *GenderStats, ageGroups []string) {
-	fmt.Printf("%-12s  %-7s", label, gender)
+	fmt.Printf("%-16s  %-7s", label, gender)
 	var rowTotal int
 	for _, ag := range ageGroups {
 		count := 0
@@ -933,21 +1032,21 @@ func printHierarchicalRowByAgeGroup(label, gender string, byAgeGroup map[string]
 
 func outputTableByYearHierarchical(stats *YouthStatistics, verbaende []string) {
 	// Header
-	fmt.Printf("%-12s  %-7s", "Verband/Bez", "Gender")
+	fmt.Printf("%-16s  %-7s", "Verband/UV/Bez", "Gender")
 	for _, year := range stats.BirthYears {
 		fmt.Printf("  %6d", year)
 	}
 	fmt.Printf("  %7s\n", "Gesamt")
 
 	// Separator
-	fmt.Print(strings.Repeat("-", 14))
+	fmt.Print(strings.Repeat("-", 18))
 	fmt.Print(strings.Repeat("-", 9))
 	for range stats.BirthYears {
 		fmt.Print(strings.Repeat("-", 8))
 	}
 	fmt.Println(strings.Repeat("-", 9))
 
-	// Data rows grouped by Verband → Bezirk
+	// Data rows grouped by Verband → Unterverband → Bezirk
 	for _, verband := range verbaende {
 		vs := stats.Verbaende[verband]
 
@@ -956,25 +1055,40 @@ func outputTableByYearHierarchical(stats *YouthStatistics, verbaende []string) {
 		printHierarchicalRowByYear("", "w", vs.ByYear, vs.Total, stats.BirthYears)
 		printHierarchicalRowByYear("", "Total", vs.ByYear, vs.Total, stats.BirthYears)
 
-		// Sort Bezirke within Verband
-		var bezirke []string
-		for b := range vs.Bezirke {
-			bezirke = append(bezirke, b)
+		// Sort Unterverbaende within Verband
+		var unterverbaende []string
+		for u := range vs.Unterverbaende {
+			unterverbaende = append(unterverbaende, u)
 		}
-		sort.Strings(bezirke)
+		sort.Strings(unterverbaende)
 
-		// Bezirk rows (indented)
-		for _, bezirk := range bezirke {
-			bs := vs.Bezirke[bezirk]
-			printHierarchicalRowByYear("  "+bezirk, "m", bs.ByYear, bs.Total, stats.BirthYears)
-			printHierarchicalRowByYear("", "w", bs.ByYear, bs.Total, stats.BirthYears)
-			printHierarchicalRowByYear("", "Total", bs.ByYear, bs.Total, stats.BirthYears)
+		// Unterverband rows (indented once)
+		for _, unterverband := range unterverbaende {
+			us := vs.Unterverbaende[unterverband]
+			printHierarchicalRowByYear("  "+unterverband, "m", us.ByYear, us.Total, stats.BirthYears)
+			printHierarchicalRowByYear("", "w", us.ByYear, us.Total, stats.BirthYears)
+			printHierarchicalRowByYear("", "Total", us.ByYear, us.Total, stats.BirthYears)
+
+			// Sort Bezirke within Unterverband
+			var bezirke []string
+			for b := range us.Bezirke {
+				bezirke = append(bezirke, b)
+			}
+			sort.Strings(bezirke)
+
+			// Bezirk rows (indented twice)
+			for _, bezirk := range bezirke {
+				bs := us.Bezirke[bezirk]
+				printHierarchicalRowByYear("    "+bezirk, "m", bs.ByYear, bs.Total, stats.BirthYears)
+				printHierarchicalRowByYear("", "w", bs.ByYear, bs.Total, stats.BirthYears)
+				printHierarchicalRowByYear("", "Total", bs.ByYear, bs.Total, stats.BirthYears)
+			}
 		}
 		fmt.Println()
 	}
 
 	// Grand total
-	fmt.Print(strings.Repeat("=", 14))
+	fmt.Print(strings.Repeat("=", 18))
 	fmt.Print(strings.Repeat("=", 9))
 	for range stats.BirthYears {
 		fmt.Print(strings.Repeat("=", 8))
@@ -987,7 +1101,7 @@ func outputTableByYearHierarchical(stats *YouthStatistics, verbaende []string) {
 }
 
 func printHierarchicalRowByYear(label, gender string, byYear map[int]*GenderStats, total *GenderStats, years []int) {
-	fmt.Printf("%-12s  %-7s", label, gender)
+	fmt.Printf("%-16s  %-7s", label, gender)
 	var rowTotal int
 	for _, year := range years {
 		count := 0
